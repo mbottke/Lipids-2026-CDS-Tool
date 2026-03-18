@@ -809,6 +809,29 @@ export default function App() {
           <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
             <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-1">Recommendation</div>
             <div className={`text-[14px] font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
+            {(rec.int === "high" || rec.int === "moderate") && (
+              <div className="mt-2 pt-2 border-t border-slate-200/50 text-[11px] text-slate-600">
+                {rec.int === "high" && (
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-slate-500">High-Intensity Statins:</div>
+                    <div className="pl-2 border-l-2 border-slate-300/50 space-y-0.5">
+                      <div>Atorvastatin 40–80 mg</div>
+                      <div>Rosuvastatin 20–40 mg</div>
+                    </div>
+                  </div>
+                )}
+                {rec.int === "moderate" && (
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-slate-500">Moderate-Intensity Statins:</div>
+                    <div className="pl-2 border-l-2 border-slate-300/50 space-y-0.5">
+                      <div>Atorvastatin 10–20 mg</div>
+                      <div>Rosuvastatin 5–10 mg</div>
+                      <div>Simvastatin 20–40 mg</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {rec.g && ldlC !== "" && ldlC !== null && (
