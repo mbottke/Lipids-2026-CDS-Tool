@@ -554,11 +554,12 @@ export default function App() {
               <Num label="eGFR" unit="mL/min" value={egfr} on={setEgfr} min={15} max={140} ph="15–140" />
               <Num label="BMI" unit="kg/m²" value={bmi} on={setBmi} min={18.5} max={60} step={0.1} ph="18.5–60" />
             </div>
-            <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
-              {/* items-end aligns button to bottom of Num (which has label above input) */}
-              <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
+              </div>
               <button onClick={() => setBmiCalc(true)}
-                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-sky-500/10 border border-blue-200 dark:border-sky-500/30 hover:bg-blue-100 dark:hover:bg-sky-500/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap min-h-[48px]">
+                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-sky-500/10 border border-blue-200 dark:border-sky-500/30 hover:bg-blue-100 dark:hover:bg-sky-500/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap h-[50px]">
                 BMI Calc
               </button>
             </div>
