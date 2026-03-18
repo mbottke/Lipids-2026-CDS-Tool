@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PREVENT-ASCVD 10-Year Base Model Coefficients
@@ -57,10 +57,10 @@ function calcPREVENT({ age, sex, sbp, bpTx, totalC, hdlC, statin, dm, smoking, e
 
 function riskCat(r) {
   if (r === null) return null;
-  if (r < 3) return { label: "Low", color: "#16a34a", bg: "#f0fdf4", range: "<3%" };
-  if (r < 5) return { label: "Borderline", color: "#ca8a04", bg: "#fefce8", range: "3–<5%" };
-  if (r < 10) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", range: "5–<10%" };
-  return { label: "High", color: "#dc2626", bg: "#fef2f2", range: "≥10%" };
+  if (r < 3) return { label: "Low", color: "#16a34a", bg: "#f0fdf4", darkBg: "#052e1633", range: "<3%" };
+  if (r < 5) return { label: "Borderline", color: "#ca8a04", bg: "#fefce8", darkBg: "#422006aa", range: "3–<5%" };
+  if (r < 10) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", darkBg: "#431407aa", range: "5–<10%" };
+  return { label: "High", color: "#dc2626", bg: "#fef2f2", darkBg: "#450a0aaa", range: "≥10%" };
 }
 
 const VHR_CRITERIA = [
@@ -138,54 +138,54 @@ function StatinInfo({ onClose }) {
     { name:"Lovastatin", risk:3 }, { name:"Simvastatin", risk:4 },
   ];
 
-  const iClr = { red:"text-red-700", amber:"text-amber-700", blue:"text-blue-700" };
-  const iBg = { red:"bg-red-50 border-red-200", amber:"bg-amber-50 border-amber-200", blue:"bg-blue-50 border-blue-200" };
+  const iClr = { red:"text-red-700 dark:text-red-400", amber:"text-amber-700 dark:text-amber-400", blue:"text-blue-700 dark:text-blue-400" };
+  const iBg = { red:"bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800", amber:"bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800", blue:"bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" };
   const dots = { 1:"bg-emerald-400", 2:"bg-yellow-400", 3:"bg-orange-400", 4:"bg-red-400" };
 
   return (
-    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-700 space-y-3">
+    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 space-y-3">
       <div className="flex items-center justify-between">
-        <div className="font-bold text-slate-800 text-[12px]">Statin Reference</div>
-        <button onClick={onClose} className="text-[12px] text-slate-400 hover:text-slate-600 cursor-pointer font-bold">✕</button>
+        <div className="font-bold text-slate-800 dark:text-slate-100 text-[12px]">Statin Reference</div>
+        <button onClick={onClose} className="text-[12px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer font-bold">✕</button>
       </div>
 
       {intensities.map(tier => (
         <div key={tier.level} className={`rounded-lg border p-2.5 ${iBg[tier.color]}`}>
-          <div className={`font-bold ${iClr[tier.color]} mb-1`}>{tier.level} <span className="font-normal text-slate-400">({tier.ldl} LDL-C reduction)</span></div>
+          <div className={`font-bold ${iClr[tier.color]} mb-1`}>{tier.level} <span className="font-normal text-slate-400 dark:text-slate-500">({tier.ldl} LDL-C reduction)</span></div>
           <div className="space-y-1">
             {tier.drugs.map(d => (
-              <div key={d.name+d.dose} className="bg-white/70 rounded p-1.5 border border-slate-100">
+              <div key={d.name+d.dose} className="bg-white/70 dark:bg-slate-700/50 rounded p-1.5 border border-slate-100 dark:border-slate-600">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800">{d.name} <span className="font-normal text-slate-500">{d.dose}</span></span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{d.name} <span className="font-normal text-slate-500 dark:text-slate-400">{d.dose}</span></span>
                   <div className="flex gap-0.5" title="Myopathy risk">
                     {[1,2,3,4].map(i => (
-                      <div key={i} className={`w-1.5 h-1.5 rounded-full ${i <= d.myopathy ? dots[d.myopathy] : "bg-slate-200"}`} />
+                      <div key={i} className={`w-1.5 h-1.5 rounded-full ${i <= d.myopathy ? dots[d.myopathy] : "bg-slate-200 dark:bg-slate-600"}`} />
                     ))}
                   </div>
                 </div>
-                {d.notes && <div className="text-[10px] text-slate-500 mt-0.5">{d.notes}</div>}
+                {d.notes && <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{d.notes}</div>}
               </div>
             ))}
           </div>
         </div>
       ))}
 
-      <div className="rounded-lg border border-slate-200 p-2.5 bg-white">
-        <div className="font-bold text-slate-700 mb-1.5">Myopathy Risk Spectrum</div>
+      <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-2.5 bg-white dark:bg-slate-800">
+        <div className="font-bold text-slate-700 dark:text-slate-200 mb-1.5">Myopathy Risk Spectrum</div>
         <div className="flex items-end gap-1">
           {myopathyScale.map(s => (
             <div key={s.name} className="flex-1 text-center">
               <div className={`mx-auto rounded-sm ${dots[s.risk]}`} style={{height: s.risk * 8 + 4, width:"100%", maxWidth:28}} />
-              <div className="text-[9px] text-slate-500 mt-1 leading-tight">{s.name.slice(0,4)}</div>
+              <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">{s.name.slice(0,4)}</div>
             </div>
           ))}
         </div>
-        <div className="flex justify-between mt-1 text-[9px] text-slate-400">
+        <div className="flex justify-between mt-1 text-[9px] text-slate-400 dark:text-slate-500">
           <span>← Lower risk</span><span>Higher risk →</span>
         </div>
       </div>
 
-      <div className="text-[10px] text-slate-500 space-y-0.5 border-t border-slate-200 pt-2">
+      <div className="text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5 border-t border-slate-200 dark:border-slate-700 pt-2">
         <div><b>Evening dosing:</b> Simvastatin, Lovastatin (short half-life). Atorvastatin and Rosuvastatin can be taken any time.</div>
         <div><b>Drug interactions:</b> CYP3A4 statins (Atorva, Simva, Lova) interact with azole antifungals, macrolides, protease inhibitors, grapefruit. Pravastatin and Pitavastatin have the fewest interactions.</div>
         <div><b>New-onset DM:</b> All statins modestly increase risk of new-onset type 2 DM (~9–12% relative increase). Risk is higher with high-intensity doses. CV benefit far outweighs DM risk. Pitavastatin may have the lowest DM risk.</div>
@@ -207,12 +207,12 @@ function Toggle({ value, on, label, sub }) {
   return (
     <button onClick={() => on(!value)} type="button"
       className="flex items-center gap-2.5 py-2 active:opacity-70 cursor-pointer min-h-[44px]">
-      <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600" : "bg-slate-300"}`}>
+      <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"}`}>
         <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white toggle-knob transition-transform duration-200 ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
       </div>
       <div className="leading-tight">
-        <span className="text-[14px] text-slate-700">{label}</span>
-        {sub && <div className="text-[10px] text-slate-400">{sub}</div>}
+        <span className="text-[14px] text-slate-700 dark:text-slate-200">{label}</span>
+        {sub && <div className="text-[10px] text-slate-400 dark:text-slate-500">{sub}</div>}
       </div>
     </button>
   );
@@ -221,13 +221,13 @@ function Toggle({ value, on, label, sub }) {
 function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className={`text-[11px] font-bold text-slate-400 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
-      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white">
+      <label className={`text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
+      <div className="flex items-center border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white dark:bg-slate-700">
         <input type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
           min={min} max={max} step={step} placeholder={ph}
-          className="flex-1 px-3 py-3 text-[16px] text-slate-800 outline-none bg-transparent min-w-0" />
-        {unit && <span className="pr-3 text-[13px] text-slate-400 whitespace-nowrap">{unit}</span>}
+          className="flex-1 px-3 py-3 text-[16px] text-slate-800 dark:text-slate-100 outline-none bg-transparent min-w-0 placeholder:text-slate-400 dark:placeholder:text-slate-500" />
+        {unit && <span className="pr-3 text-[13px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{unit}</span>}
       </div>
     </div>
   );
@@ -237,17 +237,17 @@ function Card({ title, accent="blue", children }) {
   const bdr = { blue:"border-l-blue-600", amber:"border-l-amber-500", red:"border-l-red-500",
     emerald:"border-l-emerald-600", violet:"border-l-violet-600" };
   return (
-    <div className={`bg-white rounded-xl border border-slate-200/80 border-l-4 ${bdr[accent]} card-shadow`}>
-      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[13px] font-black text-slate-800 uppercase tracking-wide">{title}</h3></div>}
+    <div className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/80 border-l-4 ${bdr[accent]} card-shadow`}>
+      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[13px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">{title}</h3></div>}
       <div className="px-4 pb-4">{children}</div>
     </div>
   );
 }
 
 function Badge({ children, color="blue" }) {
-  const s = { blue:"bg-blue-50 text-blue-700 border-blue-200", red:"bg-red-50 text-red-700 border-red-200",
-    amber:"bg-amber-50 text-amber-700 border-amber-200", emerald:"bg-emerald-50 text-emerald-700 border-emerald-200",
-    violet:"bg-violet-50 text-violet-700 border-violet-200", slate:"bg-slate-100 text-slate-600 border-slate-200" };
+  const s = { blue:"bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800", red:"bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+    amber:"bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800", emerald:"bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800",
+    violet:"bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800", slate:"bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600" };
   return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${s[color]}`}>{children}</span>;
 }
 
@@ -255,18 +255,18 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
   const needed = currentLdl ? Math.round(((currentLdl-ldl)/currentLdl)*100) : null;
   return (
     <div className="grid grid-cols-3 gap-2">
-      <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
-        <div className="text-2xl font-black text-blue-700 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{ldl}</div>
-        <div className="text-[11px] text-blue-500 font-bold mt-0.5">LDL-C</div>
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center border border-blue-100 dark:border-blue-800">
+        <div className="text-2xl font-black text-blue-700 dark:text-blue-400 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{ldl}</div>
+        <div className="text-[11px] text-blue-500 dark:text-blue-400 font-bold mt-0.5">LDL-C</div>
       </div>
-      <div className="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
-        <div className="text-2xl font-black text-violet-700 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{nonHdl}</div>
-        <div className="text-[11px] text-violet-500 font-bold mt-0.5">Non-HDL</div>
+      <div className="bg-violet-50 dark:bg-violet-900/20 rounded-lg p-3 text-center border border-violet-100 dark:border-violet-800">
+        <div className="text-2xl font-black text-violet-700 dark:text-violet-400 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{nonHdl}</div>
+        <div className="text-[11px] text-violet-500 dark:text-violet-400 font-bold mt-0.5">Non-HDL</div>
       </div>
-      <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-        <div className="text-2xl font-black text-slate-700 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>≥{pct}%</div>
-        <div className="text-[11px] text-slate-500 font-bold mt-0.5">% Reduction</div>
-        {needed > 0 && <div className="text-[11px] text-amber-600 mt-0.5">{needed}% needed</div>}
+      <div className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 text-center border border-slate-200 dark:border-slate-600">
+        <div className="text-2xl font-black text-slate-700 dark:text-slate-200 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>≥{pct}%</div>
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">% Reduction</div>
+        {needed > 0 && <div className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">{needed}% needed</div>}
       </div>
     </div>
   );
@@ -277,6 +277,32 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function App() {
+  // ── Theme ──
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('lipid2026-dark');
+      if (stored !== null) return stored === 'true';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('lipid2026-dark', darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => {
+      if (localStorage.getItem('lipid2026-dark') === null) {
+        setDarkMode(e.matches);
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // ── State ──
   const [tab, setTab] = useState("primary");
   const [age, setAge] = useState("");
@@ -424,13 +450,13 @@ export default function App() {
     { id:"severe", l:"LDL ≥190", em:"⚠️" },
   ];
 
-  const recBg = { red:"bg-red-50 border-red-300", amber:"bg-amber-50 border-amber-300",
-    emerald:"bg-emerald-50 border-emerald-300", violet:"bg-violet-50 border-violet-300", blue:"bg-blue-50 border-blue-300" };
-  const recTxt = { red:"text-red-800", amber:"text-amber-800", emerald:"text-emerald-800",
-    violet:"text-violet-800", blue:"text-blue-800" };
+  const recBg = { red:"bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-800", amber:"bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-800",
+    emerald:"bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-800", violet:"bg-violet-50 border-violet-300 dark:bg-violet-900/20 dark:border-violet-800", blue:"bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-800" };
+  const recTxt = { red:"text-red-800 dark:text-red-300", amber:"text-amber-800 dark:text-amber-300", emerald:"text-emerald-800 dark:text-emerald-300",
+    violet:"text-violet-800 dark:text-violet-300", blue:"text-blue-800 dark:text-blue-300" };
 
   return (
-    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
 
       {/* ── Header ── */}
       <div className="shrink-0">
@@ -441,10 +467,16 @@ export default function App() {
                 <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
                 <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
               </div>
-              <button onClick={resetPatient}
-                className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
-                Reset
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => { setDarkMode(d => !d); }}
+                  className="mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all cursor-pointer border border-slate-700">
+                  {darkMode ? "\u2600\uFE0F" : "\uD83C\uDF19"}
+                </button>
+                <button onClick={resetPatient}
+                  className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -452,13 +484,13 @@ export default function App() {
       </div>
 
       {/* ── Tabs ── */}
-      <div className="glass-tabs border-b border-slate-200/60 shadow-sm shrink-0">
+      <div className="glass-tabs border-b border-slate-200/60 dark:border-slate-700/60 shadow-sm shrink-0">
         <div className="max-w-lg mx-auto px-2 py-1.5">
           <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex-1 px-1 py-2.5 text-[13px] font-bold text-center whitespace-nowrap rounded-lg transition-all duration-200 cursor-pointer min-h-[44px] active:scale-[0.97] ${
-                  tab===t.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/60"
+                  tab===t.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
                 }`}>
                 <span className="mr-0.5">{t.em}</span>{t.l}
               </button>
@@ -474,16 +506,16 @@ export default function App() {
         {/* PRIMARY */}
         {tab === "primary" && (<>
           <Card title="PREVENT-ASCVD Risk Calculator" accent="blue">
-            <p className="text-[11px] text-slate-400 mb-3">Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sex</label>
+                <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sex</label>
                 <div className="flex gap-1">
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
                       className={`flex-1 py-3 rounded-lg text-[14px] font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] text-center ${
-                        sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                        sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-600/70"
                       }`}>{s==="male"?"Male":"Female"}</button>
                   ))}
                 </div>
@@ -499,60 +531,60 @@ export default function App() {
               {/* items-end aligns button to bottom of Num (which has label above input) */}
               <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
               <button onClick={() => setBmiCalc(true)}
-                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all cursor-pointer whitespace-nowrap min-h-[48px]">
+                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-95 transition-all cursor-pointer whitespace-nowrap min-h-[48px]">
                 BMI Calc
               </button>
             </div>
             {bmiCalc && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-[12px] font-bold text-blue-800">BMI Calculator</div>
+                  <div className="text-[12px] font-bold text-blue-800 dark:text-blue-300">BMI Calculator</div>
                   <button onClick={() => setBmiCalc(false)}
-                    className="text-[12px] text-slate-400 hover:text-slate-600 cursor-pointer font-bold">✕</button>
+                    className="text-[12px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer font-bold">✕</button>
                 </div>
                 <div className="flex gap-1 mb-2">
                   {["imperial","metric"].map(u => (
                     <button key={u} onClick={() => { setBmiUnit(u); setBmiWt(""); setBmiHt(""); setBmiHtIn(""); }}
                       className={`flex-1 py-1.5 rounded text-[11px] font-bold text-center cursor-pointer transition-colors ${
-                        bmiUnit===u ? "bg-blue-600 text-white" : "bg-white text-slate-500 border border-slate-200"
+                        bmiUnit===u ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
                       }`}>{u==="imperial"?"lb / ft-in":"kg / cm"}</button>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-0.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Weight</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Weight</label>
                     <input type="number" inputMode="decimal" value={bmiWt}
                       onChange={e => setBmiWt(e.target.value==="" ? "" : e.target.value)}
                       placeholder={bmiUnit==="imperial"?"lbs":"kg"}
-                      className="px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow" />
+                      className="px-2 py-2 text-[16px] border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 dark:text-slate-100 outline-none input-glow" />
                   </div>
                   {bmiUnit==="imperial" ? (
                     <div className="flex flex-col gap-0.5">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase">Height</label>
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Height</label>
                       <div className="flex gap-1">
                         <input type="number" inputMode="numeric" value={bmiHt}
                           onChange={e => setBmiHt(e.target.value==="" ? "" : e.target.value)}
-                          placeholder="ft" className="flex-1 px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow min-w-0" />
+                          placeholder="ft" className="flex-1 px-2 py-2 text-[16px] border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 dark:text-slate-100 outline-none input-glow min-w-0" />
                         <input type="number" inputMode="numeric" value={bmiHtIn}
                           onChange={e => setBmiHtIn(e.target.value==="" ? "" : e.target.value)}
-                          placeholder="in" className="flex-1 px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow min-w-0" />
+                          placeholder="in" className="flex-1 px-2 py-2 text-[16px] border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 dark:text-slate-100 outline-none input-glow min-w-0" />
                       </div>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-0.5">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase">Height</label>
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Height</label>
                       <input type="number" inputMode="decimal" value={bmiHt}
                         onChange={e => setBmiHt(e.target.value==="" ? "" : e.target.value)}
-                        placeholder="cm" className="px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow" />
+                        placeholder="cm" className="px-2 py-2 text-[16px] border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 dark:text-slate-100 outline-none input-glow" />
                     </div>
                   )}
                 </div>
                 {calcBmiValue !== null && (
-                  <div className="mt-2 flex items-center justify-between bg-white rounded-lg p-2 border border-blue-200">
+                  <div className="mt-2 flex items-center justify-between bg-white dark:bg-slate-700 rounded-lg p-2 border border-blue-200 dark:border-blue-800">
                     <div>
-                      <span className="text-[11px] text-slate-500">Calculated BMI: </span>
-                      <span className="text-[14px] font-black text-blue-700 font-mono">{calcBmiValue}</span>
-                      <span className="text-[11px] text-slate-400"> kg/m²</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Calculated BMI: </span>
+                      <span className="text-[14px] font-black text-blue-700 dark:text-blue-400 font-mono">{calcBmiValue}</span>
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500"> kg/m²</span>
                     </div>
                     <button onClick={acceptBmi}
                       className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
@@ -564,8 +596,8 @@ export default function App() {
             )}
             {nonHdlC !== null && (
               <div className="computed-field flex items-center justify-between mt-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Non-HDL-C <span className="normal-case font-medium">(calculated)</span></span>
-                <span className="text-[14px] font-black text-slate-700">{nonHdlC} <span className="text-[11px] font-normal text-slate-400">mg/dL</span></span>
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Non-HDL-C <span className="normal-case font-medium">(calculated)</span></span>
+                <span className="text-[14px] font-black text-slate-700 dark:text-slate-200">{nonHdlC} <span className="text-[11px] font-normal text-slate-400 dark:text-slate-500">mg/dL</span></span>
               </div>
             )}
             <div className="grid grid-cols-2 mt-3">
@@ -577,7 +609,7 @@ export default function App() {
 
             {/* Risk result */}
             {risk !== null && rc && (
-              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor:rc.bg, borderColor:rc.color+"40" }}>
+              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor: darkMode ? rc.darkBg : rc.bg, borderColor:rc.color+"40" }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[11px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
@@ -594,7 +626,7 @@ export default function App() {
 
           {/* Risk enhancers */}
           <Card title="Risk Enhancers — Personalize" accent="amber">
-            <p className="text-[11px] text-slate-400 mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
             <div className="space-y-1.5">
               {ENHANCERS.map(e => (
                 <div key={e.id}>
@@ -607,14 +639,14 @@ export default function App() {
                     }
                   }}
                     className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
-                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-amber-50 border-amber-300" : "bg-white border-slate-200"
+                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-800" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                     }`}>
                     <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
-                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-amber-500 border-amber-500" : "border-slate-300"
+                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-amber-500 border-amber-500" : "border-slate-300 dark:border-slate-600"
                     }`}>{(e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) && <span className="text-white text-[13px] font-bold">✓</span>}</div>
                     <div className="flex-1">
-                      <div className="text-[14px] font-bold text-slate-800 leading-tight">{e.l}</div>
-                      <div className="text-[11px] text-slate-500">{e.d}{e.id === "metabolic" && metSynCount > 0 ? ` — ${metSynCount}/5 met` : ""}</div>
+                      <div className="text-[14px] font-bold text-slate-800 dark:text-slate-100 leading-tight">{e.l}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{e.d}{e.id === "metabolic" && metSynCount > 0 ? ` — ${metSynCount}/5 met` : ""}</div>
                     </div>
                   </button>
                   {e.id === "metabolic" && (
@@ -622,17 +654,17 @@ export default function App() {
                       {METSYN_CRITERIA.map(m => (
                         <button key={m.id} onClick={() => toggleMetSyn(m.id)}
                           className={`w-full flex items-start gap-2 p-2 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 ${
-                            metSyn[m.id] ? "bg-amber-50/60 border-amber-200" : "bg-slate-50 border-slate-200"
+                            metSyn[m.id] ? "bg-amber-50/60 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-slate-50 dark:bg-slate-700/30 border-slate-200 dark:border-slate-700"
                           }`}>
                           <div className={`mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center ${
-                            metSyn[m.id] ? "bg-amber-400 border-amber-400" : "border-slate-300"
+                            metSyn[m.id] ? "bg-amber-400 border-amber-400" : "border-slate-300 dark:border-slate-600"
                           }`}>{metSyn[m.id] && <span className="text-white text-[10px] font-bold">✓</span>}</div>
-                          <div><div className="text-[12px] font-bold text-slate-700 leading-tight">{m.l}</div>
-                          <div className="text-[10px] text-slate-400">{m.d}</div></div>
+                          <div><div className="text-[12px] font-bold text-slate-700 dark:text-slate-200 leading-tight">{m.l}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{m.d}</div></div>
                         </button>
                       ))}
                       {metSynCount >= 3 && (
-                        <div className="text-[11px] font-bold text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 border border-amber-200">
+                        <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-2.5 py-1.5 border border-amber-200 dark:border-amber-800">
                           {metSynCount}/5 criteria met — Metabolic Syndrome
                         </div>
                       )}
@@ -642,7 +674,7 @@ export default function App() {
               ))}
             </div>
             {enhCount > 0 && (
-              <div className="mt-2 text-[14px] font-bold text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+              <div className="mt-2 text-[14px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 border border-amber-200 dark:border-amber-800">
                 {enhCount} enhancer{enhCount>1?"s":""} — favors statin in borderline/intermediate
               </div>
             )}
@@ -651,21 +683,21 @@ export default function App() {
           {/* CAC */}
           <Card title="CAC — Reclassify (Optional)" accent="emerald">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-[11px] text-slate-400">Male ≥40y or Female ≥45y when decision uncertain</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">Male ≥40y or Female ≥45y when decision uncertain</p>
               <button onClick={() => setCacInfo(p => !p)}
-                className="w-6 h-6 rounded-full border-2 border-slate-300 text-slate-400 text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
+                className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
             </div>
             {cacInfo && (
-              <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-slate-700 space-y-2">
-                <div className="font-bold text-emerald-800">How CAC Reclassifies Risk</div>
+              <div className="mb-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 space-y-2">
+                <div className="font-bold text-emerald-800 dark:text-emerald-300">How CAC Reclassifies Risk</div>
                 <div>The <span className="font-bold">CAC Score</span> (Agatston units) measures calcified plaque in coronary arteries via CT. It directly overrides the PREVENT risk estimate:</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                  <span className="font-bold text-emerald-700">CAC = 0</span><span>No plaque detected — statin may be <span className="font-bold">deferred</span> even at intermediate risk. Reassess in 5–10 years.</span>
-                  <span className="font-bold text-blue-700">CAC 1–99</span><span>Mild plaque — moderate-intensity statin. <span className="font-bold">This is where the percentile matters most:</span> if ≥75th percentile for age/sex, upgrades to high-intensity.</span>
-                  <span className="font-bold text-amber-700">CAC ≥100</span><span>Significant plaque — high-intensity statin, LDL goal &lt;70.</span>
-                  <span className="font-bold text-red-700">CAC ≥1000</span><span>Extensive plaque — treat as very high risk, LDL goal &lt;55, full escalation.</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">CAC = 0</span><span>No plaque detected — statin may be <span className="font-bold">deferred</span> even at intermediate risk. Reassess in 5–10 years.</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-400">CAC 1–99</span><span>Mild plaque — moderate-intensity statin. <span className="font-bold">This is where the percentile matters most:</span> if ≥75th percentile for age/sex, upgrades to high-intensity.</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400">CAC ≥100</span><span>Significant plaque — high-intensity statin, LDL goal &lt;70.</span>
+                  <span className="font-bold text-red-700 dark:text-red-400">CAC ≥1000</span><span>Extensive plaque — treat as very high risk, LDL goal &lt;55, full escalation.</span>
                 </div>
-                <div className="text-slate-500 border-t border-emerald-200 pt-2">The <span className="font-bold">percentile</span> is only needed when the score is 1–99. It compares plaque burden to others of the same age and sex — a CAC of 50 at age 45 is more concerning than a CAC of 50 at age 75.</div>
+                <div className="text-slate-500 dark:text-slate-400 border-t border-emerald-200 dark:border-emerald-800 pt-2">The <span className="font-bold">percentile</span> is only needed when the score is 1–99. It compares plaque burden to others of the same age and sex — a CAC of 50 at age 45 is more concerning than a CAC of 50 at age 75.</div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -678,7 +710,7 @@ export default function App() {
         {/* SECONDARY */}
         {tab === "secondary" && (
           <Card title="Clinical ASCVD — Risk Level" accent="red">
-            <p className="text-[11px] text-slate-400 mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-2">
               {[
@@ -687,26 +719,26 @@ export default function App() {
               ].map(o => (
                 <button key={o.id} onClick={() => setAscvdLevel(o.id)}
                   className="w-full text-left p-3 rounded-lg border-2 transition-colors cursor-pointer active:opacity-70 min-h-[56px]"
-                  style={(o.id === "very_high" ? vhrCount > 0 : vhrCount === 0) ? { borderColor:o.clr, backgroundColor:o.bg } : { borderColor:"#e2e8f0" }}>
-                  <div className="text-[14px] font-bold text-slate-800">{o.l}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">{o.d}</div>
+                  style={(o.id === "very_high" ? vhrCount > 0 : vhrCount === 0) ? { borderColor:o.clr, backgroundColor: darkMode ? o.clr + "22" : o.bg } : { borderColor: darkMode ? "#334155" : "#e2e8f0" }}>
+                  <div className="text-[14px] font-bold text-slate-800 dark:text-slate-100">{o.l}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{o.d}</div>
                 </button>
               ))}
             </div>
             <div className="mt-3 space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
+              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
               {VHR_CRITERIA.map(e => (
                 <button key={e.id} onClick={() => {
                   toggleVhr(e.id);
                 }}
                   className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
-                    vhr[e.id] ? "bg-red-50 border-red-300" : "bg-white border-slate-200"
+                    vhr[e.id] ? "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                   }`}>
                   <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
-                    vhr[e.id] ? "bg-red-500 border-red-500" : "border-slate-300"
+                    vhr[e.id] ? "bg-red-500 border-red-500" : "border-slate-300 dark:border-slate-600"
                   }`}>{vhr[e.id] && <span className="text-white text-[13px] font-bold">✓</span>}</div>
-                  <div><div className="text-[14px] font-bold text-slate-800 leading-tight">{e.l}</div>
-                  <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                  <div><div className="text-[14px] font-bold text-slate-800 dark:text-slate-100 leading-tight">{e.l}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{e.d}</div></div>
                 </button>
               ))}
             </div>
@@ -716,28 +748,28 @@ export default function App() {
         {/* DIABETES */}
         {tab === "diabetes" && (
           <Card title="Diabetes Pathway" accent="violet">
-            <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mb-3">
-              <div className="text-[14px] font-bold text-violet-800">Universal LLT (Age 40–75)</div>
-              <div className="text-[11px] text-violet-600 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
+            <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-3 mb-3">
+              <div className="text-[14px] font-bold text-violet-800 dark:text-violet-300">Universal LLT (Age 40–75)</div>
+              <div className="text-[11px] text-violet-600 dark:text-violet-400 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
             </div>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">DM-Specific Risk Enhancers</div>
+              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">DM-Specific Risk Enhancers</div>
               {DM_ENHANCERS.map(e => (
                 <button key={e.id} onClick={() => toggleDmEnh(e.id)}
                   className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
-                    dmEnhs[e.id] ? "bg-violet-50 border-violet-300" : "bg-white border-slate-200"
+                    dmEnhs[e.id] ? "bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-800" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                   }`}>
                   <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
-                    dmEnhs[e.id] ? "bg-violet-500 border-violet-500" : "border-slate-300"
+                    dmEnhs[e.id] ? "bg-violet-500 border-violet-500" : "border-slate-300 dark:border-slate-600"
                   }`}>{dmEnhs[e.id] && <span className="text-white text-[13px] font-bold">✓</span>}</div>
-                  <div><div className="text-[14px] font-bold text-slate-800 leading-tight">{e.l}</div>
-                  <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                  <div><div className="text-[14px] font-bold text-slate-800 dark:text-slate-100 leading-tight">{e.l}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{e.d}</div></div>
                 </button>
               ))}
             </div>
             {dmEnhCount > 0 && (
-              <div className="mt-2 text-[14px] font-bold text-violet-700 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+              <div className="mt-2 text-[14px] font-bold text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 rounded-lg px-3 py-2 border border-violet-200 dark:border-violet-800">
                 {dmEnhCount} DM enhancer{dmEnhCount>1?"s":""} — supports high-intensity statin
               </div>
             )}
@@ -747,9 +779,9 @@ export default function App() {
         {/* SEVERE */}
         {tab === "severe" && (
           <Card title="Severe Hypercholesterolemia" accent="red">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-              <div className="text-[14px] font-bold text-red-800">LDL ≥190 mg/dL → High-Intensity Statin</div>
-              <div className="text-[11px] text-red-600 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-3">
+              <div className="text-[14px] font-bold text-red-800 dark:text-red-300">LDL ≥190 mg/dL → High-Intensity Statin</div>
+              <div className="text-[11px] text-red-600 dark:text-red-400 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
             </div>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
           </Card>
@@ -758,32 +790,32 @@ export default function App() {
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
           <div className="flex items-start justify-between mb-2">
-            <p className="text-[11px] text-slate-400">Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
             <button onClick={() => setBioInfo(p => !p)}
-              className="w-6 h-6 rounded-full border-2 border-slate-300 text-slate-400 text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-violet-400 hover:text-violet-500 active:scale-95 transition-colors">?</button>
+              className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-violet-400 hover:text-violet-500 active:scale-95 transition-colors">?</button>
           </div>
           {bioInfo && (
-            <div className="mb-3 p-3 bg-violet-50 border border-violet-200 rounded-lg text-[11px] text-slate-700 space-y-3">
+            <div className="mb-3 p-3 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 space-y-3">
               <div>
-                <div className="font-bold text-violet-800 mb-1">Lp(a) — Lipoprotein(a)</div>
+                <div className="font-bold text-violet-800 dark:text-violet-300 mb-1">Lp(a) — Lipoprotein(a)</div>
                 <div>A genetically determined, LDL-like particle that independently increases ASCVD risk. Levels are largely fixed from birth and not significantly lowered by statins.</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
-                  <span className="font-bold text-emerald-700">&lt;125 nmol/L</span><span>Normal — not a risk enhancer</span>
-                  <span className="font-bold text-amber-700">≥125 nmol/L</span><span>Elevated — ~1.4× ASCVD risk; qualifies as risk enhancer for statin decision</span>
-                  <span className="font-bold text-red-700">≥250 nmol/L</span><span>Very high — ~2× ASCVD risk; intensify LDL-C lowering aggressively</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">&lt;125 nmol/L</span><span>Normal — not a risk enhancer</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400">≥125 nmol/L</span><span>Elevated — ~1.4× ASCVD risk; qualifies as risk enhancer for statin decision</span>
+                  <span className="font-bold text-red-700 dark:text-red-400">≥250 nmol/L</span><span>Very high — ~2× ASCVD risk; intensify LDL-C lowering aggressively</span>
                 </div>
-                <div className="text-slate-500 mt-1.5">Screen at least once as adult. Earlier if family history of premature ASCVD or FH. Values in mg/dL: divide nmol/L by ~2.5 (≥50 mg/dL ≈ elevated).</div>
+                <div className="text-slate-500 dark:text-slate-400 mt-1.5">Screen at least once as adult. Earlier if family history of premature ASCVD or FH. Values in mg/dL: divide nmol/L by ~2.5 (≥50 mg/dL ≈ elevated).</div>
               </div>
-              <div className="border-t border-violet-200 pt-2">
-                <div className="font-bold text-violet-800 mb-1">ApoB — Apolipoprotein B</div>
+              <div className="border-t border-violet-200 dark:border-violet-800 pt-2">
+                <div className="font-bold text-violet-800 dark:text-violet-300 mb-1">ApoB — Apolipoprotein B</div>
                 <div>One ApoB molecule per atherogenic particle (LDL, VLDL, IDL, Lp(a)). ApoB counts total atherogenic particle number — more precise than LDL-C alone, especially when TG elevated or LDL-C is discordant with non-HDL-C.</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
-                  <span className="font-bold text-emerald-700">&lt;85 mg/dL</span><span>Optimal — at or below goal for all risk categories</span>
-                  <span className="font-bold text-blue-700">85–99</span><span>Borderline — at goal for intermediate risk; above for very high risk</span>
-                  <span className="font-bold text-amber-700">100–129</span><span>Elevated — above goal for most; consider intensification</span>
-                  <span className="font-bold text-red-700">≥130 mg/dL</span><span>Very high — significantly elevated atherogenic burden</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">&lt;85 mg/dL</span><span>Optimal — at or below goal for all risk categories</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-400">85–99</span><span>Borderline — at goal for intermediate risk; above for very high risk</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400">100–129</span><span>Elevated — above goal for most; consider intensification</span>
+                  <span className="font-bold text-red-700 dark:text-red-400">≥130 mg/dL</span><span>Very high — significantly elevated atherogenic burden</span>
                 </div>
-                <div className="text-slate-500 mt-1.5">Check once LDL/Non-HDL-C is near goal to confirm atherogenic particle burden is also controlled. Particularly useful when TG ≥150 or diabetes present.</div>
+                <div className="text-slate-500 dark:text-slate-400 mt-1.5">Check once LDL/Non-HDL-C is near goal to confirm atherogenic particle burden is also controlled. Particularly useful when TG ≥150 or diabetes present.</div>
               </div>
             </div>
           )}
@@ -793,28 +825,28 @@ export default function App() {
           </div>
           {lpaNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border mb-1.5 ${
-              lpaNote.c==="red"?"bg-red-50 border-red-200":lpaNote.c==="amber"?"bg-amber-50 border-amber-200":"bg-emerald-50 border-emerald-200"
-            }`}><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[11px] text-slate-700">{lpaNote.n}</span></div>
+              lpaNote.c==="red"?"bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800":lpaNote.c==="amber"?"bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800":"bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
+            }`}><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[11px] text-slate-700 dark:text-slate-200">{lpaNote.n}</span></div>
           )}
           {apoBNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border ${
-              apoBNote.c==="red"?"bg-red-50 border-red-200":apoBNote.c==="amber"?"bg-amber-50 border-amber-200":
-              apoBNote.c==="blue"?"bg-blue-50 border-blue-200":"bg-emerald-50 border-emerald-200"
-            }`}><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[11px] text-slate-700">{apoBNote.n}</span></div>
+              apoBNote.c==="red"?"bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800":apoBNote.c==="amber"?"bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800":
+              apoBNote.c==="blue"?"bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800":"bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
+            }`}><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[11px] text-slate-700 dark:text-slate-200">{apoBNote.n}</span></div>
           )}
         </Card>
 
         {/* ── RECOMMENDATION ── */}
         {rec && ((tab==="primary" && risk!==null) || tab!=="primary") && (<>
           <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-1">Recommendation</div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Recommendation</div>
             <div className={`text-[14px] font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
             {(rec.int === "high" || rec.int === "moderate") && (
-              <div className="mt-2 pt-2 border-t border-slate-200/50 text-[11px] text-slate-600">
+              <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50 text-[11px] text-slate-600 dark:text-slate-300">
                 {rec.int === "high" && (
                   <div className="space-y-0.5">
-                    <div className="font-bold text-slate-500">High-Intensity Statins:</div>
-                    <div className="pl-2 border-l-2 border-slate-300/50 space-y-0.5">
+                    <div className="font-bold text-slate-500 dark:text-slate-400">High-Intensity Statins:</div>
+                    <div className="pl-2 border-l-2 border-slate-300/50 dark:border-slate-600/50 space-y-0.5">
                       <div>Atorvastatin 40–80 mg</div>
                       <div>Rosuvastatin 20–40 mg</div>
                     </div>
@@ -822,8 +854,8 @@ export default function App() {
                 )}
                 {rec.int === "moderate" && (
                   <div className="space-y-0.5">
-                    <div className="font-bold text-slate-500">Moderate-Intensity Statins:</div>
-                    <div className="pl-2 border-l-2 border-slate-300/50 space-y-0.5">
+                    <div className="font-bold text-slate-500 dark:text-slate-400">Moderate-Intensity Statins:</div>
+                    <div className="pl-2 border-l-2 border-slate-300/50 dark:border-slate-600/50 space-y-0.5">
                       <div>Atorvastatin 10–20 mg</div>
                       <div>Rosuvastatin 5–10 mg</div>
                       <div>Simvastatin 20–40 mg</div>
@@ -837,8 +869,8 @@ export default function App() {
           {rec.g && ldlC !== "" && ldlC !== null && (
             <div className={`rounded-xl p-3 flex items-center gap-3 border-2 ${
               Number(ldlC) <= rec.g.ldl
-                ? "bg-emerald-50 border-emerald-300"
-                : "bg-red-50 border-red-300"
+                ? "bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-800"
+                : "bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-800"
             }`}>
               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black shrink-0 ${
                 Number(ldlC) <= rec.g.ldl
@@ -849,13 +881,13 @@ export default function App() {
               </div>
               <div>
                 <div className={`text-[14px] font-black ${
-                  Number(ldlC) <= rec.g.ldl ? "text-emerald-800" : "text-red-800"
+                  Number(ldlC) <= rec.g.ldl ? "text-emerald-800 dark:text-emerald-300" : "text-red-800 dark:text-red-300"
                 }`}>
                   {Number(ldlC) <= rec.g.ldl
                     ? "At Goal"
                     : `Not at Goal — LDL ${Number(ldlC) - rec.g.ldl} mg/dL above target`}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   Current LDL {ldlC} mg/dL · Goal &lt;{rec.g.ldl} mg/dL
                 </div>
               </div>
@@ -881,20 +913,20 @@ export default function App() {
                     {i<arr.length-1 && <div className="flex-1 my-0.5 ladder-connector"/>}
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
-                    <div className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                    <div className="text-[14px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                       {s.l}
                       {s.isStatin && (
                         <button onClick={() => setStatinInfo(p => !p)}
-                          className="w-5 h-5 rounded-full border-2 border-slate-300 text-slate-400 text-[10px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-blue-400 hover:text-blue-500 active:scale-95 transition-colors">?</button>
+                          className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-blue-400 hover:text-blue-500 active:scale-95 transition-colors">?</button>
                       )}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {s.s === 1 && (
                         <div>Diet, exercise, weight management, smoking cessation, sleep optimization</div>
                       )}
                       {s.isStatin && (<>
-                        <div className="font-bold text-slate-600">{rec.int==="high" ? "High-Intensity" : "Moderate-Intensity"} <span className="font-normal text-slate-400">({rec.int==="high" ? "≥50%" : "30–49%"} LDL-C reduction)</span></div>
-                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
+                        <div className="font-bold text-slate-600 dark:text-slate-300">{rec.int==="high" ? "High-Intensity" : "Moderate-Intensity"} <span className="font-normal text-slate-400 dark:text-slate-500">({rec.int==="high" ? "≥50%" : "30–49%"} LDL-C reduction)</span></div>
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
                           {rec.int==="high" ? (<>
                             <div>Atorvastatin 40–80 mg</div>
                             <div>Rosuvastatin 20–40 mg</div>
@@ -907,21 +939,21 @@ export default function App() {
                         {statinInfo && <div className="mt-2"><StatinInfo onClose={() => setStatinInfo(false)} /></div>}
                       </>)}
                       {s.s === 3 && (
-                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
-                          <div>Ezetimibe 10 mg daily <span className="text-slate-400">(additional 15–20% LDL-C reduction)</span></div>
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                          <div>Ezetimibe 10 mg daily <span className="text-slate-400 dark:text-slate-500">(additional 15–20% LDL-C reduction)</span></div>
                         </div>
                       )}
                       {s.s === 4 && (
-                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
-                          <div>Bempedoic acid 180 mg daily <span className="text-slate-400">(~18% LDL-C reduction)</span></div>
-                          <div>Evolocumab 140 mg q2wk or 420 mg monthly <span className="text-slate-400">(~60% LDL-C reduction)</span></div>
-                          <div>Alirocumab 75–150 mg q2wk <span className="text-slate-400">(~50–60% LDL-C reduction)</span></div>
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                          <div>Bempedoic acid 180 mg daily <span className="text-slate-400 dark:text-slate-500">(~18% LDL-C reduction)</span></div>
+                          <div>Evolocumab 140 mg q2wk or 420 mg monthly <span className="text-slate-400 dark:text-slate-500">(~60% LDL-C reduction)</span></div>
+                          <div>Alirocumab 75–150 mg q2wk <span className="text-slate-400 dark:text-slate-500">(~50–60% LDL-C reduction)</span></div>
                         </div>
                       )}
                       {s.s === 5 && (
-                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
-                          <div>Inclisiran 284 mg SC <span className="text-slate-400">(~50% LDL-C reduction)</span></div>
-                          <div className="text-slate-400">Day 0, Day 90, then q6 months · siRNA for residual LDL elevation</div>
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                          <div>Inclisiran 284 mg SC <span className="text-slate-400 dark:text-slate-500">(~50% LDL-C reduction)</span></div>
+                          <div className="text-slate-400 dark:text-slate-500">Day 0, Day 90, then q6 months · siRNA for residual LDL elevation</div>
                         </div>
                       )}
                     </div>
@@ -930,9 +962,9 @@ export default function App() {
               ))}
             </div>
             {tg!==""&&Number(tg)>=150 && (
-              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="text-[14px] font-bold text-amber-800">Hypertriglyceridemia</div>
-                <div className="text-[11px] text-amber-700 mt-0.5">
+              <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="text-[14px] font-bold text-amber-800 dark:text-amber-300">Hypertriglyceridemia</div>
+                <div className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
                   TG {tg} — {Number(tg)>=500?"Severe: prioritize TG lowering (pancreatitis risk). Fibrate ± icosapent ethyl. If ≥1000, consider apoC-III inhibitor.":"Statins first-line for ASCVD risk. If TG persistent, add fenofibrate or icosapent ethyl (REDUCE-IT)."}
                 </div>
               </div>
@@ -944,32 +976,32 @@ export default function App() {
         <Card title="Monitoring" accent="emerald">
           <div className="space-y-2.5 text-[11px]">
 
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <div className="font-bold text-slate-700 mb-1.5">After LLT Start</div>
-              <div className="space-y-1 text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="font-bold text-slate-700 dark:text-slate-200 mb-1.5">After LLT Start</div>
+              <div className="space-y-1 text-slate-600 dark:text-slate-300">
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">4–12 wk</span><span>Fasting <b>lipid panel</b></span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">q3–12 mo</span><span>Repeat until at goal</span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Annually</span><span>Once at goal</span></div>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <div className="font-bold text-slate-700 mb-1.5">Safety</div>
-              <div className="space-y-0.5 text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="font-bold text-slate-700 dark:text-slate-200 mb-1.5">Safety</div>
+              <div className="space-y-0.5 text-slate-600 dark:text-slate-300">
                 <div>• <b>Hepatic panel</b> at baseline</div>
                 <div>• <b>CK</b> only if symptomatic</div>
                 <div className="flex items-center gap-1.5">
                   <span>• Monitor for new-onset DM with high-intensity <b>statin</b></span>
                   <button onClick={() => setStatinInfoMon(p => !p)}
-                    className="w-5 h-5 rounded-full border-2 border-slate-300 text-slate-400 text-[10px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
+                    className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
                 </div>
               </div>
               {statinInfoMon && <div className="mt-2"><StatinInfo onClose={() => setStatinInfoMon(false)} /></div>}
             </div>
 
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <div className="font-bold text-slate-700 mb-1.5">Screening</div>
-              <div className="space-y-1 text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="font-bold text-slate-700 dark:text-slate-200 mb-1.5">Screening</div>
+              <div className="space-y-1 text-slate-600 dark:text-slate-300">
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 9–11</span><span>Initial <b>lipid panel</b></span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 19–21</span><span>Repeat <b>lipid panel</b></span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Then ≥q5y</span><span>Periodic rescreening</span></div>
@@ -977,9 +1009,9 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <div className="font-bold text-slate-700 mb-1.5">Refer to Lipid Specialist</div>
-              <div className="space-y-0.5 text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="font-bold text-slate-700 dark:text-slate-200 mb-1.5">Refer to Lipid Specialist</div>
+              <div className="space-y-0.5 text-slate-600 dark:text-slate-300">
                 <div>• Suspected familial hypercholesterolemia</div>
                 <div>• Refractory LDL despite max therapy</div>
                 <div>• TG ≥500 despite lifestyle modification</div>
@@ -994,11 +1026,11 @@ export default function App() {
         {/* Footer */}
         <div className="footer-sep mx-8 mt-4" />
         <div className="text-center pt-3 pb-8 space-y-1">
-          <div className="text-[11px] text-slate-400">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
-          <div className="text-[11px] text-slate-400">Clinical decision support only. Does not replace clinical judgment.</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500">Clinical decision support only. Does not replace clinical judgment.</div>
           <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
             target="_blank" rel="noopener"
-            className="inline-block text-[11px] text-blue-500 underline mt-1">
+            className="inline-block text-[11px] text-blue-500 dark:text-blue-400 underline mt-1">
             Validate with AHA PREVENT™ Calculator
           </a>
         </div>
