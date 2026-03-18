@@ -139,7 +139,7 @@ function StatinInfo({ onClose }) {
   ];
 
   const iClr = { red:"text-red-700 dark:text-red-400", amber:"text-amber-700 dark:text-amber-400", blue:"text-blue-700 dark:text-sky-400" };
-  const iBg = { red:"bg-red-50 border-red-200 dark:bg-red-500/8 dark:border-red-500/20", amber:"bg-amber-50 border-amber-200 dark:bg-amber-500/8 dark:border-amber-500/20", blue:"bg-blue-50 border-blue-200 dark:bg-sky-500/8 dark:border-sky-500/20" };
+  const iBg = { red:"bg-red-50 border-red-200 dark:bg-red-500/15 dark:border-red-500/30", amber:"bg-amber-50 border-amber-200 dark:bg-amber-500/15 dark:border-amber-500/30", blue:"bg-blue-50 border-blue-200 dark:bg-sky-500/15 dark:border-sky-500/30" };
   const dots = { 1:"bg-emerald-400", 2:"bg-yellow-400", 3:"bg-orange-400", 4:"bg-red-400" };
 
   return (
@@ -245,9 +245,9 @@ function Card({ title, accent="blue", children }) {
 }
 
 function Badge({ children, color="blue" }) {
-  const s = { blue:"bg-blue-50 text-blue-700 border-blue-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20", red:"bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30",
+  const s = { blue:"bg-blue-50 text-blue-700 border-blue-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/30", red:"bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30",
     amber:"bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30", emerald:"bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30",
-    violet:"bg-violet-50 text-violet-700 border-violet-200 dark:bg-sky-500/8 dark:text-sky-300 dark:border-sky-500/20", slate:"bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1a2835] dark:text-[#5a8aaa] dark:border-[#1e3040]" };
+    violet:"bg-violet-50 text-violet-700 border-violet-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30", slate:"bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1a2835] dark:text-[#5a8aaa] dark:border-[#1e3040]" };
   return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${s[color]}`}>{children}</span>;
 }
 
@@ -255,11 +255,11 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
   const needed = currentLdl ? Math.round(((currentLdl-ldl)/currentLdl)*100) : null;
   return (
     <div className="grid grid-cols-3 gap-2">
-      <div className="bg-blue-50 dark:bg-sky-500/10 rounded-lg p-3 text-center border border-blue-100 dark:border-sky-500/20">
+      <div className="bg-blue-50 dark:bg-sky-500/10 rounded-lg p-3 text-center border border-blue-100 dark:border-sky-500/30">
         <div className="text-2xl font-black text-blue-700 dark:text-sky-400 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{ldl}</div>
         <div className="text-[11px] text-blue-500 dark:text-sky-400 font-bold mt-0.5">LDL-C</div>
       </div>
-      <div className="bg-violet-50 dark:bg-sky-500/8 rounded-lg p-3 text-center border border-violet-100 dark:border-sky-500/15">
+      <div className="bg-violet-50 dark:bg-sky-500/15 rounded-lg p-3 text-center border border-violet-100 dark:border-sky-500/15">
         <div className="text-2xl font-black text-violet-700 dark:text-sky-300 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{nonHdl}</div>
         <div className="text-[11px] text-violet-500 dark:text-sky-300 font-bold mt-0.5">Non-HDL</div>
       </div>
@@ -451,7 +451,7 @@ export default function App() {
   ];
 
   const recBg = { red:"bg-red-50 border-red-300 dark:bg-red-500/10 dark:border-red-500/30", amber:"bg-amber-50 border-amber-300 dark:bg-amber-500/10 dark:border-amber-500/30",
-    emerald:"bg-emerald-50 border-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30", violet:"bg-violet-50 border-violet-300 dark:bg-sky-500/8 dark:border-sky-500/20", blue:"bg-blue-50 border-blue-300 dark:bg-sky-500/8 dark:border-sky-500/20" };
+    emerald:"bg-emerald-50 border-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30", violet:"bg-violet-50 border-violet-300 dark:bg-sky-500/15 dark:border-sky-500/30", blue:"bg-blue-50 border-blue-300 dark:bg-sky-500/15 dark:border-sky-500/30" };
   const recTxt = { red:"text-red-800 dark:text-red-300", amber:"text-amber-800 dark:text-amber-300", emerald:"text-emerald-800 dark:text-emerald-300",
     violet:"text-violet-800 dark:text-sky-300", blue:"text-blue-800 dark:text-sky-300" };
 
@@ -525,12 +525,12 @@ export default function App() {
               {/* items-end aligns button to bottom of Num (which has label above input) */}
               <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
               <button onClick={() => setBmiCalc(true)}
-                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-sky-500/10 border border-blue-200 dark:border-sky-500/20 hover:bg-blue-100 dark:hover:bg-sky-500/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap min-h-[48px]">
+                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-sky-500/10 border border-blue-200 dark:border-sky-500/30 hover:bg-blue-100 dark:hover:bg-sky-500/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap min-h-[48px]">
                 BMI Calc
               </button>
             </div>
             {bmiCalc && (
-              <div className="mt-2 p-3 bg-blue-50 dark:bg-sky-500/8 border border-blue-200 dark:border-sky-500/20 rounded-lg">
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-sky-500/15 border border-blue-200 dark:border-sky-500/30 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-[12px] font-bold text-blue-800 dark:text-sky-300">BMI Calculator</div>
                   <button onClick={() => setBmiCalc(false)}
@@ -574,7 +574,7 @@ export default function App() {
                   )}
                 </div>
                 {calcBmiValue !== null && (
-                  <div className="mt-2 flex items-center justify-between bg-white dark:bg-[#0a1018] rounded-lg p-2 border border-blue-200 dark:border-sky-500/20">
+                  <div className="mt-2 flex items-center justify-between bg-white dark:bg-[#0a1018] rounded-lg p-2 border border-blue-200 dark:border-sky-500/30">
                     <div>
                       <span className="text-[11px] text-slate-500 dark:text-[#5a8aaa]">Calculated BMI: </span>
                       <span className="text-[14px] font-black text-blue-700 dark:text-sky-400 font-mono">{calcBmiValue}</span>
@@ -648,7 +648,7 @@ export default function App() {
                       {METSYN_CRITERIA.map(m => (
                         <button key={m.id} onClick={() => toggleMetSyn(m.id)}
                           className={`w-full flex items-start gap-2 p-2 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 ${
-                            metSyn[m.id] ? "bg-amber-50/60 dark:bg-amber-500/8 border-amber-200 dark:border-amber-500/20" : "bg-slate-50 dark:bg-[#0a1018] border-slate-200 dark:border-[#1a2835]"
+                            metSyn[m.id] ? "bg-amber-50/60 dark:bg-amber-500/15 border-amber-200 dark:border-amber-500/30" : "bg-slate-50 dark:bg-[#0a1018] border-slate-200 dark:border-[#1a2835]"
                           }`}>
                           <div className={`mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center ${
                             metSyn[m.id] ? "bg-amber-400 border-amber-400" : "border-slate-300 dark:border-[#1e3040]"
@@ -682,7 +682,7 @@ export default function App() {
                 className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-[#1e3040] text-slate-400 dark:text-[#3d6580] text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
             </div>
             {cacInfo && (
-              <div className="mb-3 p-3 bg-emerald-50 dark:bg-emerald-500/8 border border-emerald-200 dark:border-emerald-500/20 rounded-lg text-[11px] text-slate-700 dark:text-[#d0e4f0] space-y-2">
+              <div className="mb-3 p-3 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-[11px] text-slate-700 dark:text-[#d0e4f0] space-y-2">
                 <div className="font-bold text-emerald-800 dark:text-emerald-400">How CAC Reclassifies Risk</div>
                 <div>The <span className="font-bold">CAC Score</span> (Agatston units) measures calcified plaque in coronary arteries via CT. It directly overrides the PREVENT risk estimate:</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
@@ -691,7 +691,7 @@ export default function App() {
                   <span className="font-bold text-amber-700 dark:text-amber-400">CAC ≥100</span><span>Significant plaque — high-intensity statin, LDL goal &lt;70.</span>
                   <span className="font-bold text-red-700 dark:text-red-400">CAC ≥1000</span><span>Extensive plaque — treat as very high risk, LDL goal &lt;55, full escalation.</span>
                 </div>
-                <div className="text-slate-500 dark:text-[#5a8aaa] border-t border-emerald-200 dark:border-emerald-500/20 pt-2">The <span className="font-bold">percentile</span> is only needed when the score is 1–99. It compares plaque burden to others of the same age and sex — a CAC of 50 at age 45 is more concerning than a CAC of 50 at age 75.</div>
+                <div className="text-slate-500 dark:text-[#5a8aaa] border-t border-emerald-200 dark:border-emerald-500/30 pt-2">The <span className="font-bold">percentile</span> is only needed when the score is 1–99. It compares plaque burden to others of the same age and sex — a CAC of 50 at age 45 is more concerning than a CAC of 50 at age 75.</div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -742,7 +742,7 @@ export default function App() {
         {/* DIABETES */}
         {tab === "diabetes" && (
           <Card title="Diabetes Pathway" accent="violet">
-            <div className="bg-violet-50 dark:bg-sky-500/8 border border-violet-200 dark:border-sky-500/20 rounded-lg p-3 mb-3">
+            <div className="bg-violet-50 dark:bg-sky-500/15 border border-violet-200 dark:border-sky-500/30 rounded-lg p-3 mb-3">
               <div className="text-[14px] font-bold text-violet-800 dark:text-sky-300">Universal LLT (Age 40–75)</div>
               <div className="text-[11px] text-violet-600 dark:text-sky-400 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
             </div>
@@ -752,7 +752,7 @@ export default function App() {
               {DM_ENHANCERS.map(e => (
                 <button key={e.id} onClick={() => toggleDmEnh(e.id)}
                   className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
-                    dmEnhs[e.id] ? "bg-violet-50 dark:bg-sky-500/8 border-violet-300 dark:border-sky-500/20" : "bg-white dark:bg-[#111a24] border-slate-200 dark:border-[#1a2835]"
+                    dmEnhs[e.id] ? "bg-violet-50 dark:bg-sky-500/15 border-violet-300 dark:border-sky-500/30" : "bg-white dark:bg-[#111a24] border-slate-200 dark:border-[#1a2835]"
                   }`}>
                   <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
                     dmEnhs[e.id] ? "bg-violet-500 border-violet-500" : "border-slate-300 dark:border-[#1e3040]"
@@ -763,7 +763,7 @@ export default function App() {
               ))}
             </div>
             {dmEnhCount > 0 && (
-              <div className="mt-2 text-[14px] font-bold text-violet-700 dark:text-sky-400 bg-violet-50 dark:bg-sky-500/8 rounded-lg px-3 py-2 border border-violet-200 dark:border-sky-500/20">
+              <div className="mt-2 text-[14px] font-bold text-violet-700 dark:text-sky-400 bg-violet-50 dark:bg-sky-500/15 rounded-lg px-3 py-2 border border-violet-200 dark:border-sky-500/30">
                 {dmEnhCount} DM enhancer{dmEnhCount>1?"s":""} — supports high-intensity statin
               </div>
             )}
@@ -773,7 +773,7 @@ export default function App() {
         {/* SEVERE */}
         {tab === "severe" && (
           <Card title="Severe Hypercholesterolemia" accent="red">
-            <div className="bg-red-50 dark:bg-red-500/8 border border-red-200 dark:border-red-500/20 rounded-lg p-3 mb-3">
+            <div className="bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 rounded-lg p-3 mb-3">
               <div className="text-[14px] font-bold text-red-800 dark:text-red-300">LDL ≥190 mg/dL → High-Intensity Statin</div>
               <div className="text-[11px] text-red-600 dark:text-red-400 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
             </div>
@@ -789,7 +789,7 @@ export default function App() {
               className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-[#1e3040] text-slate-400 dark:text-[#3d6580] text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-sky-400 hover:text-sky-500 active:scale-95 transition-colors">?</button>
           </div>
           {bioInfo && (
-            <div className="mb-3 p-3 bg-violet-50 dark:bg-sky-500/8 border border-violet-200 dark:border-sky-500/20 rounded-lg text-[11px] text-slate-700 dark:text-[#d0e4f0] space-y-3">
+            <div className="mb-3 p-3 bg-violet-50 dark:bg-sky-500/15 border border-violet-200 dark:border-sky-500/30 rounded-lg text-[11px] text-slate-700 dark:text-[#d0e4f0] space-y-3">
               <div>
                 <div className="font-bold text-violet-800 dark:text-sky-300 mb-1">Lp(a) — Lipoprotein(a)</div>
                 <div>A genetically determined, LDL-like particle that independently increases ASCVD risk. Levels are largely fixed from birth and not significantly lowered by statins.</div>
@@ -800,7 +800,7 @@ export default function App() {
                 </div>
                 <div className="text-slate-500 dark:text-[#5a8aaa] mt-1.5">Screen at least once as adult. Earlier if family history of premature ASCVD or FH. Values in mg/dL: divide nmol/L by ~2.5 (≥50 mg/dL ≈ elevated).</div>
               </div>
-              <div className="border-t border-violet-200 dark:border-sky-500/20 pt-2">
+              <div className="border-t border-violet-200 dark:border-sky-500/30 pt-2">
                 <div className="font-bold text-violet-800 dark:text-sky-300 mb-1">ApoB — Apolipoprotein B</div>
                 <div>One ApoB molecule per atherogenic particle (LDL, VLDL, IDL, Lp(a)). ApoB counts total atherogenic particle number — more precise than LDL-C alone, especially when TG elevated or LDL-C is discordant with non-HDL-C.</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
@@ -825,7 +825,7 @@ export default function App() {
           {apoBNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border ${
               apoBNote.c==="red"?"bg-red-50 border-red-200 dark:bg-red-500/10 dark:border-red-500/30":apoBNote.c==="amber"?"bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30":
-              apoBNote.c==="blue"?"bg-blue-50 border-blue-200 dark:bg-sky-500/8 dark:border-sky-500/20":"bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30"
+              apoBNote.c==="blue"?"bg-blue-50 border-blue-200 dark:bg-sky-500/15 dark:border-sky-500/30":"bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30"
             }`}><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[11px] text-slate-700 dark:text-[#d0e4f0]">{apoBNote.n}</span></div>
           )}
         </Card>
