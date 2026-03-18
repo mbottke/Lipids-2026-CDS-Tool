@@ -184,6 +184,42 @@ input[type="number"]::-webkit-inner-spin-button {
   background: linear-gradient(90deg, transparent, #475569 30%, #475569 70%, transparent);
 }
 
+/* Theme slider */
+.theme-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #94a3b8;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.theme-slider::-webkit-slider-thumb:active {
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.15), 0 1px 4px rgba(0,0,0,0.2);
+  border-color: #3b82f6;
+}
+.theme-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #94a3b8;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.dark .theme-slider::-webkit-slider-thumb {
+  background: #1e293b;
+  border-color: #475569;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.dark .theme-slider::-moz-range-thumb {
+  background: #1e293b;
+  border-color: #475569;
+}
+
 /* Print styles for handouts */
 @media print {
   .no-print {

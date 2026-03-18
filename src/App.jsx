@@ -467,16 +467,10 @@ export default function App() {
                 <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
                 <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
               </div>
-              <div className="flex items-center gap-1.5">
-                <button onClick={() => { setDarkMode(d => !d); }}
-                  className="mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all cursor-pointer border border-slate-700">
-                  {darkMode ? "\u2600\uFE0F" : "\uD83C\uDF19"}
-                </button>
-                <button onClick={resetPatient}
-                  className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
-                  Reset
-                </button>
-              </div>
+              <button onClick={resetPatient}
+                className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
+                Reset
+              </button>
             </div>
           </div>
         </div>
@@ -1025,7 +1019,7 @@ export default function App() {
 
         {/* Footer */}
         <div className="footer-sep mx-8 mt-4" />
-        <div className="text-center pt-3 pb-8 space-y-1">
+        <div className="text-center pt-3 space-y-1">
           <div className="text-[11px] text-slate-400 dark:text-slate-500">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
           <div className="text-[11px] text-slate-400 dark:text-slate-500">Clinical decision support only. Does not replace clinical judgment.</div>
           <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
@@ -1033,6 +1027,27 @@ export default function App() {
             className="inline-block text-[11px] text-blue-500 dark:text-blue-400 underline mt-1">
             Validate with AHA PREVENT™ Calculator
           </a>
+        </div>
+
+        {/* Theme slider */}
+        <div className="mt-6 mb-8 px-8">
+          <div className="relative">
+            <div className="h-1.5 rounded-full overflow-hidden" style={{background:"linear-gradient(90deg, #f8fafc, #94a3b8 40%, #334155 60%, #0f172a)"}}>
+              <div className="absolute inset-0 rounded-full" style={{background:"linear-gradient(90deg, #fef3c7 0%, #e2e8f0 25%, #64748b 50%, #1e293b 75%, #020617 100%)", opacity:0.3}} />
+            </div>
+            <input
+              type="range" min="0" max="1" step="1"
+              value={darkMode ? 1 : 0}
+              onChange={e => setDarkMode(Number(e.target.value) === 1)}
+              className="theme-slider absolute inset-0 w-full cursor-pointer"
+              style={{appearance:"none", WebkitAppearance:"none", background:"transparent", height:"24px", top:"-10px"}}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-widest">Light</span>
+            <span className="text-[9px] text-slate-300 dark:text-slate-600 uppercase tracking-widest">Appearance</span>
+            <span className="text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-widest">Dark</span>
+          </div>
         </div>
       </div>
       </div>
