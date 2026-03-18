@@ -221,7 +221,7 @@ function Toggle({ value, on, label, sub }) {
 function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className={`text-[11px] font-bold text-slate-400 dark:text-white/60 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
+      <label className={`text-[11px] font-bold text-slate-400 dark:text-white/90 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
       <div className="flex items-center border border-slate-200 dark:border-[#1e3040] rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white dark:bg-[#0a1018]">
         <input type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
@@ -317,10 +317,9 @@ export default function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // ── Scroll-reactive header depth + floating section label ──
+  // ── Scroll-reactive header depth ──
   const scrollRef = useRef(null);
   const [scrollDepth, setScrollDepth] = useState(0);
-  const [floatingLabel, setFloatingLabel] = useState(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -328,26 +327,6 @@ export default function App() {
     const onScroll = () => {
       const depth = Math.min(el.scrollTop / 120, 1);
       setScrollDepth(depth);
-
-      // Find which card title has scrolled past the top
-      const cards = el.querySelectorAll('.card-shadow');
-      let currentLabel = null;
-      const scrollTop = el.scrollTop;
-      const containerTop = el.getBoundingClientRect().top;
-
-      for (const card of cards) {
-        const titleEl = card.querySelector('h3');
-        if (!titleEl) continue;
-        const cardRect = card.getBoundingClientRect();
-        const titleRect = titleEl.getBoundingClientRect();
-        const cardBottom = cardRect.bottom - containerTop;
-
-        // Title has scrolled past top AND card bottom is still below top
-        if (titleRect.top < containerTop && cardBottom > containerTop + 40) {
-          currentLabel = titleEl.textContent;
-        }
-      }
-      setFloatingLabel(currentLabel);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -494,10 +473,10 @@ export default function App() {
   }, [apoB]);
 
   const tabs = [
-    { id:"primary", l:"Primary", em:"🛡" },
-    { id:"secondary", l:"ASCVD", em:"🫀" },
-    { id:"diabetes", l:"Diabetes", em:"🩸" },
-    { id:"severe", l:"LDL ≥190", em:"⚠️" },
+    { id:"primary", l:"PRIMARY" },
+    { id:"secondary", l:"ASCVD" },
+    { id:"diabetes", l:"DIABETES" },
+    { id:"severe", l:"LDL ≥190" },
   ];
 
   const recBg = { red:"bg-red-50 border-red-300 dark:bg-red-500/10 dark:border-red-500/30", amber:"bg-amber-50 border-amber-300 dark:bg-amber-500/10 dark:border-amber-500/30",
@@ -541,10 +520,10 @@ export default function App() {
           <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex-1 px-1 py-1.5 text-[12px] font-bold text-center whitespace-nowrap rounded-md transition-all duration-200 cursor-pointer min-h-[36px] active:scale-[0.97] ${
+                className={`flex-1 px-1 py-1 text-[11px] font-black text-center whitespace-nowrap rounded-md transition-all duration-200 cursor-pointer min-h-[30px] active:scale-[0.97] tracking-wide ${
                   tab===t.id ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)] dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
                 }`}>
-                <span className="mr-0.5">{t.em}</span>{t.l}
+                {t.l}
               </button>
             ))}
           </div>
@@ -552,20 +531,7 @@ export default function App() {
       </div>
 
       {/* ── Content ── */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-none relative">
-      {/* Floating section label */}
-      <div className={`sticky top-0 z-40 pointer-events-none transition-all duration-300 ${floatingLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}>
-        <div className="max-w-lg mx-auto px-4">
-          <div className="mx-1 px-3 py-1.5 rounded-b-lg text-[10px] font-black uppercase tracking-widest
-            bg-white/80 dark:bg-[#111a24]/90 backdrop-blur-md
-            text-slate-500 dark:text-[#5a9abb]
-            border border-t-0 border-slate-200/60 dark:border-[#1a2835]
-            shadow-sm dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]
-            inline-block">
-            {floatingLabel}
-          </div>
-        </div>
-      </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-none">
       <div key={tab} className="tab-content max-w-lg mx-auto px-4 py-5 space-y-4 pb-20">
 
         {/* PRIMARY */}
@@ -575,7 +541,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-400 dark:text-white/60 uppercase tracking-wider">Sex</label>
+                <label className="text-[11px] font-bold text-slate-400 dark:text-white/90 uppercase tracking-wider">Sex</label>
                 <div className="flex gap-1">
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
@@ -905,7 +871,7 @@ export default function App() {
         {/* ── RECOMMENDATION ── */}
         {rec && ((tab==="primary" && risk!==null) || tab!=="primary") && (<>
           <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-[#5a8aaa] mb-1">Recommendation</div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white mb-1">Recommendation</div>
             <div className={`text-[14px] font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
             {(rec.int === "high" || rec.int === "moderate") && (
               <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-[#1a2835] text-[11px] text-slate-600 dark:text-[#d0e4f0]">
