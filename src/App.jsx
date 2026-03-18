@@ -877,7 +877,7 @@ export default function App() {
               <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-[#1a2835] text-[11px] text-slate-600 dark:text-[#d0e4f0]">
                 {rec.int === "high" && (
                   <div className="space-y-0.5">
-                    <div className="font-bold text-slate-500 dark:text-[#5a8aaa]">High-Intensity Statins:</div>
+                    <div className="font-bold text-slate-500 dark:text-white/90">High-Intensity Statins:</div>
                     <div className="pl-2 border-l-2 border-slate-300/50 dark:border-[#1e3040] space-y-0.5">
                       <div>Atorvastatin 40–80 mg</div>
                       <div>Rosuvastatin 20–40 mg</div>
@@ -886,7 +886,7 @@ export default function App() {
                 )}
                 {rec.int === "moderate" && (
                   <div className="space-y-0.5">
-                    <div className="font-bold text-slate-500 dark:text-[#5a8aaa]">Moderate-Intensity Statins:</div>
+                    <div className="font-bold text-slate-500 dark:text-white/90">Moderate-Intensity Statins:</div>
                     <div className="pl-2 border-l-2 border-slate-300/50 dark:border-[#1e3040] space-y-0.5">
                       <div>Atorvastatin 10–20 mg</div>
                       <div>Rosuvastatin 5–10 mg</div>
