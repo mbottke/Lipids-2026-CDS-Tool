@@ -181,17 +181,17 @@ input[type="number"]::-webkit-inner-spin-button {
 
 /* Dark mode: ice-blue shimmer */
 .dark .card-shadow::after {
-  width: 4px;
+  width: 3px;
   background: linear-gradient(
     180deg,
     transparent 0%,
     rgba(56, 189, 248, 0) 25%,
-    rgba(56, 189, 248, 0.4) 50%,
+    rgba(56, 189, 248, 0.25) 50%,
     rgba(56, 189, 248, 0) 75%,
     transparent 100%
   );
   background-size: 100% 300%;
-  filter: blur(1px);
+  filter: blur(0.5px);
 }
 
 /* Treatment ladder gradient connector */
