@@ -127,6 +127,56 @@ input[type="number"]::-webkit-inner-spin-button {
   width: 2px;
 }
 
+/* Parallax shimmer on card left borders */
+@keyframes borderShimmer {
+  0% {
+    border-image: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.35) 0%, transparent 0%) 1;
+  }
+  100% {
+    border-image: linear-gradient(180deg, transparent 100%, rgba(255,255,255,0.35) 100%, transparent 100%) 1;
+  }
+}
+
+.card-shadow {
+  border-left-style: solid;
+}
+
+/* Scroll-driven shimmer via animation-timeline (progressive enhancement) */
+@supports (animation-timeline: view()) {
+  .card-shadow {
+    animation: borderShimmer linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 100%;
+  }
+}
+
+/* Fallback: subtle gradient border for browsers without scroll timeline */
+@supports not (animation-timeline: view()) {
+  .card-shadow::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, transparent 10%, rgba(255,255,255,0.15) 50%, transparent 90%);
+    border-radius: 4px 0 0 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card-shadow:hover::before {
+    opacity: 1;
+  }
+  .card-shadow {
+    position: relative;
+  }
+}
+
+.dark .card-shadow::before {
+  background: linear-gradient(180deg, transparent 10%, rgba(56,189,248,0.2) 50%, transparent 90%);
+}
+
 /* Tab content fade-in */
 @keyframes fadeSlideIn {
   from {
