@@ -116,7 +116,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 /* Treatment ladder gradient connector */
 .ladder-connector {
-  background: linear-gradient(180deg, #10b981, #3b82f6, #7c3aed);
+  background: linear-gradient(180deg, #38bdf8, #f59e0b, #ef4444);
   width: 2px;
 }
 
