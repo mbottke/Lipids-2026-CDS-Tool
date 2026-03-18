@@ -221,7 +221,7 @@ function Toggle({ value, on, label, sub }) {
 function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className={`text-[11px] font-bold text-slate-400 dark:text-[#3d6580] tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
+      <label className={`text-[11px] font-bold text-slate-400 dark:text-white/60 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
       <div className="flex items-center border border-slate-200 dark:border-[#1e3040] rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white dark:bg-[#0a1018]">
         <input type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
@@ -244,12 +244,16 @@ function Card({ title, accent="blue", children }) {
     violet: { light:"139, 92, 246", dark:"56, 189, 248" },
     orange: { light:"249, 115, 22", dark:"251, 146, 60" },
   };
+  const accentSub = {
+    blue:"#7dd3fc", amber:"#fcd34d", red:"#fca5a5", emerald:"#6ee7b7",
+    violet:"#7dd3fc", orange:"#fdba74",
+  };
   const gc = glowColors[accent] || glowColors.blue;
   return (
     <div className={`bg-white dark:bg-[#111a24] rounded-xl border border-slate-200/80 dark:border-[#1a2835] border-l-4 ${bdr[accent]} card-shadow`}
       style={{"--glow-rgb": gc.light, "--glow-rgb-dark": gc.dark}}>
-      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[13px] font-black text-slate-800 dark:text-[#5a9abb] uppercase tracking-wide">{title}</h3></div>}
-      <div className="px-4 pb-4">{children}</div>
+      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wide">{title}</h3></div>}
+      <div className="px-4 pb-4" style={{"--accent-sub": accentSub[accent]}}>{children}</div>
     </div>
   );
 }
@@ -533,11 +537,11 @@ export default function App() {
 
       {/* ── Tabs ── */}
       <div className="glass-tabs border-b border-slate-200/60 dark:border-[#1a2835] shadow-sm shrink-0">
-        <div className="max-w-lg mx-auto px-2 py-1.5">
+        <div className="max-w-lg mx-auto px-2 py-1">
           <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex-1 px-1 py-2.5 text-[13px] font-bold text-center whitespace-nowrap rounded-lg transition-all duration-200 cursor-pointer min-h-[44px] active:scale-[0.97] ${
+                className={`flex-1 px-1 py-1.5 text-[12px] font-bold text-center whitespace-nowrap rounded-md transition-all duration-200 cursor-pointer min-h-[36px] active:scale-[0.97] ${
                   tab===t.id ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)] dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
                 }`}>
                 <span className="mr-0.5">{t.em}</span>{t.l}
@@ -567,11 +571,11 @@ export default function App() {
         {/* PRIMARY */}
         {tab === "primary" && (<>
           <Card title="PREVENT-ASCVD Risk Calculator" accent="blue">
-            <p className="text-[11px] text-slate-400 dark:text-[#3d6580] mb-3">Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+            <p className="text-[11px] text-slate-400 mb-3" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-400 dark:text-[#3d6580] uppercase tracking-wider">Sex</label>
+                <label className="text-[11px] font-bold text-slate-400 dark:text-white/60 uppercase tracking-wider">Sex</label>
                 <div className="flex gap-1">
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
@@ -688,7 +692,7 @@ export default function App() {
 
           {/* Risk enhancers */}
           <Card title="Risk Enhancers — Personalize" accent="amber">
-            <p className="text-[11px] text-slate-400 dark:text-[#3d6580] mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
+            <p className="text-[11px] text-slate-400 mb-2" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>For borderline / intermediate risk. Favors statin initiation.</p>
             <div className="space-y-1.5">
               {ENHANCERS.map(e => (
                 <div key={e.id}>
@@ -745,7 +749,7 @@ export default function App() {
           {/* CAC */}
           <Card title="CAC — Reclassify (Optional)" accent="emerald">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-[11px] text-slate-400 dark:text-[#3d6580]">Male ≥40y or Female ≥45y when decision uncertain</p>
+              <p className="text-[11px] text-slate-400" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Male ≥40y or Female ≥45y when decision uncertain</p>
               <button onClick={() => setCacInfo(p => !p)}
                 className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-[#1e3040] text-slate-400 dark:text-[#3d6580] text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
             </div>
@@ -772,7 +776,7 @@ export default function App() {
         {/* SECONDARY */}
         {tab === "secondary" && (
           <Card title="Clinical ASCVD — Risk Level" accent={vhrCount > 0 ? "red" : "orange"}>
-            <p className="text-[11px] text-slate-400 dark:text-[#3d6580] mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
+            <p className="text-[11px] text-slate-400 mb-3" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-2">
               {[
@@ -852,7 +856,7 @@ export default function App() {
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
           <div className="flex items-start justify-between mb-2">
-            <p className="text-[11px] text-slate-400 dark:text-[#3d6580]">Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
+            <p className="text-[11px] text-slate-400" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
             <button onClick={() => setBioInfo(p => !p)}
               className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-[#1e3040] text-slate-400 dark:text-[#3d6580] text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-sky-400 hover:text-sky-500 active:scale-95 transition-colors">?</button>
           </div>
