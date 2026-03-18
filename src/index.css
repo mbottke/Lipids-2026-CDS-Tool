@@ -98,10 +98,10 @@ input[type="number"]::-webkit-inner-spin-button {
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Input focus glow */
+/* Input focus glow — uses card accent color via CSS custom property */
 .input-glow:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 12px rgba(59, 130, 246, 0.08);
+  border-color: rgba(var(--glow-rgb, 59, 130, 246), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--glow-rgb, 59, 130, 246), 0.15), 0 0 12px rgba(var(--glow-rgb, 59, 130, 246), 0.08);
 }
 
 /* Computed/derived value field */
@@ -207,8 +207,8 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .dark .input-glow:focus-within {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12), 0 0 16px rgba(56, 189, 248, 0.06);
+  border-color: rgba(var(--glow-rgb-dark, 56, 189, 248), 0.7);
+  box-shadow: 0 0 0 3px rgba(var(--glow-rgb-dark, 56, 189, 248), 0.15), 0 0 16px rgba(var(--glow-rgb-dark, 56, 189, 248), 0.08);
 }
 
 .dark .computed-field {

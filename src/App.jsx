@@ -236,8 +236,18 @@ function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
 function Card({ title, accent="blue", children }) {
   const bdr = { blue:"border-l-blue-600 dark:border-l-sky-400", amber:"border-l-amber-500 dark:border-l-amber-400", red:"border-l-red-500 dark:border-l-red-400",
     emerald:"border-l-emerald-600 dark:border-l-emerald-400", violet:"border-l-violet-600 dark:border-l-sky-400", orange:"border-l-orange-500 dark:border-l-orange-400" };
+  const glowColors = {
+    blue:   { light:"59, 130, 246",  dark:"56, 189, 248" },
+    amber:  { light:"245, 158, 11", dark:"245, 158, 11" },
+    red:    { light:"239, 68, 68",  dark:"248, 113, 113" },
+    emerald:{ light:"16, 185, 129", dark:"52, 211, 153" },
+    violet: { light:"139, 92, 246", dark:"56, 189, 248" },
+    orange: { light:"249, 115, 22", dark:"251, 146, 60" },
+  };
+  const gc = glowColors[accent] || glowColors.blue;
   return (
-    <div className={`bg-white dark:bg-[#111a24] rounded-xl border border-slate-200/80 dark:border-[#1a2835] border-l-4 ${bdr[accent]} card-shadow`}>
+    <div className={`bg-white dark:bg-[#111a24] rounded-xl border border-slate-200/80 dark:border-[#1a2835] border-l-4 ${bdr[accent]} card-shadow`}
+      style={{"--glow-rgb": gc.light, "--glow-rgb-dark": gc.dark}}>
       {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[13px] font-black text-slate-800 dark:text-[#5a9abb] uppercase tracking-wide">{title}</h3></div>}
       <div className="px-4 pb-4">{children}</div>
     </div>
