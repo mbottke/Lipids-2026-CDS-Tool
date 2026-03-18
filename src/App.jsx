@@ -67,10 +67,10 @@ const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
   { id:"multi", l:"Multiple ASCVD Events", d:"≥2 major events (MI, stroke, symptomatic PAD)" },
   { id:"pad", l:"Symptomatic PAD", d:"ABI (ankle-brachial index) ≤0.85 or prior revascularization/amputation" },
-  { id:"dm_ascvd", l:"ASCVD + Diabetes", d:"High-risk condition" },
+  { id:"dm_ascvd", l:"ASCVD + Diabetes", d:"DM with microvascular complications or ≥2 additional CVD risk factors" },
   { id:"ckd_ascvd", l:"ASCVD + CKD", d:"eGFR 15–59" },
   { id:"heFH", l:"ASCVD + Heterozygous FH", d:"Familial hypercholesterolemia" },
-  { id:"persist", l:"Persistently Elevated LDL", d:"LDL ≥100 despite max statin + ezetimibe" },
+  { id:"persist", l:"Persistently Elevated LDL", d:"LDL ≥100 despite max dose statin + ezetimibe" },
 ];
 
 const DM_ENHANCERS = [
@@ -84,16 +84,24 @@ const DM_ENHANCERS = [
   { id:"abi_dm", l:"ABI (Ankle-Brachial Index) ≤0.9", d:"Peripheral arterial disease" },
 ];
 
+const METSYN_CRITERIA = [
+  { id:"ms_waist", l:"Elevated Waist Circumference", d:"Male ≥40 in (102 cm) · Female ≥35 in (88 cm)" },
+  { id:"ms_tg", l:"Elevated Triglycerides", d:"≥150 mg/dL (or on Rx)" },
+  { id:"ms_hdl", l:"Reduced HDL-C", d:"Male <40 mg/dL · Female <50 mg/dL (or on Rx)" },
+  { id:"ms_bp", l:"Elevated Blood Pressure", d:"≥130/85 mmHg (or on antihypertensive)" },
+  { id:"ms_gluc", l:"Elevated Fasting Glucose", d:"≥100 mg/dL (or on Rx)" },
+];
+
 const ENHANCERS = [
-  { id:"fhx", l:"Family History of Premature ASCVD", d:"1st-degree ♂ <55y or ♀ <65y" },
+  { id:"fhx", l:"Family History of Premature ASCVD", d:"1st-degree male <55y or female <65y" },
   { id:"lpa", l:"Elevated Lp(a)", d:"≥125 nmol/L (≥50 mg/dL)" },
-  { id:"tg", l:"Persistently Elevated Triglycerides", d:"≥175 mg/dL" },
+  { id:"tg", l:"Persistently Elevated Triglycerides", d:"≥175 mg/dL on repeat measurement" },
   { id:"hscrp", l:"Elevated hs-CRP", d:"≥2.0 mg/L" },
   { id:"ckd", l:"Chronic Kidney Disease", d:"eGFR 15–59 or ACR ≥30" },
   { id:"inflam", l:"Chronic Inflammatory Condition", d:"RA, Pso/PsA, SLE, HIV" },
   { id:"metabolic", l:"Metabolic Syndrome", d:"≥3 of 5 criteria" },
-  { id:"women", l:"Preeclampsia / Premature Menopause", d:"Women-specific" },
-  { id:"sa", l:"South Asian Ancestry", d:"Independent risk enhancer" },
+  { id:"women", l:"Preeclampsia / Premature Menopause", d:"Menopause before age 40" },
+  { id:"sa", l:"South Asian Ancestry", d:"Indian, Pakistani, Bangladeshi, Nepali, Sri Lankan heritage" },
   { id:"apob", l:"Elevated ApoB", d:"≥130 mg/dL" },
   { id:"abi", l:"Abnormal ABI (Ankle-Brachial Index)", d:"≤0.9" },
 ];
@@ -194,8 +202,9 @@ export default function App() {
   const [cacPct, setCacPct] = useState("");
   const [lpa, setLpa] = useState("");
   const [apoB, setApoB] = useState("");
-  const [ascvdLevel, setAscvdLevel] = useState("very_high");
+  const [ascvdLevel, setAscvdLevel] = useState("not_very_high");
   const [cacInfo, setCacInfo] = useState(false);
+  const [metSyn, setMetSyn] = useState({});
   const [vhr, setVhr] = useState({});
   const [dmEnhs, setDmEnhs] = useState({});
 
@@ -204,16 +213,22 @@ export default function App() {
     setTotalC(""); setHdlC(""); setLdlC(""); setOnStatin(false);
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
-    setLpa(""); setApoB(""); setAscvdLevel("very_high");
-    setCacInfo(false); setVhr({}); setDmEnhs({});
+    setLpa(""); setApoB(""); setAscvdLevel("not_very_high");
+    setCacInfo(false); setVhr({}); setDmEnhs({}); setMetSyn({});
   }, []);
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
-  const enhCount = useMemo(() => Object.values(enhs).filter(Boolean).length, [enhs]);
+  const enhCount = useMemo(() => {
+    let count = Object.entries(enhs).filter(([k,v]) => k !== "metabolic" && v).length;
+    if (enhs.metabolic || metSynCount >= 3) count++;
+    return count;
+  }, [enhs, metSynCount]);
   const toggleVhr = useCallback(id => setVhr(p => ({...p,[id]:!p[id]})), []);
   const vhrCount = useMemo(() => Object.values(vhr).filter(Boolean).length, [vhr]);
   const toggleDmEnh = useCallback(id => setDmEnhs(p => ({...p,[id]:!p[id]})), []);
   const dmEnhCount = useMemo(() => Object.values(dmEnhs).filter(Boolean).length, [dmEnhs]);
+  const toggleMetSyn = useCallback(id => setMetSyn(p => ({...p,[id]:!p[id]})), []);
+  const metSynCount = useMemo(() => Object.values(metSyn).filter(Boolean).length, [metSyn]);
 
   const risk = useMemo(() => {
     if (tab !== "primary") return null;
@@ -230,7 +245,7 @@ export default function App() {
   // ── Recommendation engine ──
   const rec = useMemo(() => {
     if (tab === "secondary") {
-      return ascvdLevel === "very_high"
+      return vhrCount > 0
         ? { g:{ldl:55,nh:85,p:50}, int:"high", esc:true, txt:"Very high-risk ASCVD — high-intensity statin + add-on therapy to LDL <55 mg/dL", clr:"red" }
         : { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Clinical ASCVD (not very high risk) — high-intensity statin to LDL <70 mg/dL", clr:"amber" };
     }
@@ -254,7 +269,7 @@ export default function App() {
     if (risk >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
     if (risk >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
     return { g:null, int:"none", esc:false, txt:"Low risk (<3%) — Lifestyle optimization. Reassess periodically.", clr:"emerald" };
-  }, [tab, risk, enhCount, cac, cacPct, ascvdLevel]);
+  }, [tab, risk, enhCount, cac, cacPct, vhrCount]);
 
   // Biomarker interpretation
   const lpaNote = useMemo(() => {
@@ -388,16 +403,48 @@ export default function App() {
             <p className="text-[12px] text-slate-400 mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
             <div className="space-y-1.5">
               {ENHANCERS.map(e => (
-                <button key={e.id} onClick={() => toggleEnh(e.id)}
-                  className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
-                    enhs[e.id] ? "bg-amber-50 border-amber-300" : "bg-white border-slate-200"
-                  }`}>
-                  <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
-                    enhs[e.id] ? "bg-amber-500 border-amber-500" : "border-slate-300"
-                  }`}>{enhs[e.id] && <span className="text-white text-[14px] font-bold">✓</span>}</div>
-                  <div><div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
-                  <div className="text-[12px] text-slate-500">{e.d}</div></div>
-                </button>
+                <div key={e.id}>
+                  <button onClick={() => {
+                    if (e.id === "metabolic") {
+                      // Auto-managed by metSynCount — toggle manually only to override
+                      toggleEnh(e.id);
+                    } else {
+                      toggleEnh(e.id);
+                    }
+                  }}
+                    className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
+                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-amber-50 border-amber-300" : "bg-white border-slate-200"
+                    }`}>
+                    <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
+                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-amber-500 border-amber-500" : "border-slate-300"
+                    }`}>{(e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) && <span className="text-white text-[14px] font-bold">✓</span>}</div>
+                    <div className="flex-1">
+                      <div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
+                      <div className="text-[12px] text-slate-500">{e.d}{e.id === "metabolic" && metSynCount > 0 ? ` — ${metSynCount}/5 met` : ""}</div>
+                    </div>
+                  </button>
+                  {e.id === "metabolic" && (
+                    <div className="ml-7 mt-1 mb-1 space-y-1">
+                      {METSYN_CRITERIA.map(m => (
+                        <button key={m.id} onClick={() => toggleMetSyn(m.id)}
+                          className={`w-full flex items-start gap-2 p-2 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 ${
+                            metSyn[m.id] ? "bg-amber-50/60 border-amber-200" : "bg-slate-50 border-slate-200"
+                          }`}>
+                          <div className={`mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center ${
+                            metSyn[m.id] ? "bg-amber-400 border-amber-400" : "border-slate-300"
+                          }`}>{metSyn[m.id] && <span className="text-white text-[11px] font-bold">✓</span>}</div>
+                          <div><div className="text-[13px] font-bold text-slate-700 leading-tight">{m.l}</div>
+                          <div className="text-[11px] text-slate-400">{m.d}</div></div>
+                        </button>
+                      ))}
+                      {metSynCount >= 3 && (
+                        <div className="text-[12px] font-bold text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 border border-amber-200">
+                          {metSynCount}/5 criteria met — Metabolic Syndrome
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
             {enhCount > 0 && (
@@ -410,7 +457,7 @@ export default function App() {
           {/* CAC */}
           <Card title="CAC — Reclassify (Optional)" accent="emerald">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-[12px] text-slate-400">♂ ≥40y or ♀ ≥45y when decision uncertain</p>
+              <p className="text-[12px] text-slate-400">Male ≥40y or Female ≥45y when decision uncertain</p>
               <button onClick={() => setCacInfo(p => !p)}
                 className="w-6 h-6 rounded-full border-2 border-slate-300 text-slate-400 text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
             </div>
@@ -441,34 +488,34 @@ export default function App() {
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-2">
               {[
-                { id:"very_high", l:"Very High Risk", d:vhrCount > 0 ? `${vhrCount} criteria selected` : "Tap to verify criteria below", clr:"#dc2626", bg:"#fef2f2" },
-                { id:"not_very_high", l:"Not Very High Risk", d:"Stable ASCVD without the above features", clr:"#ea580c", bg:"#fff7ed" },
+                { id:"very_high", l:"Very High Risk", d:vhrCount > 0 ? `${vhrCount} criteria met` : "Select criteria below to classify", clr:"#dc2626", bg:"#fef2f2" },
+                { id:"not_very_high", l:"Not Very High Risk", d:"Stable ASCVD without features below", clr:"#ea580c", bg:"#fff7ed" },
               ].map(o => (
                 <button key={o.id} onClick={() => setAscvdLevel(o.id)}
                   className="w-full text-left p-3 rounded-lg border-2 transition-colors cursor-pointer active:opacity-70 min-h-[56px]"
-                  style={ascvdLevel===o.id ? { borderColor:o.clr, backgroundColor:o.bg } : { borderColor:"#e2e8f0" }}>
+                  style={(o.id === "very_high" ? vhrCount > 0 : vhrCount === 0) ? { borderColor:o.clr, backgroundColor:o.bg } : { borderColor:"#e2e8f0" }}>
                   <div className="text-[15px] font-bold text-slate-800">{o.l}</div>
                   <div className="text-[12px] text-slate-500 mt-0.5">{o.d}</div>
                 </button>
               ))}
             </div>
-            {ascvdLevel === "very_high" && (
-              <div className="mt-3 space-y-1.5">
-                <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
-                {VHR_CRITERIA.map(e => (
-                  <button key={e.id} onClick={() => toggleVhr(e.id)}
-                    className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
-                      vhr[e.id] ? "bg-red-50 border-red-300" : "bg-white border-slate-200"
-                    }`}>
-                    <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
-                      vhr[e.id] ? "bg-red-500 border-red-500" : "border-slate-300"
-                    }`}>{vhr[e.id] && <span className="text-white text-[14px] font-bold">✓</span>}</div>
-                    <div><div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
-                    <div className="text-[12px] text-slate-500">{e.d}</div></div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="mt-3 space-y-1.5">
+              <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
+              {VHR_CRITERIA.map(e => (
+                <button key={e.id} onClick={() => {
+                  toggleVhr(e.id);
+                }}
+                  className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
+                    vhr[e.id] ? "bg-red-50 border-red-300" : "bg-white border-slate-200"
+                  }`}>
+                  <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
+                    vhr[e.id] ? "bg-red-500 border-red-500" : "border-slate-300"
+                  }`}>{vhr[e.id] && <span className="text-white text-[14px] font-bold">✓</span>}</div>
+                  <div><div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
+                  <div className="text-[12px] text-slate-500">{e.d}</div></div>
+                </button>
+              ))}
+            </div>
           </Card>
         )}
 
