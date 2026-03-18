@@ -1,0 +1,494 @@
+import { useState, useMemo, useCallback } from "react";
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PREVENT-ASCVD 10-Year Base Model Coefficients
+//  Source: Khan SS et al. Circulation 2024;149:430-449
+//  Extracted from validated `preventr` R package v0.11.0 (sysdata.rda)
+//  These are the logistic regression coefficients for the base model,
+//  sex-specific, ASCVD outcome, 10-year horizon.
+// ══════════════════════════════════════════════════════════════════════════════
+const PREVENT = {
+  female: {
+    age: 0.7198830, nonHdlC: 0.1176967, hdlC: -0.1511850,
+    sbpLt110: -0.0835358, sbpGte110: 0.3592852, dm: 0.8348585,
+    smoking: 0.4831078, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.4864619, egfrGte60: 0.0397779, bpTx: 0.2265309,
+    statin: -0.0592374, bpTxSbpGte110: -0.0395762, statinNonHdlC: 0.0844423,
+    ageNonHdlC: -0.0567839, ageHdlC: 0.0325692, ageSbpGte110: -0.1035985,
+    ageDm: -0.2417542, ageSmoking: -0.0791142, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.1671492, constant: -3.8199750,
+  },
+  male: {
+    age: 0.7099847, nonHdlC: 0.1658663, hdlC: -0.1144285,
+    sbpLt110: -0.2837212, sbpGte110: 0.3239977, dm: 0.7189597,
+    smoking: 0.3956973, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.3690075, egfrGte60: 0.0203619, bpTx: 0.2036522,
+    statin: -0.0865581, bpTxSbpGte110: -0.0322916, statinNonHdlC: 0.1145630,
+    ageNonHdlC: -0.0300005, ageHdlC: 0.0232747, ageSbpGte110: -0.0927024,
+    ageDm: -0.2018525, ageSmoking: -0.0970527, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.1217081, constant: -3.5006550,
+  },
+};
+
+function calcPREVENT({ age, sex, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bmi }) {
+  if (!age || !sbp || !totalC || !hdlC || !egfr || !bmi) return null;
+  const c = PREVENT[sex];
+  const toMmol = (mg) => mg / 38.67;
+  const a = (age - 55) / 10;
+  const nh = toMmol(totalC - hdlC) - 3.5;
+  const hd = (toMmol(hdlC) - 1.3) / 0.3;
+  const sl = (Math.min(sbp, 110) - 110) / 20;
+  const sh = (Math.max(sbp, 110) - 130) / 20;
+  const d = dm ? 1 : 0, sm = smoking ? 1 : 0, bp = bpTx ? 1 : 0, st = statin ? 1 : 0;
+  const bl = (Math.min(bmi, 30) - 25) / 5;
+  const bh = (Math.max(bmi, 30) - 30) / 5;
+  const el = (Math.min(egfr, 60) - 60) / -15;
+  const eh = (Math.max(egfr, 60) - 90) / -15;
+  const x =
+    c.age*a + c.nonHdlC*nh + c.hdlC*hd + c.sbpLt110*sl + c.sbpGte110*sh +
+    c.dm*d + c.smoking*sm + c.bmiLt30*bl + c.bmiGte30*bh +
+    c.egfrLt60*el + c.egfrGte60*eh + c.bpTx*bp + c.statin*st +
+    c.bpTxSbpGte110*(bp*sh) + c.statinNonHdlC*(st*nh) +
+    c.ageNonHdlC*(a*nh) + c.ageHdlC*(a*hd) + c.ageSbpGte110*(a*sh) +
+    c.ageDm*(a*d) + c.ageSmoking*(a*sm) + c.ageBmiGte30*(a*bh) +
+    c.ageEgfrLt60*(a*el) + c.constant;
+  return Math.round((Math.exp(x)/(1+Math.exp(x)))*1000)/10;
+}
+
+function riskCat(r) {
+  if (r === null) return null;
+  if (r < 3) return { label: "Low", color: "#16a34a", bg: "#f0fdf4", range: "<3%" };
+  if (r < 5) return { label: "Borderline", color: "#ca8a04", bg: "#fefce8", range: "3–<5%" };
+  if (r < 10) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", range: "5–<10%" };
+  return { label: "High", color: "#dc2626", bg: "#fef2f2", range: "≥10%" };
+}
+
+const ENHANCERS = [
+  { id:"fhx", l:"Family hx premature ASCVD", d:"1st-degree ♂ <55y or ♀ <65y" },
+  { id:"lpa", l:"Elevated Lp(a)", d:"≥125 nmol/L (≥50 mg/dL)" },
+  { id:"tg", l:"Persistently elevated TG", d:"≥175 mg/dL" },
+  { id:"hscrp", l:"Elevated hs-CRP", d:"≥2.0 mg/L" },
+  { id:"ckd", l:"Chronic kidney disease", d:"eGFR 15–59 or ACR ≥30" },
+  { id:"inflam", l:"Chronic inflammatory condition", d:"RA, psoriasis, lupus, HIV" },
+  { id:"metabolic", l:"Metabolic syndrome", d:"≥3 of 5 criteria" },
+  { id:"women", l:"Preeclampsia / premature menopause", d:"Women-specific" },
+  { id:"sa", l:"South Asian ancestry", d:"Independent risk enhancer" },
+  { id:"apob", l:"Elevated ApoB", d:"≥130 mg/dL" },
+  { id:"abi", l:"Abnormal ABI", d:"≤0.9" },
+];
+
+// ── UI Components (touch-optimized) ─────────────────────────────────────────
+
+function Toggle({ value, on, label }) {
+  return (
+    <button onClick={() => on(!value)} type="button"
+      className="flex items-center gap-2.5 py-2 active:opacity-70 cursor-pointer min-h-[44px]">
+      <div className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${value ? "bg-blue-600" : "bg-slate-300"}`}>
+        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
+      </div>
+      <span className="text-sm text-slate-700">{label}</span>
+    </button>
+  );
+}
+
+function Num({ label, unit, value, on, min, max, step=1, ph }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
+      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 bg-white">
+        <input type="number" inputMode="decimal" value={value}
+          onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
+          min={min} max={max} step={step} placeholder={ph}
+          className="flex-1 px-3 py-3 text-[16px] text-slate-800 outline-none bg-transparent min-w-0" />
+        {unit && <span className="pr-3 text-xs text-slate-400 whitespace-nowrap">{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, accent="blue", children }) {
+  const bdr = { blue:"border-l-blue-600", amber:"border-l-amber-500", red:"border-l-red-500",
+    emerald:"border-l-emerald-600", violet:"border-l-violet-600" };
+  return (
+    <div className={`bg-white rounded-xl border border-slate-200 border-l-4 ${bdr[accent]} shadow-sm`}>
+      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">{title}</h3></div>}
+      <div className="px-4 pb-4">{children}</div>
+    </div>
+  );
+}
+
+function Badge({ children, color="blue" }) {
+  const s = { blue:"bg-blue-50 text-blue-700 border-blue-200", red:"bg-red-50 text-red-700 border-red-200",
+    amber:"bg-amber-50 text-amber-700 border-amber-200", emerald:"bg-emerald-50 text-emerald-700 border-emerald-200",
+    violet:"bg-violet-50 text-violet-700 border-violet-200", slate:"bg-slate-100 text-slate-600 border-slate-200" };
+  return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${s[color]}`}>{children}</span>;
+}
+
+function Goals({ ldl, nonHdl, pct, currentLdl }) {
+  const needed = currentLdl ? Math.round(((currentLdl-ldl)/currentLdl)*100) : null;
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
+        <div className="text-2xl font-black text-blue-700 font-mono">&lt;{ldl}</div>
+        <div className="text-[10px] text-blue-500 font-bold mt-0.5">LDL-C</div>
+      </div>
+      <div className="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
+        <div className="text-2xl font-black text-violet-700 font-mono">&lt;{nonHdl}</div>
+        <div className="text-[10px] text-violet-500 font-bold mt-0.5">non-HDL</div>
+      </div>
+      <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
+        <div className="text-2xl font-black text-slate-700 font-mono">≥{pct}%</div>
+        <div className="text-[10px] text-slate-500 font-bold mt-0.5">% Reduction</div>
+        {needed > 0 && <div className="text-[10px] text-amber-600 mt-0.5">{needed}% needed</div>}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MAIN APP
+// ══════════════════════════════════════════════════════════════════════════════
+
+export default function App() {
+  // ── State ──
+  const [tab, setTab] = useState("primary");
+  const [age, setAge] = useState("");
+  const [sex, setSex] = useState("male");
+  const [sbp, setSbp] = useState("");
+  const [bpTx, setBpTx] = useState(false);
+  const [totalC, setTotalC] = useState("");
+  const [hdlC, setHdlC] = useState("");
+  const [ldlC, setLdlC] = useState("");
+  const [onStatin, setOnStatin] = useState(false);
+  const [dm, setDm] = useState(false);
+  const [smoking, setSmoking] = useState(false);
+  const [egfr, setEgfr] = useState("");
+  const [bmi, setBmi] = useState("");
+  const [tg, setTg] = useState("");
+  const [enhs, setEnhs] = useState({});
+  const [cac, setCac] = useState("");
+  const [cacPct, setCacPct] = useState("");
+  const [lpa, setLpa] = useState("");
+  const [apoB, setApoB] = useState("");
+  const [ascvdLevel, setAscvdLevel] = useState("very_high");
+
+  const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
+  const enhCount = useMemo(() => Object.values(enhs).filter(Boolean).length, [enhs]);
+
+  const risk = useMemo(() => {
+    if (tab !== "primary") return null;
+    return calcPREVENT({ age, sex, sbp, bpTx, totalC, hdlC, statin:onStatin, dm, smoking, egfr, bmi });
+  }, [tab, age, sex, sbp, bpTx, totalC, hdlC, onStatin, dm, smoking, egfr, bmi]);
+
+  const rc = useMemo(() => riskCat(risk), [risk]);
+
+  // ── Recommendation engine ──
+  const rec = useMemo(() => {
+    if (tab === "secondary") {
+      return ascvdLevel === "very_high"
+        ? { g:{ldl:55,nh:85,p:50}, int:"high", esc:true, txt:"Very high-risk ASCVD — high-intensity statin + add-on therapy to LDL <55 mg/dL", clr:"red" }
+        : { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Clinical ASCVD (not very high risk) — high-intensity statin to LDL <70 mg/dL", clr:"amber" };
+    }
+    if (tab === "diabetes") {
+      return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Diabetes (age 40–75) — LLT recommended regardless of LDL; high-intensity statin if additional risk factors", clr:"violet" };
+    }
+    if (tab === "severe") {
+      return { g:{ldl:100,nh:130,p:50}, int:"high", esc:true, txt:"LDL ≥190 — high-intensity statin; evaluate for familial hypercholesterolemia", clr:"red" };
+    }
+    if (risk === null) return null;
+    // CAC override
+    if (cac !== "") {
+      const c = Number(cac), p = cacPct !== "" ? Number(cacPct) : null;
+      if (c === 0) return { g:null, int:"none", esc:false, txt:"CAC = 0 — Statin may be deferred. Reassess in 5–10 y. Lifestyle optimization.", clr:"emerald" };
+      if (c >= 1000) return { g:{ldl:55,nh:85,p:50}, int:"high", esc:true, txt:"CAC ≥1000 — Treat as very high risk. LDL goal <55.", clr:"red" };
+      if (c >= 100 || (p !== null && p >= 75)) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"CAC ≥100 or ≥75th %ile — High-intensity statin to LDL <70.", clr:"amber" };
+      if (c >= 1) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"CAC 1–99 (<75th %ile) — Moderate-intensity statin to LDL <100.", clr:"blue" };
+    }
+    if (risk >= 10) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"High 10-year ASCVD risk (≥10%) — High-intensity statin to LDL <70.", clr:"red" };
+    if (risk >= 5) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"Intermediate risk (5–<10%) — Moderate-intensity statin to LDL <100 after shared decision-making.", clr:"amber" };
+    if (risk >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
+    if (risk >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
+    return { g:null, int:"none", esc:false, txt:"Low risk (<3%) — Lifestyle optimization. Reassess periodically.", clr:"emerald" };
+  }, [tab, risk, enhCount, cac, cacPct, ascvdLevel]);
+
+  // Biomarker interpretation
+  const lpaNote = useMemo(() => {
+    if (lpa === "") return null;
+    const v = Number(lpa);
+    if (v >= 250) return { lv:"Very High", c:"red", n:"≥250 nmol/L — ~2× ASCVD risk. Intensify LDL-C lowering aggressively." };
+    if (v >= 125) return { lv:"Elevated", c:"amber", n:"≥125 nmol/L — ~1.4× risk. Risk enhancer — intensify LDL-C lowering." };
+    return { lv:"Normal", c:"emerald", n:"<125 nmol/L — Not a risk enhancer." };
+  }, [lpa]);
+
+  const apoBNote = useMemo(() => {
+    if (apoB === "") return null;
+    const v = Number(apoB);
+    if (v >= 130) return { lv:"Very High", c:"red", n:"≥130 — Significantly elevated atherogenic particles. Intensify therapy." };
+    if (v >= 100) return { lv:"Elevated", c:"amber", n:"100–129 — Above goal for most. Consider intensification with elevated TG or DM." };
+    if (v >= 85) return { lv:"Borderline", c:"blue", n:"85–99 — At goal for intermediate risk; above for very high (goal <85)." };
+    return { lv:"Optimal", c:"emerald", n:"<85 — At or below goal for all risk categories." };
+  }, [apoB]);
+
+  const tabs = [
+    { id:"primary", l:"Primary", em:"🛡" },
+    { id:"secondary", l:"ASCVD", em:"🫀" },
+    { id:"diabetes", l:"Diabetes", em:"🩸" },
+    { id:"severe", l:"LDL ≥190", em:"⚠" },
+  ];
+
+  const recBg = { red:"bg-red-50 border-red-300", amber:"bg-amber-50 border-amber-300",
+    emerald:"bg-emerald-50 border-emerald-300", violet:"bg-violet-50 border-violet-300", blue:"bg-blue-50 border-blue-300" };
+  const recTxt = { red:"text-red-800", amber:"text-amber-800", emerald:"text-emerald-800",
+    violet:"text-violet-800", blue:"text-blue-800" };
+
+  return (
+    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-b from-slate-50 to-slate-100">
+
+      {/* ── Header ── */}
+      <div className="bg-slate-900 text-white pwa-header-pad">
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
+          <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
+        </div>
+      </div>
+
+      {/* ── Tabs ── */}
+      <div className="bg-white border-b border-slate-200 shadow-sm sticky-tabs">
+        <div className="max-w-lg mx-auto px-2">
+          <div className="flex">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`flex-1 px-1 py-3 text-[13px] font-bold text-center whitespace-nowrap border-b-2 transition-colors cursor-pointer min-h-[48px] active:opacity-70 ${
+                  tab===t.id ? "border-blue-600 text-blue-700 bg-blue-50/50" : "border-transparent text-slate-400 hover:text-slate-600"
+                }`}>
+                <span className="mr-0.5">{t.em}</span>{t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-20">
+
+        {/* PRIMARY */}
+        {tab === "primary" && (<>
+          <Card title="PREVENT-ASCVD Risk Calculator" accent="blue">
+            <p className="text-[11px] text-slate-400 mb-3">Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sex</label>
+                <div className="flex gap-1">
+                  {["male","female"].map(s => (
+                    <button key={s} onClick={() => setSex(s)}
+                      className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
+                        sex===s ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                      }`}>{s==="male"?"♂ Male":"♀ Female"}</button>
+                  ))}
+                </div>
+              </div>
+              <Num label="Total Cholesterol" unit="mg/dL" value={totalC} on={setTotalC} min={130} max={320} ph="130–320" />
+              <Num label="HDL-C" unit="mg/dL" value={hdlC} on={setHdlC} min={20} max={100} ph="20–100" />
+              <Num label="LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Baseline" />
+              <Num label="Systolic BP" unit="mmHg" value={sbp} on={setSbp} min={90} max={200} ph="90–200" />
+              <Num label="eGFR" unit="mL/min" value={egfr} on={setEgfr} min={15} max={140} ph="15–140" />
+              <Num label="BMI" unit="kg/m²" value={bmi} on={setBmi} min={18.5} max={60} step={0.1} ph="18.5–60" />
+            </div>
+            <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
+            <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
+              <Toggle value={bpTx} on={setBpTx} label="BP meds" />
+              <Toggle value={onStatin} on={setOnStatin} label="Statin" />
+              <Toggle value={dm} on={setDm} label="Diabetes" />
+              <Toggle value={smoking} on={setSmoking} label="Smoker" />
+            </div>
+
+            {/* Risk result */}
+            {risk !== null && rc && (
+              <div className="rounded-xl p-4 mt-4 border-2" style={{ backgroundColor:rc.bg, borderColor:rc.color+"40" }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
+                    <div className="text-4xl font-black mt-0.5 font-mono" style={{color:rc.color}}>{risk}%</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="px-4 py-2 rounded-full text-sm font-black text-white" style={{backgroundColor:rc.color}}>{rc.label}</div>
+                    <div className="text-[11px] mt-1 font-semibold" style={{color:rc.color}}>{rc.range}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Risk enhancers */}
+          <Card title="Risk Enhancers — Personalize" accent="amber">
+            <p className="text-[11px] text-slate-400 mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
+            <div className="space-y-1.5">
+              {ENHANCERS.map(e => (
+                <button key={e.id} onClick={() => toggleEnh(e.id)}
+                  className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
+                    enhs[e.id] ? "bg-amber-50 border-amber-300" : "bg-white border-slate-200"
+                  }`}>
+                  <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
+                    enhs[e.id] ? "bg-amber-500 border-amber-500" : "border-slate-300"
+                  }`}>{enhs[e.id] && <span className="text-white text-xs font-bold">✓</span>}</div>
+                  <div><div className="text-sm font-bold text-slate-800 leading-tight">{e.l}</div>
+                  <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                </button>
+              ))}
+            </div>
+            {enhCount > 0 && (
+              <div className="mt-2 text-sm font-bold text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                {enhCount} enhancer{enhCount>1?"s":""} — favors statin in borderline/intermediate
+              </div>
+            )}
+          </Card>
+
+          {/* CAC */}
+          <Card title="CAC — Reclassify (Optional)" accent="emerald">
+            <p className="text-[11px] text-slate-400 mb-2">♂ ≥40y or ♀ ≥45y when decision uncertain</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Num label="CAC Score" unit="AU" value={cac} on={setCac} min={0} max={10000} ph="Agatston" />
+              <Num label="CAC %ile" unit="%" value={cacPct} on={setCacPct} min={0} max={100} ph="Age/sex" />
+            </div>
+          </Card>
+        </>)}
+
+        {/* SECONDARY */}
+        {tab === "secondary" && (
+          <Card title="Clinical ASCVD — Risk Level" accent="red">
+            <p className="text-[11px] text-slate-400 mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
+            <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
+            <div className="mt-3 space-y-2">
+              {[
+                { id:"very_high", l:"Very High Risk", d:"Recent ACS, multiple events, ASCVD + ≥2 high-risk conditions", clr:"#dc2626", bg:"#fef2f2" },
+                { id:"not_very_high", l:"Not Very High Risk", d:"Stable ASCVD without the above features", clr:"#ea580c", bg:"#fff7ed" },
+              ].map(o => (
+                <button key={o.id} onClick={() => setAscvdLevel(o.id)}
+                  className="w-full text-left p-3 rounded-lg border-2 transition-colors cursor-pointer active:opacity-70 min-h-[56px]"
+                  style={ascvdLevel===o.id ? { borderColor:o.clr, backgroundColor:o.bg } : { borderColor:"#e2e8f0" }}>
+                  <div className="text-sm font-bold text-slate-800">{o.l}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">{o.d}</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* DIABETES */}
+        {tab === "diabetes" && (
+          <Card title="Diabetes Pathway" accent="violet">
+            <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mb-3">
+              <div className="text-sm font-bold text-violet-800">Universal LLT (Age 40–75)</div>
+              <div className="text-[11px] text-violet-600 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
+            </div>
+            <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
+            <p className="text-[11px] text-slate-400 mt-2"><span className="font-bold">DM-specific enhancers:</span> Duration ≥10y (T2) / ≥20y (T1), A1c ≥8%, albuminuria ≥30, eGFR &lt;60, retinopathy, neuropathy, ABI ≤0.9</p>
+          </Card>
+        )}
+
+        {/* SEVERE */}
+        {tab === "severe" && (
+          <Card title="Severe Hypercholesterolemia" accent="red">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+              <div className="text-sm font-bold text-red-800">LDL ≥190 mg/dL → High-Intensity Statin</div>
+              <div className="text-[11px] text-red-600 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
+            </div>
+            <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
+          </Card>
+        )}
+
+        {/* BIOMARKERS */}
+        <Card title="Advanced Biomarkers" accent="violet">
+          <p className="text-[11px] text-slate-400 mb-2">Lp(a): at least once. ApoB: once LDL/non-HDL near goal.</p>
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} ph="Screen" />
+            <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} ph="Near goal" />
+          </div>
+          {lpaNote && (
+            <div className={`flex items-start gap-2 p-2 rounded-lg border mb-1.5 ${
+              lpaNote.c==="red"?"bg-red-50 border-red-200":lpaNote.c==="amber"?"bg-amber-50 border-amber-200":"bg-emerald-50 border-emerald-200"
+            }`}><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[11px] text-slate-700">{lpaNote.n}</span></div>
+          )}
+          {apoBNote && (
+            <div className={`flex items-start gap-2 p-2 rounded-lg border ${
+              apoBNote.c==="red"?"bg-red-50 border-red-200":apoBNote.c==="amber"?"bg-amber-50 border-amber-200":
+              apoBNote.c==="blue"?"bg-blue-50 border-blue-200":"bg-emerald-50 border-emerald-200"
+            }`}><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[11px] text-slate-700">{apoBNote.n}</span></div>
+          )}
+        </Card>
+
+        {/* ── RECOMMENDATION ── */}
+        {rec && ((tab==="primary" && risk!==null) || tab!=="primary") && (<>
+          <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Recommendation</div>
+            <div className={`text-sm font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
+          </div>
+
+          {rec.g && <Card title="Treatment Goals" accent={rec.clr==="red"?"red":rec.clr==="amber"?"amber":"blue"}>
+            <Goals ldl={rec.g.ldl} nonHdl={rec.g.nh} pct={rec.g.p} currentLdl={ldlC||null} />
+          </Card>}
+
+          <Card title="Treatment Ladder" accent="blue">
+            <div className="space-y-0">
+              {[
+                { s:1, l:"Lifestyle Optimization", d:"Diet, exercise, weight, smoking cessation, sleep", show:true },
+                { s:2, l:"Maximally Tolerated Statin", d:rec.int==="high"?"High-intensity: Atorva 40–80 or Rosuva 20–40 (≥50% LDL ↓)":"Moderate-intensity: Atorva 10–20, Rosuva 5–10, Simva 20–40 (30–49% ↓)", show:rec.int!=="none"&&rec.int!=="lifestyle" },
+                { s:3, l:"Add Ezetimibe", d:"10 mg — additional 15–20% LDL reduction", show:rec.esc },
+                { s:4, l:"Bempedoic Acid / PCSK9i", d:"Bempedoic ~18% ↓; Evolocumab/alirocumab ~60% further ↓", show:rec.esc },
+                { s:5, l:"Consider Inclisiran", d:"siRNA — twice-yearly after loading; for residual LDL elevation", show:rec.esc&&rec.g?.ldl<=55 },
+              ].filter(s=>s.show).map((s,i,arr) => (
+                <div key={s.s} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i===0?"bg-emerald-500":"bg-blue-600"}`}>{s.s}</div>
+                    {i<arr.length-1 && <div className="w-0.5 flex-1 bg-slate-200 my-0.5"/>}
+                  </div>
+                  <div className="pb-3 flex-1 min-w-0">
+                    <div className="text-sm font-bold text-slate-800">{s.l}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">{s.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {tg!==""&&Number(tg)>=150 && (
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="text-sm font-bold text-amber-800">Hypertriglyceridemia</div>
+                <div className="text-[11px] text-amber-700 mt-0.5">
+                  TG {tg} — {Number(tg)>=500?"Severe: prioritize TG lowering (pancreatitis risk). Fibrate ± icosapent ethyl. If ≥1000, consider apoC-III inhibitor.":"Statins first-line for ASCVD risk. If TG persistent, add fenofibrate or icosapent ethyl (REDUCE-IT)."}
+                </div>
+              </div>
+            )}
+          </Card>
+        </>)}
+
+        {/* MONITORING */}
+        <Card title="Monitoring" accent="emerald">
+          <div className="space-y-2 text-[11px]">
+            {[
+              { h:"After LLT Start", b:"Fasting lipids at 4–12 wk, then q3–12 mo until at goal, then annually." },
+              { h:"Safety", b:"Hepatic panel at baseline. CK only if symptomatic. Monitor for new-onset DM with high-intensity statin." },
+              { h:"Screening", b:"Lipid panel at ages 9–11, 19–21, then ≥q5y. Lp(a) at least once in adulthood." },
+              { h:"Refer", b:"Suspected FH, refractory LDL, TG ≥500 despite lifestyle, complex interactions, pregnancy planning." },
+            ].map(m => (
+              <div key={m.h} className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <span className="font-bold text-slate-700">{m.h}: </span>
+                <span className="text-slate-600">{m.b}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center pt-2 pb-8 space-y-1">
+          <div className="text-[10px] text-slate-400">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
+          <div className="text-[10px] text-slate-400">Clinical decision support only. Does not replace clinical judgment.</div>
+          <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
+            target="_blank" rel="noopener"
+            className="inline-block text-[10px] text-blue-500 underline mt-1">
+            Validate with AHA PREVENT™ Calculator
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
