@@ -274,7 +274,7 @@ export default function App() {
     { id:"primary", l:"Primary", em:"🛡" },
     { id:"secondary", l:"ASCVD", em:"🫀" },
     { id:"diabetes", l:"Diabetes", em:"🩸" },
-    { id:"severe", l:"LDL ≥190", em:"⚠" },
+    { id:"severe", l:"LDL ≥190", em:"⚠️" },
   ];
 
   const recBg = { red:"bg-red-50 border-red-300", amber:"bg-amber-50 border-amber-300",
