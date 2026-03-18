@@ -106,6 +106,101 @@ const ENHANCERS = [
   { id:"abi", l:"Abnormal ABI (Ankle-Brachial Index)", d:"≤0.9" },
 ];
 
+// ── Statin Reference Panel (reusable) ────────────────────────────────────────
+
+function StatinInfo({ onClose }) {
+  const intensities = [
+    { level:"High-Intensity", ldl:"≥50%", color:"red", drugs:[
+      { name:"Rosuvastatin", dose:"20–40 mg", myopathy:1, notes:"Most potent per mg. Renally cleared — dose-adjust if eGFR <30." },
+      { name:"Atorvastatin", dose:"40–80 mg", myopathy:2, notes:"Long half-life — can take any time of day. Most clinical trial data." },
+    ]},
+    { level:"Moderate-Intensity", ldl:"30–49%", color:"amber", drugs:[
+      { name:"Rosuvastatin", dose:"5–10 mg", myopathy:1, notes:null },
+      { name:"Atorvastatin", dose:"10–20 mg", myopathy:2, notes:null },
+      { name:"Simvastatin", dose:"20–40 mg", myopathy:4, notes:"Take in evening. 80 mg: FDA limits — avoid new starts (↑ myopathy)." },
+      { name:"Pravastatin", dose:"40–80 mg", myopathy:1, notes:"Hydrophilic. Not CYP3A4 — fewest drug interactions." },
+      { name:"Lovastatin", dose:"40–80 mg", myopathy:3, notes:"Take with evening meal. CYP3A4 substrate." },
+      { name:"Fluvastatin XL", dose:"80 mg", myopathy:1, notes:"CYP2C9 — fewer CYP3A4 interactions." },
+      { name:"Pitavastatin", dose:"1–4 mg", myopathy:1, notes:"Minimal CYP metabolism. May have lower new-onset DM risk." },
+    ]},
+    { level:"Low-Intensity", ldl:"<30%", color:"blue", drugs:[
+      { name:"Simvastatin", dose:"10 mg", myopathy:2, notes:null },
+      { name:"Pravastatin", dose:"10–20 mg", myopathy:1, notes:null },
+      { name:"Lovastatin", dose:"20 mg", myopathy:2, notes:null },
+      { name:"Fluvastatin", dose:"20–40 mg", myopathy:1, notes:null },
+      { name:"Pitavastatin", dose:"1 mg", myopathy:1, notes:null },
+    ]},
+  ];
+
+  const myopathyScale = [
+    { name:"Pitavastatin", risk:1 }, { name:"Pravastatin", risk:1 }, { name:"Fluvastatin", risk:1 },
+    { name:"Rosuvastatin", risk:2 }, { name:"Atorvastatin", risk:2 },
+    { name:"Lovastatin", risk:3 }, { name:"Simvastatin", risk:4 },
+  ];
+
+  const iClr = { red:"text-red-700", amber:"text-amber-700", blue:"text-blue-700" };
+  const iBg = { red:"bg-red-50 border-red-200", amber:"bg-amber-50 border-amber-200", blue:"bg-blue-50 border-blue-200" };
+  const dots = { 1:"bg-emerald-400", 2:"bg-yellow-400", 3:"bg-orange-400", 4:"bg-red-400" };
+
+  return (
+    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-700 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="font-bold text-slate-800 text-[12px]">Statin Reference</div>
+        <button onClick={onClose} className="text-[12px] text-slate-400 hover:text-slate-600 cursor-pointer font-bold">✕</button>
+      </div>
+
+      {intensities.map(tier => (
+        <div key={tier.level} className={`rounded-lg border p-2.5 ${iBg[tier.color]}`}>
+          <div className={`font-bold ${iClr[tier.color]} mb-1`}>{tier.level} <span className="font-normal text-slate-400">({tier.ldl} LDL-C reduction)</span></div>
+          <div className="space-y-1">
+            {tier.drugs.map(d => (
+              <div key={d.name+d.dose} className="bg-white/70 rounded p-1.5 border border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800">{d.name} <span className="font-normal text-slate-500">{d.dose}</span></span>
+                  <div className="flex gap-0.5" title="Myopathy risk">
+                    {[1,2,3,4].map(i => (
+                      <div key={i} className={`w-1.5 h-1.5 rounded-full ${i <= d.myopathy ? dots[d.myopathy] : "bg-slate-200"}`} />
+                    ))}
+                  </div>
+                </div>
+                {d.notes && <div className="text-[10px] text-slate-500 mt-0.5">{d.notes}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-lg border border-slate-200 p-2.5 bg-white">
+        <div className="font-bold text-slate-700 mb-1.5">Myopathy Risk Spectrum</div>
+        <div className="flex items-end gap-1">
+          {myopathyScale.map(s => (
+            <div key={s.name} className="flex-1 text-center">
+              <div className={`mx-auto rounded-sm ${dots[s.risk]}`} style={{height: s.risk * 8 + 4, width:"100%", maxWidth:28}} />
+              <div className="text-[9px] text-slate-500 mt-1 leading-tight">{s.name.slice(0,4)}</div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between mt-1 text-[9px] text-slate-400">
+          <span>← Lower risk</span><span>Higher risk →</span>
+        </div>
+      </div>
+
+      <div className="text-[10px] text-slate-500 space-y-0.5 border-t border-slate-200 pt-2">
+        <div><b>Evening dosing:</b> Simvastatin, Lovastatin (short half-life). Atorvastatin and Rosuvastatin can be taken any time.</div>
+        <div><b>Drug interactions:</b> CYP3A4 statins (Atorva, Simva, Lova) interact with azole antifungals, macrolides, protease inhibitors, grapefruit. Pravastatin and Pitavastatin have the fewest interactions.</div>
+        <div><b>New-onset DM:</b> Class effect, higher with high-intensity. Pitavastatin may carry lower risk. CV benefit outweighs DM risk.</div>
+        <div className="flex gap-1 mt-1">
+          <span>Myopathy risk dots:</span>
+          <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Lowest</span>
+          <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block" /> Low</span>
+          <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block" /> Mod</span>
+          <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" /> Higher</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── UI Components (touch-optimized) ─────────────────────────────────────────
 
 function Toggle({ value, on, label, sub }) {
@@ -206,6 +301,8 @@ export default function App() {
   const [cacInfo, setCacInfo] = useState(false);
   const [bioInfo, setBioInfo] = useState(false);
   const [bmiCalc, setBmiCalc] = useState(false);
+  const [statinInfo, setStatinInfo] = useState(false);
+  const [statinInfoMon, setStatinInfoMon] = useState(false);
   const [bmiUnit, setBmiUnit] = useState("imperial");
   const [bmiWt, setBmiWt] = useState("");
   const [bmiHt, setBmiHt] = useState("");
@@ -221,6 +318,7 @@ export default function App() {
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB(""); setAscvdLevel("not_very_high");
     setCacInfo(false); setBioInfo(false); setBmiCalc(false);
+    setStatinInfo(false); setStatinInfoMon(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhr({}); setDmEnhs({}); setMetSyn({});
   }, []);
@@ -760,7 +858,13 @@ export default function App() {
                     {i<arr.length-1 && <div className="flex-1 my-0.5 ladder-connector"/>}
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
-                    <div className="text-[14px] font-bold text-slate-800">{s.l}</div>
+                    <div className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                      {s.l}
+                      {s.isStatin && (
+                        <button onClick={() => setStatinInfo(p => !p)}
+                          className="w-5 h-5 rounded-full border-2 border-slate-300 text-slate-400 text-[10px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-blue-400 hover:text-blue-500 active:scale-95 transition-colors">?</button>
+                      )}
+                    </div>
                     <div className="text-[11px] text-slate-500 mt-0.5">
                       {s.s === 1 && (
                         <div>Diet, exercise, weight management, smoking cessation, sleep optimization</div>
@@ -777,6 +881,7 @@ export default function App() {
                             <div>Simvastatin 20–40 mg</div>
                           </>)}
                         </div>
+                        {statinInfo && <div className="mt-2"><StatinInfo onClose={() => setStatinInfo(false)} /></div>}
                       </>)}
                       {s.s === 3 && (
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
@@ -830,8 +935,13 @@ export default function App() {
               <div className="space-y-0.5 text-slate-600">
                 <div>• <b>Hepatic panel</b> at baseline</div>
                 <div>• <b>CK</b> only if symptomatic</div>
-                <div>• Monitor for new-onset DM with high-intensity <b>statin</b></div>
+                <div className="flex items-center gap-1.5">
+                  <span>• Monitor for new-onset DM with high-intensity <b>statin</b></span>
+                  <button onClick={() => setStatinInfoMon(p => !p)}
+                    className="w-5 h-5 rounded-full border-2 border-slate-300 text-slate-400 text-[10px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
+                </div>
               </div>
+              {statinInfoMon && <div className="mt-2"><StatinInfo onClose={() => setStatinInfoMon(false)} /></div>}
             </div>
 
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
