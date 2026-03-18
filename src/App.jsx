@@ -207,30 +207,6 @@ export default function App() {
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
   const enhCount = useMemo(() => Object.values(enhs).filter(Boolean).length, [enhs]);
-  const copySummary = useCallback(() => {
-    if (!rec) return;
-    const parts = [];
-    if (tab === "primary" && age) parts.push(`${age}${sex === "male" ? "M" : "F"}`);
-    if (tab === "primary" && risk !== null) parts.push(`10yr ASCVD ${risk}% (${rc?.label})`);
-    if (tab === "secondary") parts.push(`ASCVD ${ascvdLevel === "very_high" ? "Very High Risk" : "Not Very High Risk"}`);
-    if (tab === "diabetes") parts.push("Diabetes pathway");
-    if (tab === "severe") parts.push("Severe hypercholesterolemia (LDL ≥190)");
-    if (ldlC) parts.push(`LDL ${ldlC}`);
-    if (nonHdlC !== null) parts.push(`non-HDL ${nonHdlC}`);
-    if (rec.g) parts.push(`Goal LDL <${rec.g.ldl}`);
-    parts.push(`Rec: ${rec.int === "high" ? "high" : rec.int === "moderate" ? "moderate" : rec.int}-intensity statin`);
-    if (rec.esc) parts.push("escalation pathway");
-    if (enhCount > 0 && tab === "primary") parts.push(`${enhCount} risk enhancer${enhCount > 1 ? "s" : ""}`);
-    if (cac !== "" && tab === "primary") parts.push(`CAC ${cac}`);
-    if (lpa !== "") parts.push(`Lp(a) ${lpa} nmol/L`);
-    if (apoB !== "") parts.push(`ApoB ${apoB} mg/dL`);
-    const text = parts.join(" · ");
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }, [rec, tab, age, sex, risk, rc, ascvdLevel, ldlC, nonHdlC, enhCount, cac, lpa, apoB]);
-
   const toggleVhr = useCallback(id => setVhr(p => ({...p,[id]:!p[id]})), []);
   const vhrCount = useMemo(() => Object.values(vhr).filter(Boolean).length, [vhr]);
   const toggleDmEnh = useCallback(id => setDmEnhs(p => ({...p,[id]:!p[id]})), []);
@@ -294,6 +270,30 @@ export default function App() {
     if (v >= 85) return { lv:"Borderline", c:"blue", n:"85–99 — At goal for intermediate risk; above for very high (goal <85)." };
     return { lv:"Optimal", c:"emerald", n:"<85 — At or below goal for all risk categories." };
   }, [apoB]);
+
+  const copySummary = useCallback(() => {
+    if (!rec) return;
+    const parts = [];
+    if (tab === "primary" && age) parts.push(`${age}${sex === "male" ? "M" : "F"}`);
+    if (tab === "primary" && risk !== null) parts.push(`10yr ASCVD ${risk}% (${rc?.label})`);
+    if (tab === "secondary") parts.push(`ASCVD ${ascvdLevel === "very_high" ? "Very High Risk" : "Not Very High Risk"}`);
+    if (tab === "diabetes") parts.push("Diabetes pathway");
+    if (tab === "severe") parts.push("Severe hypercholesterolemia (LDL ≥190)");
+    if (ldlC) parts.push(`LDL ${ldlC}`);
+    if (nonHdlC !== null) parts.push(`non-HDL ${nonHdlC}`);
+    if (rec.g) parts.push(`Goal LDL <${rec.g.ldl}`);
+    parts.push(`Rec: ${rec.int === "high" ? "high" : rec.int === "moderate" ? "moderate" : rec.int}-intensity statin`);
+    if (rec.esc) parts.push("escalation pathway");
+    if (enhCount > 0 && tab === "primary") parts.push(`${enhCount} risk enhancer${enhCount > 1 ? "s" : ""}`);
+    if (cac !== "" && tab === "primary") parts.push(`CAC ${cac}`);
+    if (lpa !== "") parts.push(`Lp(a) ${lpa} nmol/L`);
+    if (apoB !== "") parts.push(`ApoB ${apoB} mg/dL`);
+    const text = parts.join(" · ");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [rec, tab, age, sex, risk, rc, ascvdLevel, ldlC, nonHdlC, enhCount, cac, lpa, apoB]);
 
   const tabs = [
     { id:"primary", l:"Primary", em:"🛡" },
