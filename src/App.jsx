@@ -150,15 +150,15 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
   return (
     <div className="grid grid-cols-3 gap-2">
       <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
-        <div className="text-2xl font-black text-blue-700 font-mono tabular-nums">&lt;{ldl}</div>
+        <div className="text-2xl font-black text-blue-700 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{ldl}</div>
         <div className="text-[12px] text-blue-500 font-bold mt-0.5">LDL-C</div>
       </div>
       <div className="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
-        <div className="text-2xl font-black text-violet-700 font-mono tabular-nums">&lt;{nonHdl}</div>
+        <div className="text-2xl font-black text-violet-700 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>&lt;{nonHdl}</div>
         <div className="text-[12px] text-violet-500 font-bold mt-0.5">Non-HDL</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-        <div className="text-2xl font-black text-slate-700 font-mono tabular-nums">≥{pct}%</div>
+        <div className="text-2xl font-black text-slate-700 font-mono tabular-nums" style={{fontFeatureSettings:'"zero" 0'}}>≥{pct}%</div>
         <div className="text-[12px] text-slate-500 font-bold mt-0.5">% Reduction</div>
         {needed > 0 && <div className="text-[12px] text-amber-600 mt-0.5">{needed}% needed</div>}
       </div>
@@ -192,6 +192,7 @@ export default function App() {
   const [lpa, setLpa] = useState("");
   const [apoB, setApoB] = useState("");
   const [ascvdLevel, setAscvdLevel] = useState("very_high");
+  const [cacInfo, setCacInfo] = useState(false);
   const [vhr, setVhr] = useState({});
   const [dmEnhs, setDmEnhs] = useState({});
 
@@ -201,7 +202,7 @@ export default function App() {
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB(""); setAscvdLevel("very_high");
-    setVhr({}); setDmEnhs({});
+    setCacInfo(false); setVhr({}); setDmEnhs({});
   }, []);
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
@@ -405,10 +406,27 @@ export default function App() {
 
           {/* CAC */}
           <Card title="CAC — Reclassify (Optional)" accent="emerald">
-            <p className="text-[12px] text-slate-400 mb-2">♂ ≥40y or ♀ ≥45y when decision uncertain</p>
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-[12px] text-slate-400">♂ ≥40y or ♀ ≥45y when decision uncertain</p>
+              <button onClick={() => setCacInfo(p => !p)}
+                className="w-6 h-6 rounded-full border-2 border-slate-300 text-slate-400 text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-emerald-400 hover:text-emerald-500 active:scale-95 transition-colors">?</button>
+            </div>
+            {cacInfo && (
+              <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-[12px] text-slate-700 space-y-2">
+                <div className="font-bold text-emerald-800">How CAC Reclassifies Risk</div>
+                <div>The <span className="font-bold">CAC Score</span> (Agatston units) measures calcified plaque in coronary arteries via CT. It directly overrides the PREVENT risk estimate:</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  <span className="font-bold text-emerald-700">CAC = 0</span><span>No plaque detected — statin may be <span className="font-bold">deferred</span> even at intermediate risk. Reassess in 5–10 years.</span>
+                  <span className="font-bold text-blue-700">CAC 1–99</span><span>Mild plaque — moderate-intensity statin. <span className="font-bold">This is where the percentile matters most:</span> if ≥75th percentile for age/sex, upgrades to high-intensity.</span>
+                  <span className="font-bold text-amber-700">CAC ≥100</span><span>Significant plaque — high-intensity statin, LDL goal &lt;70.</span>
+                  <span className="font-bold text-red-700">CAC ≥1000</span><span>Extensive plaque — treat as very high risk, LDL goal &lt;55, full escalation.</span>
+                </div>
+                <div className="text-slate-500 border-t border-emerald-200 pt-2">The <span className="font-bold">percentile</span> is only needed when the score is 1–99. It compares plaque burden to others of the same age and sex — a CAC of 50 at age 45 is more concerning than a CAC of 50 at age 75.</div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <Num label="CAC Score" unit="AU" value={cac} on={setCac} min={0} max={10000} ph="Agatston" />
-              <Num label="CAC %ile" unit="%" value={cacPct} on={setCacPct} min={0} max={100} ph="Age/sex" />
+              <Num label="CAC %ile" unit="%" value={cacPct} on={setCacPct} min={0} max={100} ph="Percentile" />
             </div>
           </Card>
         </>)}
@@ -495,10 +513,10 @@ export default function App() {
 
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
-          <p className="text-[12px] text-slate-400 mb-2">Lp(a): at least once. ApoB: once LDL/non-HDL near goal.</p>
+          <p className="text-[12px] text-slate-400 mb-2">Lp(a): screen at least once in adulthood. ApoB: check once LDL/Non-HDL near goal.</p>
           <div className="grid grid-cols-2 gap-3 mb-2">
-            <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} ph="Screen" preserveCase />
-            <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} ph="Near goal" preserveCase />
+            <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} preserveCase />
+            <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} preserveCase />
           </div>
           {lpaNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border mb-1.5 ${
@@ -556,7 +574,7 @@ export default function App() {
             <div className="space-y-0">
               {[
                 { s:1, l:"Lifestyle Optimization", d:"Diet, exercise, weight management, smoking cessation, sleep optimization", show:true },
-                { s:2, l:"Maximally Tolerated Statin", d:rec.int==="high"?"High-intensity: Atorva 40–80 or Rosuva 20–40 (≥50% LDL ↓)":"Moderate-intensity: Atorva 10–20, Rosuva 5–10, Simva 20–40 (30–49% ↓)", show:rec.int!=="none"&&rec.int!=="lifestyle" },
+                { s:2, l:"Maximally Tolerated Statin", d:rec.int==="high"?"high":"moderate", show:rec.int!=="none"&&rec.int!=="lifestyle", isStatin:true },
                 { s:3, l:"Add Ezetimibe", d:"10 mg — additional 15–20% LDL reduction", show:rec.esc },
                 { s:4, l:"Bempedoic Acid / PCSK9i", d:"Bempedoic ~18% ↓; Evolocumab/alirocumab ~60% further ↓", show:rec.esc },
                 { s:5, l:"Consider Inclisiran", d:"siRNA — twice-yearly after loading; for residual LDL elevation", show:rec.esc&&rec.g?.ldl<=55 },
@@ -568,7 +586,23 @@ export default function App() {
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
                     <div className="text-[15px] font-bold text-slate-800">{s.l}</div>
-                    <div className="text-[12px] text-slate-500 mt-0.5">{s.d}</div>
+                    {s.isStatin ? (
+                      <div className="text-[12px] text-slate-500 mt-0.5">
+                        <div className="font-bold text-slate-600 mt-0.5">{s.d === "high" ? "High-Intensity" : "Moderate-Intensity"} <span className="font-normal text-slate-400">({s.d === "high" ? "≥50%" : "30–49%"} LDL-C reduction)</span></div>
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
+                          {s.d === "high" ? (<>
+                            <div>Atorvastatin 40–80 mg</div>
+                            <div>Rosuvastatin 20–40 mg</div>
+                          </>) : (<>
+                            <div>Atorvastatin 10–20 mg</div>
+                            <div>Rosuvastatin 5–10 mg</div>
+                            <div>Simvastatin 20–40 mg</div>
+                          </>)}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[12px] text-slate-500 mt-0.5">{s.d}</div>
+                    )}
                   </div>
                 </div>
               ))}
