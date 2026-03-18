@@ -207,7 +207,7 @@ function Toggle({ value, on, label, sub }) {
   return (
     <button onClick={() => on(!value)} type="button"
       className="flex items-center gap-2.5 py-2 active:opacity-70 cursor-pointer min-h-[44px]">
-      <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600" : "bg-slate-300 dark:bg-[#1a2835]"}`}>
+      <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600 dark:bg-sky-500" : "bg-slate-300 dark:bg-[#1a2835]"}`}>
         <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white toggle-knob transition-transform duration-200 ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
       </div>
       <div className="leading-tight">
@@ -521,7 +521,7 @@ export default function App() {
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex-1 px-1 py-1 text-[11px] font-black text-center whitespace-nowrap rounded-md transition-all duration-200 cursor-pointer min-h-[30px] active:scale-[0.97] tracking-wide ${
-                  tab===t.id ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)] dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
+                  tab===t.id ? "bg-blue-600 dark:bg-sky-500/30 text-white dark:text-sky-300 shadow-[0_2px_8px_rgba(37,99,235,0.3)] dark:shadow-[0_0_12px_rgba(56,189,248,0.15)] dark:border dark:border-sky-400/40" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
                 }`}>
                 {t.l}
               </button>
@@ -546,7 +546,7 @@ export default function App() {
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
                       className={`flex-1 py-3 rounded-lg text-[14px] font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] text-center ${
-                        sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-[#1a2835] text-slate-600 dark:text-[#5a8aaa] hover:bg-slate-200/70 dark:hover:bg-sky-500/8"
+                        sex===s ? "bg-blue-600 dark:bg-sky-500/30 text-white dark:text-sky-300 shadow-sm dark:shadow-[0_0_8px_rgba(56,189,248,0.15)] dark:border dark:border-sky-400/40" : "bg-slate-100 dark:bg-[#1a2835] text-slate-600 dark:text-[#5a8aaa] hover:bg-slate-200/70 dark:hover:bg-sky-500/8"
                       }`}>{s==="male"?"Male":"Female"}</button>
                   ))}
                 </div>
@@ -578,7 +578,7 @@ export default function App() {
                   {["imperial","metric"].map(u => (
                     <button key={u} onClick={() => { setBmiUnit(u); setBmiWt(""); setBmiHt(""); setBmiHtIn(""); }}
                       className={`flex-1 py-1.5 rounded text-[11px] font-bold text-center cursor-pointer transition-colors ${
-                        bmiUnit===u ? "bg-blue-600 text-white" : "bg-white dark:bg-[#0a1018] text-slate-500 dark:text-[#5a8aaa] border border-slate-200 dark:border-[#1e3040]"
+                        bmiUnit===u ? "bg-blue-600 dark:bg-sky-500/30 text-white dark:text-sky-300 dark:border dark:border-sky-400/40" : "bg-white dark:bg-[#0a1018] text-slate-500 dark:text-[#5a8aaa] border border-slate-200 dark:border-[#1e3040]"
                       }`}>{u==="imperial"?"lb / ft-in":"kg / cm"}</button>
                   ))}
                 </div>
@@ -619,7 +619,7 @@ export default function App() {
                       <span className="text-[11px] text-slate-400 dark:text-[#3d6580]"> kg/m²</span>
                     </div>
                     <button onClick={acceptBmi}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-blue-600 dark:bg-sky-500 hover:bg-blue-700 dark:hover:bg-sky-400 active:scale-95 transition-all cursor-pointer">
                       Accept
                     </button>
                   </div>
