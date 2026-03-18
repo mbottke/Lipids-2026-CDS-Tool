@@ -63,6 +63,27 @@ function riskCat(r) {
   return { label: "High", color: "#dc2626", bg: "#fef2f2", range: "≥10%" };
 }
 
+const VHR_CRITERIA = [
+  { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
+  { id:"multi", l:"Multiple ASCVD events", d:"≥2 major events (MI, stroke, symptomatic PAD)" },
+  { id:"pad", l:"Symptomatic PAD", d:"ABI ≤0.85 or prior revascularization/amputation" },
+  { id:"dm_ascvd", l:"ASCVD + Diabetes", d:"High-risk condition" },
+  { id:"ckd_ascvd", l:"ASCVD + CKD", d:"eGFR 15–59" },
+  { id:"heFH", l:"ASCVD + Heterozygous FH", d:"Familial hypercholesterolemia" },
+  { id:"persist", l:"Persistently elevated LDL", d:"LDL ≥100 despite max statin + ezetimibe" },
+];
+
+const DM_ENHANCERS = [
+  { id:"dur_t2", l:"DM duration ≥10y (T2)", d:"Type 2 diabetes ≥10 years" },
+  { id:"dur_t1", l:"DM duration ≥20y (T1)", d:"Type 1 diabetes ≥20 years" },
+  { id:"a1c", l:"A1c ≥8%", d:"Suboptimal glycemic control" },
+  { id:"alb", l:"Albuminuria ≥30 mg/g", d:"Urine albumin-to-creatinine ratio" },
+  { id:"egfr_dm", l:"eGFR <60", d:"Stage 3+ chronic kidney disease" },
+  { id:"retino", l:"Retinopathy", d:"Diabetic retinopathy" },
+  { id:"neuro", l:"Neuropathy", d:"Diabetic neuropathy" },
+  { id:"abi_dm", l:"ABI ≤0.9", d:"Peripheral arterial disease" },
+];
+
 const ENHANCERS = [
   { id:"fhx", l:"Family hx premature ASCVD", d:"1st-degree ♂ <55y or ♀ <65y" },
   { id:"lpa", l:"Elevated Lp(a)", d:"≥125 nmol/L (≥50 mg/dL)" },
@@ -171,9 +192,49 @@ export default function App() {
   const [lpa, setLpa] = useState("");
   const [apoB, setApoB] = useState("");
   const [ascvdLevel, setAscvdLevel] = useState("very_high");
+  const [vhr, setVhr] = useState({});
+  const [dmEnhs, setDmEnhs] = useState({});
+  const [copied, setCopied] = useState(false);
+
+  const resetPatient = useCallback(() => {
+    setAge(""); setSex("male"); setSbp(""); setBpTx(false);
+    setTotalC(""); setHdlC(""); setLdlC(""); setOnStatin(false);
+    setDm(false); setSmoking(false); setEgfr(""); setBmi("");
+    setTg(""); setEnhs({}); setCac(""); setCacPct("");
+    setLpa(""); setApoB(""); setAscvdLevel("very_high");
+    setVhr({}); setDmEnhs({}); setCopied(false);
+  }, []);
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
   const enhCount = useMemo(() => Object.values(enhs).filter(Boolean).length, [enhs]);
+  const copySummary = useCallback(() => {
+    if (!rec) return;
+    const parts = [];
+    if (tab === "primary" && age) parts.push(`${age}${sex === "male" ? "M" : "F"}`);
+    if (tab === "primary" && risk !== null) parts.push(`10yr ASCVD ${risk}% (${rc?.label})`);
+    if (tab === "secondary") parts.push(`ASCVD ${ascvdLevel === "very_high" ? "Very High Risk" : "Not Very High Risk"}`);
+    if (tab === "diabetes") parts.push("Diabetes pathway");
+    if (tab === "severe") parts.push("Severe hypercholesterolemia (LDL ≥190)");
+    if (ldlC) parts.push(`LDL ${ldlC}`);
+    if (nonHdlC !== null) parts.push(`non-HDL ${nonHdlC}`);
+    if (rec.g) parts.push(`Goal LDL <${rec.g.ldl}`);
+    parts.push(`Rec: ${rec.int === "high" ? "high" : rec.int === "moderate" ? "moderate" : rec.int}-intensity statin`);
+    if (rec.esc) parts.push("escalation pathway");
+    if (enhCount > 0 && tab === "primary") parts.push(`${enhCount} risk enhancer${enhCount > 1 ? "s" : ""}`);
+    if (cac !== "" && tab === "primary") parts.push(`CAC ${cac}`);
+    if (lpa !== "") parts.push(`Lp(a) ${lpa} nmol/L`);
+    if (apoB !== "") parts.push(`ApoB ${apoB} mg/dL`);
+    const text = parts.join(" · ");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [rec, tab, age, sex, risk, rc, ascvdLevel, ldlC, nonHdlC, enhCount, cac, lpa, apoB]);
+
+  const toggleVhr = useCallback(id => setVhr(p => ({...p,[id]:!p[id]})), []);
+  const vhrCount = useMemo(() => Object.values(vhr).filter(Boolean).length, [vhr]);
+  const toggleDmEnh = useCallback(id => setDmEnhs(p => ({...p,[id]:!p[id]})), []);
+  const dmEnhCount = useMemo(() => Object.values(dmEnhs).filter(Boolean).length, [dmEnhs]);
 
   const risk = useMemo(() => {
     if (tab !== "primary") return null;
@@ -181,6 +242,11 @@ export default function App() {
   }, [tab, age, sex, sbp, bpTx, totalC, hdlC, onStatin, dm, smoking, egfr, bmi]);
 
   const rc = useMemo(() => riskCat(risk), [risk]);
+
+  const nonHdlC = useMemo(() => {
+    if (totalC === "" || hdlC === "") return null;
+    return Number(totalC) - Number(hdlC);
+  }, [totalC, hdlC]);
 
   // ── Recommendation engine ──
   const rec = useMemo(() => {
@@ -248,8 +314,16 @@ export default function App() {
       <div className="shrink-0">
         <div className="bg-slate-900 text-white pwa-header-pad">
           <div className="max-w-lg mx-auto px-4 py-4">
-            <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
-            <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
+                <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
+              </div>
+              <button onClick={resetPatient}
+                className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
+                Reset
+              </button>
+            </div>
           </div>
         </div>
         <div className="header-accent" />
@@ -300,6 +374,12 @@ export default function App() {
               <Num label="BMI" unit="kg/m²" value={bmi} on={setBmi} min={18.5} max={60} step={0.1} ph="18.5–60" />
             </div>
             <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
+            {nonHdlC !== null && (
+              <div className="computed-field flex items-center justify-between mt-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Non-HDL-C <span className="normal-case font-medium">(calculated)</span></span>
+                <span className="text-sm font-black text-slate-700">{nonHdlC} <span className="text-[11px] font-normal text-slate-400">mg/dL</span></span>
+              </div>
+            )}
             <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
               <Toggle value={bpTx} on={setBpTx} label="BP meds" />
               <Toggle value={onStatin} on={setOnStatin} label="Statin" />
@@ -365,7 +445,7 @@ export default function App() {
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-2">
               {[
-                { id:"very_high", l:"Very High Risk", d:"Recent ACS, multiple events, ASCVD + ≥2 high-risk conditions", clr:"#dc2626", bg:"#fef2f2" },
+                { id:"very_high", l:"Very High Risk", d:vhrCount > 0 ? `${vhrCount} criteria selected` : "Tap to verify criteria below", clr:"#dc2626", bg:"#fef2f2" },
                 { id:"not_very_high", l:"Not Very High Risk", d:"Stable ASCVD without the above features", clr:"#ea580c", bg:"#fff7ed" },
               ].map(o => (
                 <button key={o.id} onClick={() => setAscvdLevel(o.id)}
@@ -376,6 +456,23 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {ascvdLevel === "very_high" && (
+              <div className="mt-3 space-y-1.5">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
+                {VHR_CRITERIA.map(e => (
+                  <button key={e.id} onClick={() => toggleVhr(e.id)}
+                    className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
+                      vhr[e.id] ? "bg-red-50 border-red-300" : "bg-white border-slate-200"
+                    }`}>
+                    <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
+                      vhr[e.id] ? "bg-red-500 border-red-500" : "border-slate-300"
+                    }`}>{vhr[e.id] && <span className="text-white text-xs font-bold">✓</span>}</div>
+                    <div><div className="text-sm font-bold text-slate-800 leading-tight">{e.l}</div>
+                    <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                  </button>
+                ))}
+              </div>
+            )}
           </Card>
         )}
 
@@ -387,7 +484,26 @@ export default function App() {
               <div className="text-[11px] text-violet-600 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
             </div>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
-            <p className="text-[11px] text-slate-400 mt-2"><span className="font-bold">DM-specific enhancers:</span> Duration ≥10y (T2) / ≥20y (T1), A1c ≥8%, albuminuria ≥30, eGFR &lt;60, retinopathy, neuropathy, ABI ≤0.9</p>
+            <div className="mt-3 space-y-1.5">
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">DM-Specific Risk Enhancers</div>
+              {DM_ENHANCERS.map(e => (
+                <button key={e.id} onClick={() => toggleDmEnh(e.id)}
+                  className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
+                    dmEnhs[e.id] ? "bg-violet-50 border-violet-300" : "bg-white border-slate-200"
+                  }`}>
+                  <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
+                    dmEnhs[e.id] ? "bg-violet-500 border-violet-500" : "border-slate-300"
+                  }`}>{dmEnhs[e.id] && <span className="text-white text-xs font-bold">✓</span>}</div>
+                  <div><div className="text-sm font-bold text-slate-800 leading-tight">{e.l}</div>
+                  <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                </button>
+              ))}
+            </div>
+            {dmEnhCount > 0 && (
+              <div className="mt-2 text-sm font-bold text-violet-700 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+                {dmEnhCount} DM enhancer{dmEnhCount>1?"s":""} — supports high-intensity statin
+              </div>
+            )}
           </Card>
         )}
 
@@ -429,6 +545,43 @@ export default function App() {
             <div className={`text-sm font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
           </div>
 
+          <button onClick={copySummary}
+            className={`w-full py-2.5 rounded-lg text-[12px] font-bold transition-all duration-200 cursor-pointer active:scale-[0.98] min-h-[44px] border ${
+              copied
+                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+            }`}>
+            {copied ? "✓ Copied to Clipboard" : "📋 Copy Summary to Note"}
+          </button>
+
+          {rec.g && ldlC !== "" && ldlC !== null && (
+            <div className={`rounded-xl p-3 flex items-center gap-3 border-2 ${
+              Number(ldlC) <= rec.g.ldl
+                ? "bg-emerald-50 border-emerald-300"
+                : "bg-red-50 border-red-300"
+            }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black shrink-0 ${
+                Number(ldlC) <= rec.g.ldl
+                  ? "bg-emerald-500 text-white"
+                  : "bg-red-500 text-white"
+              }`}>
+                {Number(ldlC) <= rec.g.ldl ? "✓" : "✗"}
+              </div>
+              <div>
+                <div className={`text-sm font-black ${
+                  Number(ldlC) <= rec.g.ldl ? "text-emerald-800" : "text-red-800"
+                }`}>
+                  {Number(ldlC) <= rec.g.ldl
+                    ? "At Goal"
+                    : `Not at Goal — LDL ${Number(ldlC) - rec.g.ldl} mg/dL above target`}
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5">
+                  Current LDL {ldlC} mg/dL · Goal &lt;{rec.g.ldl} mg/dL
+                </div>
+              </div>
+            </div>
+          )}
+
           {rec.g && <Card title="Treatment Goals" accent={rec.clr==="red"?"red":rec.clr==="amber"?"amber":"blue"}>
             <Goals ldl={rec.g.ldl} nonHdl={rec.g.nh} pct={rec.g.p} currentLdl={ldlC||null} />
           </Card>}
@@ -445,7 +598,7 @@ export default function App() {
                 <div key={s.s} className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i===0?"bg-emerald-500":"bg-blue-600"}`}>{s.s}</div>
-                    {i<arr.length-1 && <div className="w-0.5 flex-1 bg-slate-200 my-0.5"/>}
+                    {i<arr.length-1 && <div className="flex-1 my-0.5 ladder-connector"/>}
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
                     <div className="text-sm font-bold text-slate-800">{s.l}</div>

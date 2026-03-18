@@ -97,11 +97,27 @@ input[type="number"]::-webkit-inner-spin-button {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 12px rgba(59, 130, 246, 0.08);
 }
 
+/* Computed/derived value field */
+.computed-field {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Toggle knob tactile shadow */
 .toggle-knob {
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Treatment ladder gradient connector */
+.ladder-connector {
+  background: linear-gradient(180deg, #10b981, #3b82f6, #7c3aed);
+  width: 2px;
 }
 
 /* Tab content fade-in */
