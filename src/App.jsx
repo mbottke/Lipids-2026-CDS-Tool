@@ -204,6 +204,7 @@ export default function App() {
   const [apoB, setApoB] = useState("");
   const [ascvdLevel, setAscvdLevel] = useState("not_very_high");
   const [cacInfo, setCacInfo] = useState(false);
+  const [bioInfo, setBioInfo] = useState(false);
   const [metSyn, setMetSyn] = useState({});
   const [vhr, setVhr] = useState({});
   const [dmEnhs, setDmEnhs] = useState({});
@@ -214,7 +215,7 @@ export default function App() {
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB(""); setAscvdLevel("not_very_high");
-    setCacInfo(false); setVhr({}); setDmEnhs({}); setMetSyn({});
+    setCacInfo(false); setBioInfo(false); setVhr({}); setDmEnhs({}); setMetSyn({});
   }, []);
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
@@ -563,7 +564,36 @@ export default function App() {
 
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
-          <p className="text-[11px] text-slate-400 mb-2">Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-[11px] text-slate-400">Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
+            <button onClick={() => setBioInfo(p => !p)}
+              className="w-6 h-6 rounded-full border-2 border-slate-300 text-slate-400 text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-violet-400 hover:text-violet-500 active:scale-95 transition-colors">?</button>
+          </div>
+          {bioInfo && (
+            <div className="mb-3 p-3 bg-violet-50 border border-violet-200 rounded-lg text-[11px] text-slate-700 space-y-3">
+              <div>
+                <div className="font-bold text-violet-800 mb-1">Lp(a) — Lipoprotein(a)</div>
+                <div>A genetically determined, LDL-like particle that independently increases ASCVD risk. Levels are largely fixed from birth and not significantly lowered by statins.</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
+                  <span className="font-bold text-emerald-700">&lt;125 nmol/L</span><span>Normal — not a risk enhancer</span>
+                  <span className="font-bold text-amber-700">≥125 nmol/L</span><span>Elevated — ~1.4× ASCVD risk; qualifies as risk enhancer for statin decision</span>
+                  <span className="font-bold text-red-700">≥250 nmol/L</span><span>Very high — ~2× ASCVD risk; intensify LDL-C lowering aggressively</span>
+                </div>
+                <div className="text-slate-500 mt-1.5">Screen at least once as adult. Earlier if family history of premature ASCVD or FH. Values in mg/dL: divide nmol/L by ~2.5 (≥50 mg/dL ≈ elevated).</div>
+              </div>
+              <div className="border-t border-violet-200 pt-2">
+                <div className="font-bold text-violet-800 mb-1">ApoB — Apolipoprotein B</div>
+                <div>One ApoB molecule per atherogenic particle (LDL, VLDL, IDL, Lp(a)). ApoB counts total atherogenic particle number — more precise than LDL-C alone, especially when TG elevated or LDL-C is discordant with non-HDL-C.</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
+                  <span className="font-bold text-emerald-700">&lt;85 mg/dL</span><span>Optimal — at or below goal for all risk categories</span>
+                  <span className="font-bold text-blue-700">85–99</span><span>Borderline — at goal for intermediate risk; above for very high risk</span>
+                  <span className="font-bold text-amber-700">100–129</span><span>Elevated — above goal for most; consider intensification</span>
+                  <span className="font-bold text-red-700">≥130 mg/dL</span><span>Very high — significantly elevated atherogenic burden</span>
+                </div>
+                <div className="text-slate-500 mt-1.5">Check once LDL/Non-HDL-C is near goal to confirm atherogenic particle burden is also controlled. Particularly useful when TG ≥150 or diabetes present.</div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3 mb-2">
             <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} preserveCase />
             <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} preserveCase />
