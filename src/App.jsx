@@ -313,16 +313,37 @@ export default function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // ── Scroll-reactive header depth ──
+  // ── Scroll-reactive header depth + floating section label ──
   const scrollRef = useRef(null);
   const [scrollDepth, setScrollDepth] = useState(0);
+  const [floatingLabel, setFloatingLabel] = useState(null);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      const depth = Math.min(el.scrollTop / 120, 1); // 0→1 over first 120px
+      const depth = Math.min(el.scrollTop / 120, 1);
       setScrollDepth(depth);
+
+      // Find which card title has scrolled past the top
+      const cards = el.querySelectorAll('.card-shadow');
+      let currentLabel = null;
+      const scrollTop = el.scrollTop;
+      const containerTop = el.getBoundingClientRect().top;
+
+      for (const card of cards) {
+        const titleEl = card.querySelector('h3');
+        if (!titleEl) continue;
+        const cardRect = card.getBoundingClientRect();
+        const titleRect = titleEl.getBoundingClientRect();
+        const cardBottom = cardRect.bottom - containerTop;
+
+        // Title has scrolled past top AND card bottom is still below top
+        if (titleRect.top < containerTop && cardBottom > containerTop + 40) {
+          currentLabel = titleEl.textContent;
+        }
+      }
+      setFloatingLabel(currentLabel);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -527,7 +548,20 @@ export default function App() {
       </div>
 
       {/* ── Content ── */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-none">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-none relative">
+      {/* Floating section label */}
+      <div className={`sticky top-0 z-40 pointer-events-none transition-all duration-300 ${floatingLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}>
+        <div className="max-w-lg mx-auto px-4">
+          <div className="mx-1 px-3 py-1.5 rounded-b-lg text-[10px] font-black uppercase tracking-widest
+            bg-white/80 dark:bg-[#111a24]/90 backdrop-blur-md
+            text-slate-500 dark:text-[#5a9abb]
+            border border-t-0 border-slate-200/60 dark:border-[#1a2835]
+            shadow-sm dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]
+            inline-block">
+            {floatingLabel}
+          </div>
+        </div>
+      </div>
       <div key={tab} className="tab-content max-w-lg mx-auto px-4 py-5 space-y-4 pb-20">
 
         {/* PRIMARY */}
