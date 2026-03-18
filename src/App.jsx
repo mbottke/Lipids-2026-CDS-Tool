@@ -362,8 +362,8 @@ export default function App() {
             <div className="grid grid-cols-2 mt-3 px-2">
               <div className="flex justify-center"><Toggle value={bpTx} on={setBpTx} label="BP Med(s)" /></div>
               <div className="flex justify-center"><Toggle value={onStatin} on={setOnStatin} label="Statin" /></div>
-              <div className="flex justify-center"><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical diagnosis" /></div>
-              <div className="flex justify-center"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Cigarettes within 30 days" /></div>
+              <div className="flex justify-center"><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" /></div>
+              <div className="flex justify-center"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" /></div>
             </div>
 
             {/* Risk result */}
