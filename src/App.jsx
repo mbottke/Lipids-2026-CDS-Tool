@@ -278,39 +278,30 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
 
 export default function App() {
   // ── Theme ──
-  // Theme: 0 = full light, 100 = full dark, intermediate = graduated overlay
-  const [darkLevel, setDarkLevel] = useState(() => {
+  const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('lipid2026-theme');
-      if (stored !== null) return Number(stored);
-      // Default to light (0) — system dark preference gets 100
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 100 : 0;
+      if (stored !== null) return stored === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    return 0;
+    return false;
   });
-
-  const darkMode = darkLevel >= 50;
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('lipid2026-theme', darkLevel);
-  }, [darkLevel, darkMode]);
+    localStorage.setItem('lipid2026-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e) => {
       if (localStorage.getItem('lipid2026-theme') === null) {
-        setDarkLevel(e.matches ? 100 : 0);
+        setDarkMode(e.matches);
       }
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
-
-  // Overlay opacity for graduated dimming (0-49 in light mode, 50-100 in dark mode)
-  const overlayOpacity = darkMode
-    ? 0 // dark mode handles itself via Tailwind dark: classes
-    : darkLevel / 100 * 0.6; // light mode: slider adds a dim overlay up to 60% at level 49
 
   // ── State ──
   const [tab, setTab] = useState("primary");
@@ -465,11 +456,7 @@ export default function App() {
     violet:"text-violet-800 dark:text-sky-300", blue:"text-blue-800 dark:text-sky-300" };
 
   return (
-    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#0c1117] dark:to-[#080e14] relative">
-      {/* Graduated dimming overlay for intermediate slider positions */}
-      {overlayOpacity > 0 && (
-        <div className="absolute inset-0 bg-slate-900 pointer-events-none z-50 transition-opacity duration-300" style={{opacity: overlayOpacity}} />
-      )}
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#0c1117] dark:to-[#080e14]">
 
       {/* ── Header ── */}
       <div className="shrink-0">
@@ -1042,24 +1029,36 @@ export default function App() {
           </a>
         </div>
 
-        {/* Theme slider */}
-        <div className="mt-6 mb-8 px-8">
-          <div className="relative">
-            <div className="h-1.5 rounded-full overflow-hidden" style={{background:"linear-gradient(90deg, #f8fafc, #e2e8f0 20%, #94a3b8 40%, #475569 55%, #334155 70%, #1e293b 85%, #0f172a)"}}>
+        {/* Theme toggle */}
+        <div className="mt-6 mb-8 px-10">
+          <button onClick={() => setDarkMode(d => !d)}
+            className="w-full h-8 rounded-full relative cursor-pointer active:scale-[0.98] transition-transform duration-150 theme-toggle-track"
+            style={{background: darkMode
+              ? "linear-gradient(90deg, #1a2835, #0c1117 45%, #0c1117 55%, #1e3040)"
+              : "linear-gradient(90deg, #e2e8f0, #f8fafc 45%, #f8fafc 55%, #e2e8f0)",
+              border: darkMode ? "1px solid #1e3040" : "1px solid #cbd5e1"
+            }}>
+            <div className="absolute inset-y-1 left-1 right-1 flex items-center justify-between px-4">
+              <span className={`text-[9px] font-bold uppercase tracking-widest transition-all duration-500 ${darkMode ? "text-[#3d6580]" : "text-slate-600"}`}>Light</span>
+              <span className={`text-[9px] font-bold uppercase tracking-widest transition-all duration-500 ${darkMode ? "text-[#5a8aaa]" : "text-slate-400"}`}>Dark</span>
             </div>
-            <input
-              type="range" min="0" max="100" step="1"
-              value={darkLevel}
-              onChange={e => setDarkLevel(Number(e.target.value))}
-              className="theme-slider absolute inset-0 w-full cursor-pointer"
-              style={{appearance:"none", WebkitAppearance:"none", background:"transparent", height:"24px", top:"-10px"}}
-            />
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[9px] text-slate-400 dark:text-[#3d6580] uppercase tracking-widest">Light</span>
-            <span className="text-[9px] text-slate-300 dark:text-[#3d6580] uppercase tracking-widest">Appearance</span>
-            <span className="text-[9px] text-slate-400 dark:text-[#3d6580] uppercase tracking-widest">Dark</span>
-          </div>
+            <div className={`absolute top-1 w-12 h-6 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              darkMode ? "right-1 left-auto" : "left-1"
+            }`}
+              style={{
+                background: darkMode
+                  ? "linear-gradient(135deg, #111a24, #1a2835)"
+                  : "linear-gradient(135deg, #ffffff, #f1f5f9)",
+                boxShadow: darkMode
+                  ? "0 2px 8px rgba(0,0,0,0.4), 0 0 12px rgba(56,189,248,0.15), inset 0 1px 0 rgba(255,255,255,0.05)"
+                  : "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)",
+                border: darkMode ? "1px solid #38bdf8" : "1px solid #94a3b8"
+              }}>
+              <div className="w-full h-full flex items-center justify-center text-[11px]">
+                {darkMode ? "☽" : "☀"}
+              </div>
+            </div>
+          </button>
         </div>
       </div>
       </div>
