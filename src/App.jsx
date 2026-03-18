@@ -90,7 +90,7 @@ const ENHANCERS = [
   { id:"tg", l:"Persistently Elevated Triglycerides", d:"≥175 mg/dL" },
   { id:"hscrp", l:"Elevated hs-CRP", d:"≥2.0 mg/L" },
   { id:"ckd", l:"Chronic Kidney Disease", d:"eGFR 15–59 or ACR ≥30" },
-  { id:"inflam", l:"Chronic Inflammatory Condition", d:"RA, psoriasis, lupus, HIV" },
+  { id:"inflam", l:"Chronic Inflammatory Condition", d:"RA, Pso/PsA, SLE, HIV" },
   { id:"metabolic", l:"Metabolic Syndrome", d:"≥3 of 5 criteria" },
   { id:"women", l:"Preeclampsia / Premature Menopause", d:"Women-specific" },
   { id:"sa", l:"South Asian Ancestry", d:"Independent risk enhancer" },
@@ -360,7 +360,7 @@ export default function App() {
               </div>
             )}
             <div className="grid grid-cols-2 gap-y-1 mt-3 justify-items-center">
-              <Toggle value={bpTx} on={setBpTx} label="Antihypertensive(s)" />
+              <Toggle value={bpTx} on={setBpTx} label="BP Med(s)" />
               <Toggle value={onStatin} on={setOnStatin} label="Statin" />
               <Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical diagnosis" />
               <Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Cigarettes within 30 days" />
