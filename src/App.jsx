@@ -653,11 +653,11 @@ export default function App() {
           <Card title="Treatment Ladder" accent="blue">
             <div className="space-y-0">
               {[
-                { s:1, l:"Lifestyle Optimization", d:"Diet, exercise, weight management, smoking cessation, sleep optimization", show:true },
-                { s:2, l:"Maximally Tolerated Statin", d:rec.int==="high"?"high":"moderate", show:rec.int!=="none"&&rec.int!=="lifestyle", isStatin:true },
-                { s:3, l:"Add Ezetimibe", d:"10 mg — additional 15–20% LDL reduction", show:rec.esc },
-                { s:4, l:"Bempedoic Acid / PCSK9i", d:"Bempedoic ~18% ↓; Evolocumab/alirocumab ~60% further ↓", show:rec.esc },
-                { s:5, l:"Consider Inclisiran", d:"siRNA — twice-yearly after loading; for residual LDL elevation", show:rec.esc&&rec.g?.ldl<=55 },
+                { s:1, l:"Lifestyle Optimization", show:true },
+                { s:2, l:"Maximally Tolerated Statin", show:rec.int!=="none"&&rec.int!=="lifestyle", isStatin:true },
+                { s:3, l:"Add Ezetimibe", show:rec.esc },
+                { s:4, l:"Bempedoic Acid / PCSK9i", show:rec.esc },
+                { s:5, l:"Consider Inclisiran", show:rec.esc&&rec.g?.ldl<=55 },
               ].filter(s=>s.show).map((s,i,arr) => (
                 <div key={s.s} className="flex gap-3">
                   <div className="flex flex-col items-center">
@@ -666,11 +666,14 @@ export default function App() {
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
                     <div className="text-[14px] font-bold text-slate-800">{s.l}</div>
-                    {s.isStatin ? (
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        <div className="font-bold text-slate-600 mt-0.5">{s.d === "high" ? "High-Intensity" : "Moderate-Intensity"} <span className="font-normal text-slate-400">({s.d === "high" ? "≥50%" : "30–49%"} LDL-C reduction)</span></div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      {s.s === 1 && (
+                        <div>Diet, exercise, weight management, smoking cessation, sleep optimization</div>
+                      )}
+                      {s.isStatin && (<>
+                        <div className="font-bold text-slate-600">{rec.int==="high" ? "High-Intensity" : "Moderate-Intensity"} <span className="font-normal text-slate-400">({rec.int==="high" ? "≥50%" : "30–49%"} LDL-C reduction)</span></div>
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
-                          {s.d === "high" ? (<>
+                          {rec.int==="high" ? (<>
                             <div>Atorvastatin 40–80 mg</div>
                             <div>Rosuvastatin 20–40 mg</div>
                           </>) : (<>
@@ -679,10 +682,26 @@ export default function App() {
                             <div>Simvastatin 20–40 mg</div>
                           </>)}
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-[11px] text-slate-500 mt-0.5">{s.d}</div>
-                    )}
+                      </>)}
+                      {s.s === 3 && (
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
+                          <div>Ezetimibe 10 mg daily <span className="text-slate-400">(additional 15–20% LDL-C reduction)</span></div>
+                        </div>
+                      )}
+                      {s.s === 4 && (
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
+                          <div>Bempedoic acid 180 mg daily <span className="text-slate-400">(~18% LDL-C reduction)</span></div>
+                          <div>Evolocumab 140 mg q2wk or 420 mg monthly <span className="text-slate-400">(~60% LDL-C reduction)</span></div>
+                          <div>Alirocumab 75–150 mg q2wk <span className="text-slate-400">(~50–60% LDL-C reduction)</span></div>
+                        </div>
+                      )}
+                      {s.s === 5 && (
+                        <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200">
+                          <div>Inclisiran 284 mg SC <span className="text-slate-400">(~50% LDL-C reduction)</span></div>
+                          <div className="text-slate-400">Day 0, Day 90, then q6 months · siRNA for residual LDL elevation</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
