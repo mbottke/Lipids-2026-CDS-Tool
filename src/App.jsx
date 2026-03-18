@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PREVENT-ASCVD 10-Year Base Model Coefficients
@@ -303,6 +303,21 @@ export default function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // ── Scroll-reactive header depth ──
+  const scrollRef = useRef(null);
+  const [scrollDepth, setScrollDepth] = useState(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const depth = Math.min(el.scrollTop / 120, 1); // 0→1 over first 120px
+      setScrollDepth(depth);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
   // ── State ──
   const [tab, setTab] = useState("primary");
   const [age, setAge] = useState("");
@@ -461,7 +476,13 @@ export default function App() {
     <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#0c1117] dark:to-[#080e14]">
 
       {/* ── Header ── */}
-      <div className="shrink-0">
+      <div className="shrink-0 transition-shadow duration-300" style={{
+        boxShadow: scrollDepth > 0
+          ? darkMode
+            ? `0 4px ${12 + scrollDepth * 20}px rgba(0,0,0,${0.3 + scrollDepth * 0.3}), 0 0 ${scrollDepth * 15}px rgba(56,189,248,${scrollDepth * 0.06})`
+            : `0 4px ${8 + scrollDepth * 16}px rgba(0,0,0,${scrollDepth * 0.12})`
+          : "none"
+      }}>
         <div className="bg-slate-900 text-white pwa-header-pad">
           <div className="max-w-lg mx-auto px-4 py-4">
             <div className="flex items-start justify-between">
@@ -496,7 +517,7 @@ export default function App() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto overscroll-none">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-none">
       <div key={tab} className="tab-content max-w-lg mx-auto px-4 py-5 space-y-4 pb-20">
 
         {/* PRIMARY */}
