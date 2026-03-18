@@ -558,7 +558,7 @@ export default function App() {
               <div className="flex-1">
                 <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
               </div>
-              <button onClick={() => setBmiCalc(true)}
+              <button onClick={() => setBmiCalc(p => !p)}
                 className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-sky-500/10 border border-blue-200 dark:border-sky-500/30 hover:bg-blue-100 dark:hover:bg-sky-500/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap h-[50px]">
                 BMI Calc
               </button>
