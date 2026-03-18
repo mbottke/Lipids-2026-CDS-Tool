@@ -65,37 +65,37 @@ function riskCat(r) {
 
 const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
-  { id:"multi", l:"Multiple ASCVD events", d:"≥2 major events (MI, stroke, symptomatic PAD)" },
-  { id:"pad", l:"Symptomatic PAD", d:"ABI ≤0.85 or prior revascularization/amputation" },
+  { id:"multi", l:"Multiple ASCVD Events", d:"≥2 major events (MI, stroke, symptomatic PAD)" },
+  { id:"pad", l:"Symptomatic PAD", d:"ABI (ankle-brachial index) ≤0.85 or prior revascularization/amputation" },
   { id:"dm_ascvd", l:"ASCVD + Diabetes", d:"High-risk condition" },
   { id:"ckd_ascvd", l:"ASCVD + CKD", d:"eGFR 15–59" },
   { id:"heFH", l:"ASCVD + Heterozygous FH", d:"Familial hypercholesterolemia" },
-  { id:"persist", l:"Persistently elevated LDL", d:"LDL ≥100 despite max statin + ezetimibe" },
+  { id:"persist", l:"Persistently Elevated LDL", d:"LDL ≥100 despite max statin + ezetimibe" },
 ];
 
 const DM_ENHANCERS = [
-  { id:"dur_t2", l:"DM duration ≥10y (T2)", d:"Type 2 diabetes ≥10 years" },
-  { id:"dur_t1", l:"DM duration ≥20y (T1)", d:"Type 1 diabetes ≥20 years" },
+  { id:"dur_t2", l:"DM Duration ≥10y (T2)", d:"Type 2 diabetes ≥10 years" },
+  { id:"dur_t1", l:"DM Duration ≥20y (T1)", d:"Type 1 diabetes ≥20 years" },
   { id:"a1c", l:"A1c ≥8%", d:"Suboptimal glycemic control" },
   { id:"alb", l:"Albuminuria ≥30 mg/g", d:"Urine albumin-to-creatinine ratio" },
   { id:"egfr_dm", l:"eGFR <60", d:"Stage 3+ chronic kidney disease" },
   { id:"retino", l:"Retinopathy", d:"Diabetic retinopathy" },
   { id:"neuro", l:"Neuropathy", d:"Diabetic neuropathy" },
-  { id:"abi_dm", l:"ABI ≤0.9", d:"Peripheral arterial disease" },
+  { id:"abi_dm", l:"ABI (Ankle-Brachial Index) ≤0.9", d:"Peripheral arterial disease" },
 ];
 
 const ENHANCERS = [
-  { id:"fhx", l:"Family hx premature ASCVD", d:"1st-degree ♂ <55y or ♀ <65y" },
+  { id:"fhx", l:"Family History of Premature ASCVD", d:"1st-degree ♂ <55y or ♀ <65y" },
   { id:"lpa", l:"Elevated Lp(a)", d:"≥125 nmol/L (≥50 mg/dL)" },
-  { id:"tg", l:"Persistently elevated TG", d:"≥175 mg/dL" },
+  { id:"tg", l:"Persistently Elevated Triglycerides", d:"≥175 mg/dL" },
   { id:"hscrp", l:"Elevated hs-CRP", d:"≥2.0 mg/L" },
-  { id:"ckd", l:"Chronic kidney disease", d:"eGFR 15–59 or ACR ≥30" },
-  { id:"inflam", l:"Chronic inflammatory condition", d:"RA, psoriasis, lupus, HIV" },
-  { id:"metabolic", l:"Metabolic syndrome", d:"≥3 of 5 criteria" },
-  { id:"women", l:"Preeclampsia / premature menopause", d:"Women-specific" },
-  { id:"sa", l:"South Asian ancestry", d:"Independent risk enhancer" },
+  { id:"ckd", l:"Chronic Kidney Disease", d:"eGFR 15–59 or ACR ≥30" },
+  { id:"inflam", l:"Chronic Inflammatory Condition", d:"RA, psoriasis, lupus, HIV" },
+  { id:"metabolic", l:"Metabolic Syndrome", d:"≥3 of 5 criteria" },
+  { id:"women", l:"Preeclampsia / Premature Menopause", d:"Women-specific" },
+  { id:"sa", l:"South Asian Ancestry", d:"Independent risk enhancer" },
   { id:"apob", l:"Elevated ApoB", d:"≥130 mg/dL" },
-  { id:"abi", l:"Abnormal ABI", d:"≤0.9" },
+  { id:"abi", l:"Abnormal ABI (Ankle-Brachial Index)", d:"≤0.9" },
 ];
 
 // ── UI Components (touch-optimized) ─────────────────────────────────────────
@@ -112,10 +112,10 @@ function Toggle({ value, on, label }) {
   );
 }
 
-function Num({ label, unit, value, on, min, max, step=1, ph }) {
+function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
+      <label className={`text-[11px] font-bold text-slate-400 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
       <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white">
         <input type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
@@ -380,8 +380,8 @@ export default function App() {
                 <span className="text-sm font-black text-slate-700">{nonHdlC} <span className="text-[11px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
-            <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
-              <Toggle value={bpTx} on={setBpTx} label="BP meds" />
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
+              <Toggle value={bpTx} on={setBpTx} label="BP Meds" />
               <Toggle value={onStatin} on={setOnStatin} label="Statin" />
               <Toggle value={dm} on={setDm} label="Diabetes" />
               <Toggle value={smoking} on={setSmoking} label="Smoker" />
@@ -522,8 +522,8 @@ export default function App() {
         <Card title="Advanced Biomarkers" accent="violet">
           <p className="text-[11px] text-slate-400 mb-2">Lp(a): at least once. ApoB: once LDL/non-HDL near goal.</p>
           <div className="grid grid-cols-2 gap-3 mb-2">
-            <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} ph="Screen" />
-            <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} ph="Near goal" />
+            <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} ph="Screen" preserveCase />
+            <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} ph="Near goal" preserveCase />
           </div>
           {lpaNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border mb-1.5 ${
