@@ -176,11 +176,11 @@ function StatinInfo({ onClose }) {
           {myopathyScale.map(s => (
             <div key={s.name} className="flex-1 text-center">
               <div className={`mx-auto rounded-sm ${dots[s.risk]}`} style={{height: s.risk * 8 + 4, width:"100%", maxWidth:28}} />
-              <div className="text-[9px] text-slate-500 dark:text-[#5a8aaa] mt-1 leading-tight">{s.name.slice(0,4)}</div>
+              <div className="text-[9px] text-slate-500 dark:text-[#b0c8d8] mt-1 leading-tight">{s.name.slice(0,4)}</div>
             </div>
           ))}
         </div>
-        <div className="flex justify-between mt-1 text-[9px] text-slate-400 dark:text-[#3d6580]">
+        <div className="flex justify-between mt-1 text-[9px] text-slate-400 dark:text-[#b0c8d8]">
           <span>← Lower risk</span><span>Higher risk →</span>
         </div>
       </div>
