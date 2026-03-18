@@ -703,13 +703,13 @@ export default function App() {
 
         {/* SECONDARY */}
         {tab === "secondary" && (
-          <Card title="Clinical ASCVD — Risk Level" accent="red">
+          <Card title="Clinical ASCVD — Risk Level" accent={vhrCount > 0 ? "red" : "amber"}>
             <p className="text-[11px] text-slate-400 dark:text-[#3d6580] mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-2">
               {[
                 { id:"very_high", l:"Very High Risk", d:vhrCount > 0 ? `${vhrCount} criteria met` : "Select criteria below to classify", clr:"#dc2626", bg:"#fef2f2" },
-                { id:"not_very_high", l:"Not Very High Risk", d:"Stable ASCVD without features below", clr:"#ea580c", bg:"#fff7ed" },
+                { id:"not_very_high", l:"Not Very High Risk", d:"Stable ASCVD without features below", clr:"#d97706", bg:"#fffbeb" },
               ].map(o => (
                 <button key={o.id} onClick={() => setAscvdLevel(o.id)}
                   className="w-full text-left p-3 rounded-lg border-2 transition-colors cursor-pointer active:opacity-70 min-h-[56px]"
