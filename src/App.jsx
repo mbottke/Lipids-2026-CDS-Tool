@@ -359,11 +359,11 @@ export default function App() {
                 <span className="text-[15px] font-black text-slate-700">{nonHdlC} <span className="text-[12px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-y-1 mt-3 justify-items-center">
-              <Toggle value={bpTx} on={setBpTx} label="BP Med(s)" />
-              <Toggle value={onStatin} on={setOnStatin} label="Statin" />
-              <Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical diagnosis" />
-              <Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Cigarettes within 30 days" />
+            <div className="grid grid-cols-2 mt-3 px-2">
+              <div className="flex justify-center"><Toggle value={bpTx} on={setBpTx} label="BP Med(s)" /></div>
+              <div className="flex justify-center"><Toggle value={onStatin} on={setOnStatin} label="Statin" /></div>
+              <div className="flex justify-center"><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical diagnosis" /></div>
+              <div className="flex justify-center"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Cigarettes within 30 days" /></div>
             </div>
 
             {/* Risk result */}
