@@ -1,6 +1,6 @@
-# 2026 ACC/AHA Lipid Management Calculator
+# 2026 ACC/AHA Lipid Management CDS Application
 
-**Comprehensive clinical decision support for the 2026 ACC/AHA Dyslipidemia Guideline with embedded PREVENT-ASCVD risk estimator.**
+**Clinical decision support for the 2026 ACC/AHA Dyslipidemia Guideline with embedded PREVENT-ASCVD risk estimator.**
 
 Built for physician use at the point of care. Mobile-first PWA — add to home screen for native-app experience.
 
@@ -15,31 +15,6 @@ Built for physician use at the point of care. Mobile-first PWA — add to home s
 
 React 19 · Vite 6 · Tailwind CSS 3 · vite-plugin-pwa (Workbox)
 
-## Deploy with Claude Code
-
-```bash
-# 1. Clone or copy this directory
-cd lipid2026
-
-# 2. Install dependencies
-npm install
-
-# 3. Test locally
-npm run dev
-# → opens at http://localhost:5173
-
-# 4. Deploy to Vercel
-npx vercel
-# Follow prompts. Done.
-# Your URL: https://lipid2026.vercel.app (or custom)
-```
-
-## Deploy with Vercel CLI (if already set up)
-
-```bash
-npx vercel --prod
-```
-
 ## Add to Home Screen (for your co-residents)
 
 ### iPhone
@@ -51,10 +26,6 @@ npx vercel --prod
 1. Open the URL in Chrome
 2. Tap ⋮ → "Add to Home Screen" (or the install banner)
 3. Launches full-screen like a native app
-
-## Share
-
-Generate a QR code at [qr.io](https://qr.io) or any QR generator pointing to your deployed URL. Post in the residents' workroom.
 
 ## References
 
