@@ -151,7 +151,7 @@ function StatinInfo({ onClose }) {
 
       {intensities.map(tier => (
         <div key={tier.level} className={`rounded-lg border p-2.5 ${iBg[tier.color]}`}>
-          <div className={`font-bold ${iClr[tier.color]} mb-1`}>{tier.level} <span className="font-normal text-slate-400 dark:text-[#3d6580]">({tier.ldl} LDL-C reduction)</span></div>
+          <div className={`font-bold ${iClr[tier.color]} mb-1`}>{tier.level} <span className="font-normal text-slate-400 dark:text-[#b0c8d8]">({tier.ldl} LDL-C reduction)</span></div>
           <div className="space-y-1">
             {tier.drugs.map(d => (
               <div key={d.name+d.dose} className="bg-white/70 dark:bg-white/[0.04] rounded p-1.5 border border-slate-100 dark:border-white/[0.08]">
