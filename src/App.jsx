@@ -155,7 +155,7 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
       </div>
       <div className="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
         <div className="text-2xl font-black text-violet-700 font-mono tabular-nums">&lt;{nonHdl}</div>
-        <div className="text-[12px] text-violet-500 font-bold mt-0.5">non-HDL</div>
+        <div className="text-[12px] text-violet-500 font-bold mt-0.5">Non-HDL</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
         <div className="text-2xl font-black text-slate-700 font-mono tabular-nums">≥{pct}%</div>
@@ -555,7 +555,7 @@ export default function App() {
           <Card title="Treatment Ladder" accent="blue">
             <div className="space-y-0">
               {[
-                { s:1, l:"Lifestyle Optimization", d:"Diet, exercise, weight, smoking cessation, sleep", show:true },
+                { s:1, l:"Lifestyle Optimization", d:"Diet, exercise, weight management, smoking cessation, sleep optimization", show:true },
                 { s:2, l:"Maximally Tolerated Statin", d:rec.int==="high"?"High-intensity: Atorva 40–80 or Rosuva 20–40 (≥50% LDL ↓)":"Moderate-intensity: Atorva 10–20, Rosuva 5–10, Simva 20–40 (30–49% ↓)", show:rec.int!=="none"&&rec.int!=="lifestyle" },
                 { s:3, l:"Add Ezetimibe", d:"10 mg — additional 15–20% LDL reduction", show:rec.esc },
                 { s:4, l:"Bempedoic Acid / PCSK9i", d:"Bempedoic ~18% ↓; Evolocumab/alirocumab ~60% further ↓", show:rec.esc },
