@@ -700,18 +700,47 @@ export default function App() {
 
         {/* MONITORING */}
         <Card title="Monitoring" accent="emerald">
-          <div className="space-y-2 text-[11px]">
-            {[
-              { h:"After LLT Start", b:"Fasting lipids at 4–12 wk, then q3–12 mo until at goal, then annually." },
-              { h:"Safety", b:"Hepatic panel at baseline. CK only if symptomatic. Monitor for new-onset DM with high-intensity statin." },
-              { h:"Screening", b:"Lipid panel at ages 9–11, 19–21, then ≥q5y. Lp(a) at least once in adulthood." },
-              { h:"Refer", b:"Suspected FH, refractory LDL, TG ≥500 despite lifestyle, complex interactions, pregnancy planning." },
-            ].map(m => (
-              <div key={m.h} className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <span className="font-bold text-slate-700">{m.h}: </span>
-                <span className="text-slate-600">{m.b}</span>
+          <div className="space-y-2.5 text-[11px]">
+
+            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <div className="font-bold text-slate-700 mb-1.5">After LLT Start</div>
+              <div className="space-y-1 text-slate-600">
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">4–12 wk</span><span>Fasting lipid panel</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">q3–12 mo</span><span>Repeat until at goal</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Annually</span><span>Once at goal</span></div>
               </div>
-            ))}
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <div className="font-bold text-slate-700 mb-1.5">Safety</div>
+              <div className="space-y-0.5 text-slate-600">
+                <div>• Hepatic panel at baseline</div>
+                <div>• CK only if symptomatic</div>
+                <div>• Monitor for new-onset DM with high-intensity statin</div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <div className="font-bold text-slate-700 mb-1.5">Screening</div>
+              <div className="space-y-1 text-slate-600">
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 9–11</span><span>Initial lipid panel</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 19–21</span><span>Repeat lipid panel</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Then ≥q5y</span><span>Periodic rescreening</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Lp(a)</span><span>At least once as adult</span></div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <div className="font-bold text-slate-700 mb-1.5">Refer to Lipid Specialist</div>
+              <div className="space-y-0.5 text-slate-600">
+                <div>• Suspected familial hypercholesterolemia</div>
+                <div>• Refractory LDL despite max therapy</div>
+                <div>• TG ≥500 despite lifestyle modification</div>
+                <div>• Complex drug interactions</div>
+                <div>• Pregnancy planning on LLT</div>
+              </div>
+            </div>
+
           </div>
         </Card>
 
