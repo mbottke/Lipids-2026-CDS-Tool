@@ -100,14 +100,17 @@ const ENHANCERS = [
 
 // ── UI Components (touch-optimized) ─────────────────────────────────────────
 
-function Toggle({ value, on, label }) {
+function Toggle({ value, on, label, sub }) {
   return (
     <button onClick={() => on(!value)} type="button"
       className="flex items-center gap-2.5 py-2 active:opacity-70 cursor-pointer min-h-[44px]">
       <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600" : "bg-slate-300"}`}>
         <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white toggle-knob transition-transform duration-200 ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
       </div>
-      <span className="text-[15px] text-slate-700">{label}</span>
+      <div className="leading-tight">
+        <span className="text-[15px] text-slate-700">{label}</span>
+        {sub && <div className="text-[11px] text-slate-400">{sub}</div>}
+      </div>
     </button>
   );
 }
@@ -356,11 +359,11 @@ export default function App() {
                 <span className="text-[15px] font-black text-slate-700">{nonHdlC} <span className="text-[12px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
-              <Toggle value={bpTx} on={setBpTx} label="BP Meds" />
+            <div className="grid grid-cols-2 gap-y-1 mt-3 justify-items-center">
+              <Toggle value={bpTx} on={setBpTx} label="Antihypertensive(s)" />
               <Toggle value={onStatin} on={setOnStatin} label="Statin" />
-              <Toggle value={dm} on={setDm} label="Diabetes" />
-              <Toggle value={smoking} on={setSmoking} label="Smoker" />
+              <Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical diagnosis" />
+              <Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Cigarettes within 30 days" />
             </div>
 
             {/* Risk result */}
