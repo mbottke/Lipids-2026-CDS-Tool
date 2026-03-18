@@ -74,11 +74,11 @@ const VHR_CRITERIA = [
 ];
 
 const DM_ENHANCERS = [
-  { id:"dur_t2", l:"DM Duration ≥10y (T2)", d:"Type 2 diabetes ≥10 years" },
-  { id:"dur_t1", l:"DM Duration ≥20y (T1)", d:"Type 1 diabetes ≥20 years" },
-  { id:"a1c", l:"A1c ≥8%", d:"Suboptimal glycemic control" },
-  { id:"alb", l:"Albuminuria ≥30 mg/g", d:"Urine albumin-to-creatinine ratio" },
-  { id:"egfr_dm", l:"eGFR <60", d:"Stage 3+ chronic kidney disease" },
+  { id:"dur_t2", l:"Type 2 DM ≥10 Years", d:"Longer duration increases CVD risk" },
+  { id:"dur_t1", l:"Type 1 DM ≥20 Years", d:"Longer duration increases CVD risk" },
+  { id:"a1c", l:"A1c ≥8%", d:"Average glucose ≥183 mg/dL" },
+  { id:"alb", l:"Albuminuria ≥30 mg/g", d:"Urine albumin-to-creatinine ratio (uACR)" },
+  { id:"egfr_dm", l:"eGFR <60", d:"Stage 3+ CKD" },
   { id:"retino", l:"Retinopathy", d:"Diabetic retinopathy" },
   { id:"neuro", l:"Neuropathy", d:"Diabetic neuropathy" },
   { id:"abi_dm", l:"ABI (Ankle-Brachial Index) ≤0.9", d:"Peripheral arterial disease" },
@@ -724,7 +724,7 @@ export default function App() {
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <div className="font-bold text-slate-700 mb-1.5">After LLT Start</div>
               <div className="space-y-1 text-slate-600">
-                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">4–12 wk</span><span>Fasting lipid panel</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">4–12 wk</span><span>Fasting <b>lipid panel</b></span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">q3–12 mo</span><span>Repeat until at goal</span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Annually</span><span>Once at goal</span></div>
               </div>
@@ -733,17 +733,17 @@ export default function App() {
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <div className="font-bold text-slate-700 mb-1.5">Safety</div>
               <div className="space-y-0.5 text-slate-600">
-                <div>• Hepatic panel at baseline</div>
-                <div>• CK only if symptomatic</div>
-                <div>• Monitor for new-onset DM with high-intensity statin</div>
+                <div>• <b>Hepatic panel</b> at baseline</div>
+                <div>• <b>CK</b> only if symptomatic</div>
+                <div>• Monitor for new-onset DM with high-intensity <b>statin</b></div>
               </div>
             </div>
 
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <div className="font-bold text-slate-700 mb-1.5">Screening</div>
               <div className="space-y-1 text-slate-600">
-                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 9–11</span><span>Initial lipid panel</span></div>
-                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 19–21</span><span>Repeat lipid panel</span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 9–11</span><span>Initial <b>lipid panel</b></span></div>
+                <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Ages 19–21</span><span>Repeat <b>lipid panel</b></span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Then ≥q5y</span><span>Periodic rescreening</span></div>
                 <div className="flex gap-2"><span className="text-emerald-500 font-bold shrink-0">Lp(a)</span><span>At least once as adult</span></div>
               </div>
