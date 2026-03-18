@@ -278,30 +278,39 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
 
 export default function App() {
   // ── Theme ──
-  const [darkMode, setDarkMode] = useState(() => {
+  // Theme: 0 = full light, 100 = full dark, intermediate = graduated overlay
+  const [darkLevel, setDarkLevel] = useState(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('lipid2026-dark');
-      if (stored !== null) return stored === 'true';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const stored = localStorage.getItem('lipid2026-theme');
+      if (stored !== null) return Number(stored);
+      // Default to light (0) — system dark preference gets 100
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 100 : 0;
     }
-    return false;
+    return 0;
   });
+
+  const darkMode = darkLevel >= 50;
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('lipid2026-dark', darkMode);
-  }, [darkMode]);
+    localStorage.setItem('lipid2026-theme', darkLevel);
+  }, [darkLevel, darkMode]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e) => {
-      if (localStorage.getItem('lipid2026-dark') === null) {
-        setDarkMode(e.matches);
+      if (localStorage.getItem('lipid2026-theme') === null) {
+        setDarkLevel(e.matches ? 100 : 0);
       }
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
+
+  // Overlay opacity for graduated dimming (0-49 in light mode, 50-100 in dark mode)
+  const overlayOpacity = darkMode
+    ? 0 // dark mode handles itself via Tailwind dark: classes
+    : darkLevel / 100 * 0.6; // light mode: slider adds a dim overlay up to 60% at level 49
 
   // ── State ──
   const [tab, setTab] = useState("primary");
@@ -456,7 +465,11 @@ export default function App() {
     violet:"text-violet-800 dark:text-violet-300", blue:"text-blue-800 dark:text-blue-300" };
 
   return (
-    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 relative">
+      {/* Graduated dimming overlay for intermediate slider positions */}
+      {overlayOpacity > 0 && (
+        <div className="absolute inset-0 bg-slate-900 pointer-events-none z-50 transition-opacity duration-300" style={{opacity: overlayOpacity}} />
+      )}
 
       {/* ── Header ── */}
       <div className="shrink-0">
@@ -1032,13 +1045,12 @@ export default function App() {
         {/* Theme slider */}
         <div className="mt-6 mb-8 px-8">
           <div className="relative">
-            <div className="h-1.5 rounded-full overflow-hidden" style={{background:"linear-gradient(90deg, #f8fafc, #94a3b8 40%, #334155 60%, #0f172a)"}}>
-              <div className="absolute inset-0 rounded-full" style={{background:"linear-gradient(90deg, #fef3c7 0%, #e2e8f0 25%, #64748b 50%, #1e293b 75%, #020617 100%)", opacity:0.3}} />
+            <div className="h-1.5 rounded-full overflow-hidden" style={{background:"linear-gradient(90deg, #f8fafc, #e2e8f0 20%, #94a3b8 40%, #475569 55%, #334155 70%, #1e293b 85%, #0f172a)"}}>
             </div>
             <input
-              type="range" min="0" max="1" step="1"
-              value={darkMode ? 1 : 0}
-              onChange={e => setDarkMode(Number(e.target.value) === 1)}
+              type="range" min="0" max="100" step="1"
+              value={darkLevel}
+              onChange={e => setDarkLevel(Number(e.target.value))}
               className="theme-slider absolute inset-0 w-full cursor-pointer"
               style={{appearance:"none", WebkitAppearance:"none", background:"transparent", height:"24px", top:"-10px"}}
             />
