@@ -520,7 +520,7 @@ export default function App() {
           <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex-1 px-1 py-1 text-[11px] font-black text-center whitespace-nowrap rounded-md transition-all duration-200 cursor-pointer min-h-[30px] active:scale-[0.97] tracking-wide ${
+                className={`flex-1 px-1 py-0.5 text-[12px] font-black text-center whitespace-nowrap rounded-md transition-all duration-200 cursor-pointer min-h-[27px] active:scale-[0.97] tracking-wide ${
                   tab===t.id ? "bg-blue-600 dark:bg-sky-500/30 text-white dark:text-sky-300 shadow-[0_2px_8px_rgba(37,99,235,0.3)] dark:shadow-[0_0_12px_rgba(56,189,248,0.15)] dark:border dark:border-sky-400/40" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
                 }`}>
                 {t.l}
