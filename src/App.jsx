@@ -154,12 +154,12 @@ function StatinInfo({ onClose }) {
           <div className={`font-bold ${iClr[tier.color]} mb-1`}>{tier.level} <span className="font-normal text-slate-400 dark:text-[#3d6580]">({tier.ldl} LDL-C reduction)</span></div>
           <div className="space-y-1">
             {tier.drugs.map(d => (
-              <div key={d.name+d.dose} className="bg-white/70 dark:bg-[#0a1018] rounded p-1.5 border border-slate-100 dark:border-[#1a2835]">
+              <div key={d.name+d.dose} className="bg-white/70 dark:bg-[#111a24]/80 rounded p-1.5 border border-slate-100 dark:border-[#1e3040]">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-800 dark:text-[#d0e4f0]">{d.name} <span className="font-normal text-slate-500 dark:text-[#5a8aaa]">{d.dose}</span></span>
                   <div className="flex gap-0.5" title="Myopathy risk">
                     {[1,2,3,4].map(i => (
-                      <div key={i} className={`w-1.5 h-1.5 rounded-full ${i <= d.myopathy ? dots[d.myopathy] : "bg-slate-200 dark:bg-[#1a2835]"}`} />
+                      <div key={i} className={`w-1.5 h-1.5 rounded-full ${i <= d.myopathy ? dots[d.myopathy] : "bg-slate-200 dark:bg-[#2a3848]"}`} />
                     ))}
                   </div>
                 </div>
