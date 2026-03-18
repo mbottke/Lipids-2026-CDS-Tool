@@ -83,8 +83,8 @@ function Toggle({ value, on, label }) {
   return (
     <button onClick={() => on(!value)} type="button"
       className="flex items-center gap-2.5 py-2 active:opacity-70 cursor-pointer min-h-[44px]">
-      <div className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${value ? "bg-blue-600" : "bg-slate-300"}`}>
-        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
+      <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600" : "bg-slate-300"}`}>
+        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white toggle-knob transition-transform duration-200 ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
       </div>
       <span className="text-sm text-slate-700">{label}</span>
     </button>
@@ -95,7 +95,7 @@ function Num({ label, unit, value, on, min, max, step=1, ph }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
-      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 bg-white">
+      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white">
         <input type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
           min={min} max={max} step={step} placeholder={ph}
@@ -110,7 +110,7 @@ function Card({ title, accent="blue", children }) {
   const bdr = { blue:"border-l-blue-600", amber:"border-l-amber-500", red:"border-l-red-500",
     emerald:"border-l-emerald-600", violet:"border-l-violet-600" };
   return (
-    <div className={`bg-white rounded-xl border border-slate-200 border-l-4 ${bdr[accent]} shadow-sm`}>
+    <div className={`bg-white rounded-xl border border-slate-200/80 border-l-4 ${bdr[accent]} card-shadow`}>
       {title && <div className="px-4 pt-4 pb-1"><h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">{title}</h3></div>}
       <div className="px-4 pb-4">{children}</div>
     </div>
@@ -129,15 +129,15 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
   return (
     <div className="grid grid-cols-3 gap-2">
       <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
-        <div className="text-2xl font-black text-blue-700 font-mono">&lt;{ldl}</div>
+        <div className="text-2xl font-black text-blue-700 font-mono tabular-nums">&lt;{ldl}</div>
         <div className="text-[10px] text-blue-500 font-bold mt-0.5">LDL-C</div>
       </div>
       <div className="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
-        <div className="text-2xl font-black text-violet-700 font-mono">&lt;{nonHdl}</div>
+        <div className="text-2xl font-black text-violet-700 font-mono tabular-nums">&lt;{nonHdl}</div>
         <div className="text-[10px] text-violet-500 font-bold mt-0.5">non-HDL</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-        <div className="text-2xl font-black text-slate-700 font-mono">≥{pct}%</div>
+        <div className="text-2xl font-black text-slate-700 font-mono tabular-nums">≥{pct}%</div>
         <div className="text-[10px] text-slate-500 font-bold mt-0.5">% Reduction</div>
         {needed > 0 && <div className="text-[10px] text-amber-600 mt-0.5">{needed}% needed</div>}
       </div>
@@ -242,24 +242,27 @@ export default function App() {
     violet:"text-violet-800", blue:"text-blue-800" };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-b from-slate-50 to-slate-100">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100">
 
       {/* ── Header ── */}
-      <div className="bg-slate-900 text-white pwa-header-pad">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
-          <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
+      <div className="shrink-0">
+        <div className="bg-slate-900 text-white pwa-header-pad">
+          <div className="max-w-lg mx-auto px-4 py-4">
+            <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
+            <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
+          </div>
         </div>
+        <div className="header-accent" />
       </div>
 
       {/* ── Tabs ── */}
-      <div className="bg-white border-b border-slate-200 shadow-sm sticky-tabs">
-        <div className="max-w-lg mx-auto px-2">
-          <div className="flex">
+      <div className="glass-tabs border-b border-slate-200/60 shadow-sm shrink-0">
+        <div className="max-w-lg mx-auto px-2 py-1.5">
+          <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex-1 px-1 py-3 text-[13px] font-bold text-center whitespace-nowrap border-b-2 transition-colors cursor-pointer min-h-[48px] active:opacity-70 ${
-                  tab===t.id ? "border-blue-600 text-blue-700 bg-blue-50/50" : "border-transparent text-slate-400 hover:text-slate-600"
+                className={`flex-1 px-1 py-2.5 text-[13px] font-bold text-center whitespace-nowrap rounded-lg transition-all duration-200 cursor-pointer min-h-[44px] active:scale-[0.97] ${
+                  tab===t.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/60"
                 }`}>
                 <span className="mr-0.5">{t.em}</span>{t.l}
               </button>
@@ -269,7 +272,8 @@ export default function App() {
       </div>
 
       {/* ── Content ── */}
-      <div className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-20">
+      <div className="flex-1 overflow-y-auto overscroll-none">
+      <div key={tab} className="tab-content max-w-lg mx-auto px-4 py-5 space-y-4 pb-20">
 
         {/* PRIMARY */}
         {tab === "primary" && (<>
@@ -282,8 +286,8 @@ export default function App() {
                 <div className="flex gap-1">
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
-                      className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
-                        sex===s ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                      className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] ${
+                        sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
                       }`}>{s==="male"?"♂ Male":"♀ Female"}</button>
                   ))}
                 </div>
@@ -305,14 +309,14 @@ export default function App() {
 
             {/* Risk result */}
             {risk !== null && rc && (
-              <div className="rounded-xl p-4 mt-4 border-2" style={{ backgroundColor:rc.bg, borderColor:rc.color+"40" }}>
+              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor:rc.bg, borderColor:rc.color+"40" }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
-                    <div className="text-4xl font-black mt-0.5 font-mono" style={{color:rc.color}}>{risk}%</div>
+                    <div className="text-4xl font-black mt-0.5 font-mono tabular-nums" style={{color:rc.color}}>{risk}%</div>
                   </div>
                   <div className="text-right">
-                    <div className="px-4 py-2 rounded-full text-sm font-black text-white" style={{backgroundColor:rc.color}}>{rc.label}</div>
+                    <div className="px-4 py-2 rounded-full text-sm font-black text-white shadow-sm" style={{backgroundColor:rc.color}}>{rc.label}</div>
                     <div className="text-[11px] mt-1 font-semibold" style={{color:rc.color}}>{rc.range}</div>
                   </div>
                 </div>
@@ -479,7 +483,8 @@ export default function App() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center pt-2 pb-8 space-y-1">
+        <div className="footer-sep mx-8 mt-4" />
+        <div className="text-center pt-3 pb-8 space-y-1">
           <div className="text-[10px] text-slate-400">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
           <div className="text-[10px] text-slate-400">Clinical decision support only. Does not replace clinical judgment.</div>
           <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
@@ -488,6 +493,7 @@ export default function App() {
             Validate with AHA PREVENT™ Calculator
           </a>
         </div>
+      </div>
       </div>
     </div>
   );

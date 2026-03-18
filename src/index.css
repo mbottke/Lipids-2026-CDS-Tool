@@ -50,11 +50,10 @@ input[type="number"]::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* Sticky tab bar respects safe area */
-.sticky-tabs {
-  position: sticky;
-  top: var(--sat, 0px);
-  z-index: 30;
+/* Overscroll containment for app shell scroll area */
+.overscroll-none {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Prevent overscroll bounce on iOS */
@@ -69,6 +68,76 @@ input[type="number"]::-webkit-inner-spin-button {
   .pwa-header-pad {
     padding-top: env(safe-area-inset-top, 0px);
   }
+}
+
+/* ── Visual polish ── */
+
+/* Gradient accent line under header */
+.header-accent {
+  height: 2px;
+  background: linear-gradient(90deg, #2563eb, #7c3aed, #2563eb);
+  background-size: 200% 100%;
+}
+
+/* Frosted glass tab bar */
+.glass-tabs {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* Layered card shadows */
+.card-shadow {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.03);
+}
+
+/* Input focus glow */
+.input-glow:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 12px rgba(59, 130, 246, 0.08);
+}
+
+/* Toggle knob tactile shadow */
+.toggle-knob {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Tab content fade-in */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-content {
+  animation: fadeSlideIn 0.25s ease-out both;
+}
+
+/* Risk badge pulse on appear */
+@keyframes riskPulse {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.risk-appear {
+  animation: riskPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Footer gradient separator */
+.footer-sep {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cbd5e1 30%, #cbd5e1 70%, transparent);
 }
 
 /* Print styles for handouts */
