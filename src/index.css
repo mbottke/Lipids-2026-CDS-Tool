@@ -74,6 +74,7 @@ input[type="number"]::-webkit-inner-spin-button {
   height: 2px;
   background: linear-gradient(90deg, #2563eb, #7c3aed, #2563eb);
   background-size: 200% 100%;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.2);
 }
 
 /* Frosted glass tab bar */
@@ -88,7 +89,13 @@ input[type="number"]::-webkit-inner-spin-button {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
     0 4px 8px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.03);
+    0 8px 24px rgba(0, 0, 0, 0.03),
+    -1px 0 4px rgba(37, 99, 235, 0.03);
+}
+
+/* Risk number glow (light mode) */
+.risk-appear .font-mono {
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Input focus glow */

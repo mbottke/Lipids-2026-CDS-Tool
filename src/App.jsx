@@ -480,7 +480,7 @@ export default function App() {
         boxShadow: scrollDepth > 0
           ? darkMode
             ? `0 4px ${12 + scrollDepth * 20}px rgba(0,0,0,${0.3 + scrollDepth * 0.3}), 0 0 ${scrollDepth * 15}px rgba(56,189,248,${scrollDepth * 0.06})`
-            : `0 4px ${8 + scrollDepth * 16}px rgba(0,0,0,${scrollDepth * 0.12})`
+            : `0 4px ${8 + scrollDepth * 16}px rgba(0,0,0,${scrollDepth * 0.1}), 0 0 ${scrollDepth * 10}px rgba(37,99,235,${scrollDepth * 0.04})`
           : "none"
       }}>
         <div className="bg-slate-900 text-white pwa-header-pad">
@@ -507,7 +507,7 @@ export default function App() {
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex-1 px-1 py-2.5 text-[13px] font-bold text-center whitespace-nowrap rounded-lg transition-all duration-200 cursor-pointer min-h-[44px] active:scale-[0.97] ${
-                  tab===t.id ? "bg-blue-600 text-white shadow-sm dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
+                  tab===t.id ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)] dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]" : "text-slate-400 dark:text-[#3d6580] hover:text-slate-600 dark:hover:text-sky-400 hover:bg-slate-100/60 dark:hover:bg-sky-500/8"
                 }`}>
                 <span className="mr-0.5">{t.em}</span>{t.l}
               </button>
