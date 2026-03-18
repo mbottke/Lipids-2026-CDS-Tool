@@ -401,7 +401,7 @@ export default function App() {
     if (tab === "secondary") {
       return vhrCount > 0
         ? { g:{ldl:55,nh:85,p:50}, int:"high", esc:true, txt:"Very high-risk ASCVD — high-intensity statin + add-on therapy to LDL <55 mg/dL", clr:"red" }
-        : { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Clinical ASCVD (not very high risk) — high-intensity statin to LDL <70 mg/dL", clr:"amber" };
+        : { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Clinical ASCVD (not very high risk) — high-intensity statin to LDL <70 mg/dL", clr:"orange" };
     }
     if (tab === "diabetes") {
       return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Diabetes (age 40–75) — LLT recommended regardless of LDL; high-intensity statin if additional risk factors", clr:"violet" };
@@ -451,8 +451,10 @@ export default function App() {
   ];
 
   const recBg = { red:"bg-red-50 border-red-300 dark:bg-red-500/10 dark:border-red-500/30", amber:"bg-amber-50 border-amber-300 dark:bg-amber-500/10 dark:border-amber-500/30",
+    orange:"bg-orange-50 border-orange-300 dark:bg-orange-500/10 dark:border-orange-500/30",
     emerald:"bg-emerald-50 border-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30", violet:"bg-violet-50 border-violet-300 dark:bg-sky-500/15 dark:border-sky-500/30", blue:"bg-blue-50 border-blue-300 dark:bg-sky-500/15 dark:border-sky-500/30" };
-  const recTxt = { red:"text-red-800 dark:text-red-300", amber:"text-amber-800 dark:text-amber-300", emerald:"text-emerald-800 dark:text-emerald-300",
+  const recTxt = { red:"text-red-800 dark:text-red-300", amber:"text-amber-800 dark:text-amber-300", orange:"text-orange-800 dark:text-orange-300",
+    emerald:"text-emerald-800 dark:text-emerald-300",
     violet:"text-violet-800 dark:text-sky-300", blue:"text-blue-800 dark:text-sky-300" };
 
   return (
@@ -888,7 +890,7 @@ export default function App() {
             </div>
           )}
 
-          {rec.g && <Card title="Treatment Goals" accent={rec.clr==="red"?"red":rec.clr==="amber"?"amber":"blue"}>
+          {rec.g && <Card title="Treatment Goals" accent={rec.clr==="red"?"red":rec.clr==="orange"?"orange":rec.clr==="amber"?"amber":"blue"}>
             <Goals ldl={rec.g.ldl} nonHdl={rec.g.nh} pct={rec.g.p} currentLdl={ldlC||null} />
           </Card>}
 
