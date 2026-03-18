@@ -897,16 +897,16 @@ export default function App() {
           <Card title="Treatment Ladder" accent="blue">
             <div className="space-y-0">
               {[
-                { s:1, l:"Lifestyle Optimization", show:true },
-                { s:2, l:"Maximally Tolerated Statin", show:rec.int!=="none"&&rec.int!=="lifestyle", isStatin:true },
-                { s:3, l:"Add Ezetimibe", show:rec.esc },
-                { s:4, l:"Bempedoic Acid / PCSK9i", show:rec.esc },
                 { s:5, l:"Consider Inclisiran", show:rec.esc&&rec.g?.ldl<=55 },
+                { s:4, l:"Bempedoic Acid / PCSK9i", show:rec.esc },
+                { s:3, l:"Add Ezetimibe", show:rec.esc },
+                { s:2, l:"Maximally Tolerated Statin", show:rec.int!=="none"&&rec.int!=="lifestyle", isStatin:true },
+                { s:1, l:"Lifestyle Optimization", show:true },
               ].filter(s=>s.show).map((s,i,arr) => (
                 <div key={s.s} className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0 ${
-                      i===0?"bg-sky-400":i===1?"bg-sky-500":i===2?"bg-amber-500":i===3?"bg-orange-500":"bg-red-500"
+                      s.s===5?"bg-red-500":s.s===4?"bg-orange-500":s.s===3?"bg-amber-500":s.s===2?"bg-sky-500":"bg-sky-400"
                     }`}>{s.s}</div>
                     {i<arr.length-1 && <div className="flex-1 my-0.5 ladder-connector"/>}
                   </div>
