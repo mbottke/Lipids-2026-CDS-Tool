@@ -288,7 +288,7 @@ export default function App() {
                     <button key={s} onClick={() => setSex(s)}
                       className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] ${
                         sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
-                      }`}>{s==="male"?"♂ Male":"♀ Female"}</button>
+                      }`}><span className="inline-block -translate-y-px">{s==="male"?"♂":"♀"}</span> {s==="male"?"Male":"Female"}</button>
                   ))}
                 </div>
               </div>
