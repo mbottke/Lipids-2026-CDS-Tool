@@ -398,9 +398,10 @@ export default function App() {
               <Num label="BMI" unit="kg/m²" value={bmi} on={setBmi} min={18.5} max={60} step={0.1} ph="18.5–60" />
             </div>
             <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+              {/* items-end aligns button to bottom of Num (which has label above input) */}
               <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
               <button onClick={() => setBmiCalc(true)}
-                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all cursor-pointer whitespace-nowrap">
+                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all cursor-pointer whitespace-nowrap min-h-[48px]">
                 BMI Calc
               </button>
             </div>
@@ -469,11 +470,11 @@ export default function App() {
                 <span className="text-[14px] font-black text-slate-700">{nonHdlC} <span className="text-[11px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
-            <div className="grid grid-cols-2 mt-3 px-2">
-              <div><Toggle value={bpTx} on={setBpTx} label="BP Med(s)" /></div>
-              <div className="flex justify-end"><Toggle value={onStatin} on={setOnStatin} label="Statin" /></div>
-              <div><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" /></div>
-              <div className="flex justify-end"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" /></div>
+            <div className="grid grid-cols-2 mt-3">
+              <div className="flex justify-center"><Toggle value={onStatin} on={setOnStatin} label="Statin" /></div>
+              <div className="flex justify-center"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" /></div>
+              <div className="flex justify-center"><Toggle value={bpTx} on={setBpTx} label="BP Med(s)" /></div>
+              <div className="flex justify-center"><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" /></div>
             </div>
 
             {/* Risk result */}
