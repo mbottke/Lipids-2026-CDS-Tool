@@ -188,7 +188,7 @@ function StatinInfo({ onClose }) {
       <div className="text-[10px] text-slate-500 space-y-0.5 border-t border-slate-200 pt-2">
         <div><b>Evening dosing:</b> Simvastatin, Lovastatin (short half-life). Atorvastatin and Rosuvastatin can be taken any time.</div>
         <div><b>Drug interactions:</b> CYP3A4 statins (Atorva, Simva, Lova) interact with azole antifungals, macrolides, protease inhibitors, grapefruit. Pravastatin and Pitavastatin have the fewest interactions.</div>
-        <div><b>New-onset DM:</b> Class effect, higher with high-intensity. Pitavastatin may carry lower risk. CV benefit outweighs DM risk.</div>
+        <div><b>New-onset DM:</b> All statins modestly increase risk of new-onset type 2 DM (~9–12% relative increase). Risk is higher with high-intensity doses. CV benefit far outweighs DM risk. Pitavastatin may have the lowest DM risk.</div>
         <div className="flex gap-1 mt-1">
           <span>Myopathy risk dots:</span>
           <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Lowest</span>
