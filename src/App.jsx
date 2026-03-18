@@ -905,7 +905,9 @@ export default function App() {
               ].filter(s=>s.show).map((s,i,arr) => (
                 <div key={s.s} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0 ${i===0?"bg-emerald-500":"bg-blue-600"}`}>{s.s}</div>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0 ${
+                      i===0?"bg-sky-400":i===1?"bg-sky-500":i===2?"bg-amber-500":i===3?"bg-orange-500":"bg-red-500"
+                    }`}>{s.s}</div>
                     {i<arr.length-1 && <div className="flex-1 my-0.5 ladder-connector"/>}
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
