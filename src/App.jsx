@@ -359,11 +359,11 @@ export default function App() {
                 <span className="text-[15px] font-black text-slate-700">{nonHdlC} <span className="text-[12px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
-            <div className="grid grid-cols-2 mt-3 px-2">
-              <div className="flex justify-center"><Toggle value={bpTx} on={setBpTx} label="BP Med(s)" /></div>
-              <div className="flex justify-center"><Toggle value={onStatin} on={setOnStatin} label="Statin" /></div>
-              <div className="flex justify-center"><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" /></div>
-              <div className="flex justify-center"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" /></div>
+            <div className="grid grid-cols-2 gap-x-6 mt-3 px-4">
+              <Toggle value={bpTx} on={setBpTx} label="BP Med(s)" />
+              <Toggle value={onStatin} on={setOnStatin} label="Statin" />
+              <Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" />
+              <Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" />
             </div>
 
             {/* Risk result */}
@@ -516,7 +516,7 @@ export default function App() {
 
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
-          <p className="text-[12px] text-slate-400 mb-2">Lp(a): screen at least once in adulthood. ApoB: check once LDL/Non-HDL near goal.</p>
+          <p className="text-[12px] text-slate-400 mb-2">Lp(a): screen at least once as adult. ApoB: check once LDL/Non-HDL near goal.</p>
           <div className="grid grid-cols-2 gap-3 mb-2">
             <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} preserveCase />
             <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} preserveCase />
