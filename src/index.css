@@ -24,8 +24,7 @@ body {
   background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Respect safe areas for notched phones */
-  padding-top: var(--sat);
+  /* Respect safe areas for notched phones (top handled by header) */
   padding-bottom: var(--sab);
   padding-left: var(--sal);
   padding-right: var(--sar);
@@ -63,11 +62,9 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 }
 
-/* PWA standalone mode adjustments */
-@media (display-mode: standalone) {
-  .pwa-header-pad {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+/* Header extends to screen edge; content respects safe area */
+.pwa-header-pad {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ── Visual polish ── */
