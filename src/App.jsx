@@ -317,9 +317,10 @@ export default function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // ── Scroll-reactive header depth ──
+  // ── Scroll-reactive header depth + progress ──
   const scrollRef = useRef(null);
   const [scrollDepth, setScrollDepth] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -327,6 +328,8 @@ export default function App() {
     const onScroll = () => {
       const depth = Math.min(el.scrollTop / 120, 1);
       setScrollDepth(depth);
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      setScrollProgress(maxScroll > 0 ? el.scrollTop / maxScroll : 0);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -528,6 +531,17 @@ export default function App() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* ── Scroll progress bar ── */}
+      <div className="shrink-0 h-[2px] bg-slate-200/30 dark:bg-[#1a2835]">
+        <div className="h-full transition-[width] duration-100 ease-out rounded-r-full"
+          style={{
+            width: `${scrollProgress * 100}%`,
+            background: darkMode
+              ? `linear-gradient(90deg, rgba(56,189,248,0.6), rgba(56,189,248,0.9))`
+              : `linear-gradient(90deg, rgba(37,99,235,0.4), rgba(37,99,235,0.8))`
+          }} />
       </div>
 
       {/* ── Content ── */}
