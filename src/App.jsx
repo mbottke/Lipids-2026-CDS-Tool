@@ -107,7 +107,7 @@ function Toggle({ value, on, label }) {
       <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600" : "bg-slate-300"}`}>
         <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white toggle-knob transition-transform duration-200 ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
       </div>
-      <span className="text-sm text-slate-700">{label}</span>
+      <span className="text-[15px] text-slate-700">{label}</span>
     </button>
   );
 }
@@ -115,13 +115,13 @@ function Toggle({ value, on, label }) {
 function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className={`text-[11px] font-bold text-slate-400 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
+      <label className={`text-[12px] font-bold text-slate-400 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
       <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white">
         <input type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
           min={min} max={max} step={step} placeholder={ph}
           className="flex-1 px-3 py-3 text-[16px] text-slate-800 outline-none bg-transparent min-w-0" />
-        {unit && <span className="pr-3 text-xs text-slate-400 whitespace-nowrap">{unit}</span>}
+        {unit && <span className="pr-3 text-[14px] text-slate-400 whitespace-nowrap">{unit}</span>}
       </div>
     </div>
   );
@@ -132,7 +132,7 @@ function Card({ title, accent="blue", children }) {
     emerald:"border-l-emerald-600", violet:"border-l-violet-600" };
   return (
     <div className={`bg-white rounded-xl border border-slate-200/80 border-l-4 ${bdr[accent]} card-shadow`}>
-      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">{title}</h3></div>}
+      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[14px] font-black text-slate-800 uppercase tracking-wide">{title}</h3></div>}
       <div className="px-4 pb-4">{children}</div>
     </div>
   );
@@ -142,7 +142,7 @@ function Badge({ children, color="blue" }) {
   const s = { blue:"bg-blue-50 text-blue-700 border-blue-200", red:"bg-red-50 text-red-700 border-red-200",
     amber:"bg-amber-50 text-amber-700 border-amber-200", emerald:"bg-emerald-50 text-emerald-700 border-emerald-200",
     violet:"bg-violet-50 text-violet-700 border-violet-200", slate:"bg-slate-100 text-slate-600 border-slate-200" };
-  return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${s[color]}`}>{children}</span>;
+  return <span className={`inline-block px-2 py-0.5 rounded-full text-[12px] font-bold border ${s[color]}`}>{children}</span>;
 }
 
 function Goals({ ldl, nonHdl, pct, currentLdl }) {
@@ -151,16 +151,16 @@ function Goals({ ldl, nonHdl, pct, currentLdl }) {
     <div className="grid grid-cols-3 gap-2">
       <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
         <div className="text-2xl font-black text-blue-700 font-mono tabular-nums">&lt;{ldl}</div>
-        <div className="text-[10px] text-blue-500 font-bold mt-0.5">LDL-C</div>
+        <div className="text-[12px] text-blue-500 font-bold mt-0.5">LDL-C</div>
       </div>
       <div className="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
         <div className="text-2xl font-black text-violet-700 font-mono tabular-nums">&lt;{nonHdl}</div>
-        <div className="text-[10px] text-violet-500 font-bold mt-0.5">non-HDL</div>
+        <div className="text-[12px] text-violet-500 font-bold mt-0.5">non-HDL</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
         <div className="text-2xl font-black text-slate-700 font-mono tabular-nums">≥{pct}%</div>
-        <div className="text-[10px] text-slate-500 font-bold mt-0.5">% Reduction</div>
-        {needed > 0 && <div className="text-[10px] text-amber-600 mt-0.5">{needed}% needed</div>}
+        <div className="text-[12px] text-slate-500 font-bold mt-0.5">% Reduction</div>
+        {needed > 0 && <div className="text-[12px] text-amber-600 mt-0.5">{needed}% needed</div>}
       </div>
     </div>
   );
@@ -292,10 +292,10 @@ export default function App() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-lg font-black tracking-tight leading-tight">2026 ACC/AHA Lipid Management</h1>
-                <p className="text-slate-400 text-[11px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
+                <p className="text-slate-400 text-[12px] mt-0.5 font-medium">Dyslipidemia Guideline CDS · PREVENT-ASCVD Embedded</p>
               </div>
               <button onClick={resetPatient}
-                className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
+                className="mt-0.5 px-2.5 py-1.5 rounded-lg text-[12px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 active:scale-95 transition-all duration-150 cursor-pointer whitespace-nowrap border border-slate-700">
                 Reset
               </button>
             </div>
@@ -310,7 +310,7 @@ export default function App() {
           <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex-1 px-1 py-2.5 text-[13px] font-bold text-center whitespace-nowrap rounded-lg transition-all duration-200 cursor-pointer min-h-[44px] active:scale-[0.97] ${
+                className={`flex-1 px-1 py-2.5 text-[14px] font-bold text-center whitespace-nowrap rounded-lg transition-all duration-200 cursor-pointer min-h-[44px] active:scale-[0.97] ${
                   tab===t.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/60"
                 }`}>
                 <span className="mr-0.5">{t.em}</span>{t.l}
@@ -327,15 +327,15 @@ export default function App() {
         {/* PRIMARY */}
         {tab === "primary" && (<>
           <Card title="PREVENT-ASCVD Risk Calculator" accent="blue">
-            <p className="text-[11px] text-slate-400 mb-3">Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+            <p className="text-[12px] text-slate-400 mb-3">Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sex</label>
+                <label className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Sex</label>
                 <div className="flex gap-1">
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
-                      className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] ${
+                      className={`flex-1 py-3 rounded-lg text-[15px] font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] ${
                         sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
                       }`}><span className="inline-block -translate-y-px">{s==="male"?"♂":"♀"}</span> {s==="male"?"Male":"Female"}</button>
                   ))}
@@ -351,8 +351,8 @@ export default function App() {
             <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
             {nonHdlC !== null && (
               <div className="computed-field flex items-center justify-between mt-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Non-HDL-C <span className="normal-case font-medium">(calculated)</span></span>
-                <span className="text-sm font-black text-slate-700">{nonHdlC} <span className="text-[11px] font-normal text-slate-400">mg/dL</span></span>
+                <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Non-HDL-C <span className="normal-case font-medium">(calculated)</span></span>
+                <span className="text-[15px] font-black text-slate-700">{nonHdlC} <span className="text-[12px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
@@ -367,12 +367,12 @@ export default function App() {
               <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor:rc.bg, borderColor:rc.color+"40" }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
+                    <div className="text-[12px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
                     <div className="text-4xl font-black mt-0.5 font-mono tabular-nums" style={{color:rc.color}}>{risk}%</div>
                   </div>
                   <div className="text-right">
-                    <div className="px-4 py-2 rounded-full text-sm font-black text-white shadow-sm" style={{backgroundColor:rc.color}}>{rc.label}</div>
-                    <div className="text-[11px] mt-1 font-semibold" style={{color:rc.color}}>{rc.range}</div>
+                    <div className="px-4 py-2 rounded-full text-[15px] font-black text-white shadow-sm" style={{backgroundColor:rc.color}}>{rc.label}</div>
+                    <div className="text-[12px] mt-1 font-semibold" style={{color:rc.color}}>{rc.range}</div>
                   </div>
                 </div>
               </div>
@@ -381,7 +381,7 @@ export default function App() {
 
           {/* Risk enhancers */}
           <Card title="Risk Enhancers — Personalize" accent="amber">
-            <p className="text-[11px] text-slate-400 mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
+            <p className="text-[12px] text-slate-400 mb-2">For borderline / intermediate risk. Favors statin initiation.</p>
             <div className="space-y-1.5">
               {ENHANCERS.map(e => (
                 <button key={e.id} onClick={() => toggleEnh(e.id)}
@@ -390,14 +390,14 @@ export default function App() {
                   }`}>
                   <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
                     enhs[e.id] ? "bg-amber-500 border-amber-500" : "border-slate-300"
-                  }`}>{enhs[e.id] && <span className="text-white text-xs font-bold">✓</span>}</div>
-                  <div><div className="text-sm font-bold text-slate-800 leading-tight">{e.l}</div>
-                  <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                  }`}>{enhs[e.id] && <span className="text-white text-[14px] font-bold">✓</span>}</div>
+                  <div><div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
+                  <div className="text-[12px] text-slate-500">{e.d}</div></div>
                 </button>
               ))}
             </div>
             {enhCount > 0 && (
-              <div className="mt-2 text-sm font-bold text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+              <div className="mt-2 text-[15px] font-bold text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
                 {enhCount} enhancer{enhCount>1?"s":""} — favors statin in borderline/intermediate
               </div>
             )}
@@ -405,7 +405,7 @@ export default function App() {
 
           {/* CAC */}
           <Card title="CAC — Reclassify (Optional)" accent="emerald">
-            <p className="text-[11px] text-slate-400 mb-2">♂ ≥40y or ♀ ≥45y when decision uncertain</p>
+            <p className="text-[12px] text-slate-400 mb-2">♂ ≥40y or ♀ ≥45y when decision uncertain</p>
             <div className="grid grid-cols-2 gap-3">
               <Num label="CAC Score" unit="AU" value={cac} on={setCac} min={0} max={10000} ph="Agatston" />
               <Num label="CAC %ile" unit="%" value={cacPct} on={setCacPct} min={0} max={100} ph="Age/sex" />
@@ -416,7 +416,7 @@ export default function App() {
         {/* SECONDARY */}
         {tab === "secondary" && (
           <Card title="Clinical ASCVD — Risk Level" accent="red">
-            <p className="text-[11px] text-slate-400 mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
+            <p className="text-[12px] text-slate-400 mb-3">All ASCVD patients → high-intensity statin. Classify to set LDL target.</p>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-2">
               {[
@@ -426,14 +426,14 @@ export default function App() {
                 <button key={o.id} onClick={() => setAscvdLevel(o.id)}
                   className="w-full text-left p-3 rounded-lg border-2 transition-colors cursor-pointer active:opacity-70 min-h-[56px]"
                   style={ascvdLevel===o.id ? { borderColor:o.clr, backgroundColor:o.bg } : { borderColor:"#e2e8f0" }}>
-                  <div className="text-sm font-bold text-slate-800">{o.l}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">{o.d}</div>
+                  <div className="text-[15px] font-bold text-slate-800">{o.l}</div>
+                  <div className="text-[12px] text-slate-500 mt-0.5">{o.d}</div>
                 </button>
               ))}
             </div>
             {ascvdLevel === "very_high" && (
               <div className="mt-3 space-y-1.5">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
+                <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-1">Very High-Risk Criteria</div>
                 {VHR_CRITERIA.map(e => (
                   <button key={e.id} onClick={() => toggleVhr(e.id)}
                     className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
@@ -441,9 +441,9 @@ export default function App() {
                     }`}>
                     <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
                       vhr[e.id] ? "bg-red-500 border-red-500" : "border-slate-300"
-                    }`}>{vhr[e.id] && <span className="text-white text-xs font-bold">✓</span>}</div>
-                    <div><div className="text-sm font-bold text-slate-800 leading-tight">{e.l}</div>
-                    <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                    }`}>{vhr[e.id] && <span className="text-white text-[14px] font-bold">✓</span>}</div>
+                    <div><div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
+                    <div className="text-[12px] text-slate-500">{e.d}</div></div>
                   </button>
                 ))}
               </div>
@@ -455,12 +455,12 @@ export default function App() {
         {tab === "diabetes" && (
           <Card title="Diabetes Pathway" accent="violet">
             <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mb-3">
-              <div className="text-sm font-bold text-violet-800">Universal LLT (Age 40–75)</div>
-              <div className="text-[11px] text-violet-600 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
+              <div className="text-[15px] font-bold text-violet-800">Universal LLT (Age 40–75)</div>
+              <div className="text-[12px] text-violet-600 mt-1">DM (type 1 or 2), CKD 3–4, or HIV → lipid-lowering therapy regardless of LDL-C level.</div>
             </div>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={400} ph="Current" />
             <div className="mt-3 space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">DM-Specific Risk Enhancers</div>
+              <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-1">DM-Specific Risk Enhancers</div>
               {DM_ENHANCERS.map(e => (
                 <button key={e.id} onClick={() => toggleDmEnh(e.id)}
                   className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[44px] ${
@@ -468,14 +468,14 @@ export default function App() {
                   }`}>
                   <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center ${
                     dmEnhs[e.id] ? "bg-violet-500 border-violet-500" : "border-slate-300"
-                  }`}>{dmEnhs[e.id] && <span className="text-white text-xs font-bold">✓</span>}</div>
-                  <div><div className="text-sm font-bold text-slate-800 leading-tight">{e.l}</div>
-                  <div className="text-[11px] text-slate-500">{e.d}</div></div>
+                  }`}>{dmEnhs[e.id] && <span className="text-white text-[14px] font-bold">✓</span>}</div>
+                  <div><div className="text-[15px] font-bold text-slate-800 leading-tight">{e.l}</div>
+                  <div className="text-[12px] text-slate-500">{e.d}</div></div>
                 </button>
               ))}
             </div>
             {dmEnhCount > 0 && (
-              <div className="mt-2 text-sm font-bold text-violet-700 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+              <div className="mt-2 text-[15px] font-bold text-violet-700 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
                 {dmEnhCount} DM enhancer{dmEnhCount>1?"s":""} — supports high-intensity statin
               </div>
             )}
@@ -486,8 +486,8 @@ export default function App() {
         {tab === "severe" && (
           <Card title="Severe Hypercholesterolemia" accent="red">
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-              <div className="text-sm font-bold text-red-800">LDL ≥190 mg/dL → High-Intensity Statin</div>
-              <div className="text-[11px] text-red-600 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
+              <div className="text-[15px] font-bold text-red-800">LDL ≥190 mg/dL → High-Intensity Statin</div>
+              <div className="text-[12px] text-red-600 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
             </div>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
           </Card>
@@ -495,7 +495,7 @@ export default function App() {
 
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
-          <p className="text-[11px] text-slate-400 mb-2">Lp(a): at least once. ApoB: once LDL/non-HDL near goal.</p>
+          <p className="text-[12px] text-slate-400 mb-2">Lp(a): at least once. ApoB: once LDL/non-HDL near goal.</p>
           <div className="grid grid-cols-2 gap-3 mb-2">
             <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} ph="Screen" preserveCase />
             <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} ph="Near goal" preserveCase />
@@ -503,21 +503,21 @@ export default function App() {
           {lpaNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border mb-1.5 ${
               lpaNote.c==="red"?"bg-red-50 border-red-200":lpaNote.c==="amber"?"bg-amber-50 border-amber-200":"bg-emerald-50 border-emerald-200"
-            }`}><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[11px] text-slate-700">{lpaNote.n}</span></div>
+            }`}><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[12px] text-slate-700">{lpaNote.n}</span></div>
           )}
           {apoBNote && (
             <div className={`flex items-start gap-2 p-2 rounded-lg border ${
               apoBNote.c==="red"?"bg-red-50 border-red-200":apoBNote.c==="amber"?"bg-amber-50 border-amber-200":
               apoBNote.c==="blue"?"bg-blue-50 border-blue-200":"bg-emerald-50 border-emerald-200"
-            }`}><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[11px] text-slate-700">{apoBNote.n}</span></div>
+            }`}><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[12px] text-slate-700">{apoBNote.n}</span></div>
           )}
         </Card>
 
         {/* ── RECOMMENDATION ── */}
         {rec && ((tab==="primary" && risk!==null) || tab!=="primary") && (<>
           <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Recommendation</div>
-            <div className={`text-sm font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-500 mb-1">Recommendation</div>
+            <div className={`text-[15px] font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
           </div>
 
           {rec.g && ldlC !== "" && ldlC !== null && (
@@ -534,14 +534,14 @@ export default function App() {
                 {Number(ldlC) <= rec.g.ldl ? "✓" : "✗"}
               </div>
               <div>
-                <div className={`text-sm font-black ${
+                <div className={`text-[15px] font-black ${
                   Number(ldlC) <= rec.g.ldl ? "text-emerald-800" : "text-red-800"
                 }`}>
                   {Number(ldlC) <= rec.g.ldl
                     ? "At Goal"
                     : `Not at Goal — LDL ${Number(ldlC) - rec.g.ldl} mg/dL above target`}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[12px] text-slate-500 mt-0.5">
                   Current LDL {ldlC} mg/dL · Goal &lt;{rec.g.ldl} mg/dL
                 </div>
               </div>
@@ -563,20 +563,20 @@ export default function App() {
               ].filter(s=>s.show).map((s,i,arr) => (
                 <div key={s.s} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i===0?"bg-emerald-500":"bg-blue-600"}`}>{s.s}</div>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 ${i===0?"bg-emerald-500":"bg-blue-600"}`}>{s.s}</div>
                     {i<arr.length-1 && <div className="flex-1 my-0.5 ladder-connector"/>}
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
-                    <div className="text-sm font-bold text-slate-800">{s.l}</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">{s.d}</div>
+                    <div className="text-[15px] font-bold text-slate-800">{s.l}</div>
+                    <div className="text-[12px] text-slate-500 mt-0.5">{s.d}</div>
                   </div>
                 </div>
               ))}
             </div>
             {tg!==""&&Number(tg)>=150 && (
               <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="text-sm font-bold text-amber-800">Hypertriglyceridemia</div>
-                <div className="text-[11px] text-amber-700 mt-0.5">
+                <div className="text-[15px] font-bold text-amber-800">Hypertriglyceridemia</div>
+                <div className="text-[12px] text-amber-700 mt-0.5">
                   TG {tg} — {Number(tg)>=500?"Severe: prioritize TG lowering (pancreatitis risk). Fibrate ± icosapent ethyl. If ≥1000, consider apoC-III inhibitor.":"Statins first-line for ASCVD risk. If TG persistent, add fenofibrate or icosapent ethyl (REDUCE-IT)."}
                 </div>
               </div>
@@ -586,7 +586,7 @@ export default function App() {
 
         {/* MONITORING */}
         <Card title="Monitoring" accent="emerald">
-          <div className="space-y-2 text-[11px]">
+          <div className="space-y-2 text-[12px]">
             {[
               { h:"After LLT Start", b:"Fasting lipids at 4–12 wk, then q3–12 mo until at goal, then annually." },
               { h:"Safety", b:"Hepatic panel at baseline. CK only if symptomatic. Monitor for new-onset DM with high-intensity statin." },
@@ -604,11 +604,11 @@ export default function App() {
         {/* Footer */}
         <div className="footer-sep mx-8 mt-4" />
         <div className="text-center pt-3 pb-8 space-y-1">
-          <div className="text-[10px] text-slate-400">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
-          <div className="text-[10px] text-slate-400">Clinical decision support only. Does not replace clinical judgment.</div>
+          <div className="text-[12px] text-slate-400">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
+          <div className="text-[12px] text-slate-400">Clinical decision support only. Does not replace clinical judgment.</div>
           <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
             target="_blank" rel="noopener"
-            className="inline-block text-[10px] text-blue-500 underline mt-1">
+            className="inline-block text-[12px] text-blue-500 underline mt-1">
             Validate with AHA PREVENT™ Calculator
           </a>
         </div>
