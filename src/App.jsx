@@ -205,6 +205,11 @@ export default function App() {
   const [ascvdLevel, setAscvdLevel] = useState("not_very_high");
   const [cacInfo, setCacInfo] = useState(false);
   const [bioInfo, setBioInfo] = useState(false);
+  const [bmiCalc, setBmiCalc] = useState(false);
+  const [bmiUnit, setBmiUnit] = useState("imperial");
+  const [bmiWt, setBmiWt] = useState("");
+  const [bmiHt, setBmiHt] = useState("");
+  const [bmiHtIn, setBmiHtIn] = useState("");
   const [metSyn, setMetSyn] = useState({});
   const [vhr, setVhr] = useState({});
   const [dmEnhs, setDmEnhs] = useState({});
@@ -215,8 +220,32 @@ export default function App() {
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB(""); setAscvdLevel("not_very_high");
-    setCacInfo(false); setBioInfo(false); setVhr({}); setDmEnhs({}); setMetSyn({});
+    setCacInfo(false); setBioInfo(false); setBmiCalc(false);
+    setBmiWt(""); setBmiHt(""); setBmiHtIn("");
+    setVhr({}); setDmEnhs({}); setMetSyn({});
   }, []);
+
+  const calcBmiValue = useMemo(() => {
+    if (bmiWt === "" || bmiHt === "") return null;
+    const w = Number(bmiWt), h = Number(bmiHt);
+    if (bmiUnit === "imperial") {
+      const totalIn = h * 12 + (bmiHtIn === "" ? 0 : Number(bmiHtIn));
+      if (totalIn <= 0 || w <= 0) return null;
+      return Math.round((w / (totalIn * totalIn)) * 703 * 10) / 10;
+    } else {
+      const cm = h;
+      if (cm <= 0 || w <= 0) return null;
+      return Math.round((w / ((cm / 100) * (cm / 100))) * 10) / 10;
+    }
+  }, [bmiWt, bmiHt, bmiHtIn, bmiUnit]);
+
+  const acceptBmi = useCallback(() => {
+    if (calcBmiValue !== null) {
+      setBmi(calcBmiValue);
+      setBmiCalc(false);
+      setBmiWt(""); setBmiHt(""); setBmiHtIn("");
+    }
+  }, [calcBmiValue]);
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
   const toggleVhr = useCallback(id => setVhr(p => ({...p,[id]:!p[id]})), []);
@@ -355,9 +384,9 @@ export default function App() {
                 <div className="flex gap-1">
                   {["male","female"].map(s => (
                     <button key={s} onClick={() => setSex(s)}
-                      className={`flex-1 py-3 rounded-lg text-[14px] font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] ${
+                      className={`flex-1 py-3 rounded-lg text-[14px] font-bold transition-all duration-200 cursor-pointer active:scale-[0.97] min-h-[48px] text-center ${
                         sex===s ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
-                      }`}><span className="inline-block -translate-y-px">{s==="male"?"♂":"♀"}</span> {s==="male"?"Male":"Female"}</button>
+                      }`}>{s==="male"?"Male":"Female"}</button>
                   ))}
                 </div>
               </div>
@@ -368,18 +397,83 @@ export default function App() {
               <Num label="eGFR" unit="mL/min" value={egfr} on={setEgfr} min={15} max={140} ph="15–140" />
               <Num label="BMI" unit="kg/m²" value={bmi} on={setBmi} min={18.5} max={60} step={0.1} ph="18.5–60" />
             </div>
-            <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
+            <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+              <Num label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
+              <button onClick={() => setBmiCalc(true)}
+                className="px-3 py-3 rounded-lg text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all cursor-pointer whitespace-nowrap">
+                BMI Calc
+              </button>
+            </div>
+            {bmiCalc && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[12px] font-bold text-blue-800">BMI Calculator</div>
+                  <button onClick={() => setBmiCalc(false)}
+                    className="text-[12px] text-slate-400 hover:text-slate-600 cursor-pointer font-bold">✕</button>
+                </div>
+                <div className="flex gap-1 mb-2">
+                  {["imperial","metric"].map(u => (
+                    <button key={u} onClick={() => { setBmiUnit(u); setBmiWt(""); setBmiHt(""); setBmiHtIn(""); }}
+                      className={`flex-1 py-1.5 rounded text-[11px] font-bold text-center cursor-pointer transition-colors ${
+                        bmiUnit===u ? "bg-blue-600 text-white" : "bg-white text-slate-500 border border-slate-200"
+                      }`}>{u==="imperial"?"lb / ft-in":"kg / cm"}</button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Weight</label>
+                    <input type="number" inputMode="decimal" value={bmiWt}
+                      onChange={e => setBmiWt(e.target.value==="" ? "" : e.target.value)}
+                      placeholder={bmiUnit==="imperial"?"lbs":"kg"}
+                      className="px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow" />
+                  </div>
+                  {bmiUnit==="imperial" ? (
+                    <div className="flex flex-col gap-0.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">Height</label>
+                      <div className="flex gap-1">
+                        <input type="number" inputMode="numeric" value={bmiHt}
+                          onChange={e => setBmiHt(e.target.value==="" ? "" : e.target.value)}
+                          placeholder="ft" className="flex-1 px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow min-w-0" />
+                        <input type="number" inputMode="numeric" value={bmiHtIn}
+                          onChange={e => setBmiHtIn(e.target.value==="" ? "" : e.target.value)}
+                          placeholder="in" className="flex-1 px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow min-w-0" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-0.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">Height</label>
+                      <input type="number" inputMode="decimal" value={bmiHt}
+                        onChange={e => setBmiHt(e.target.value==="" ? "" : e.target.value)}
+                        placeholder="cm" className="px-2 py-2 text-[16px] border border-slate-200 rounded bg-white outline-none input-glow" />
+                    </div>
+                  )}
+                </div>
+                {calcBmiValue !== null && (
+                  <div className="mt-2 flex items-center justify-between bg-white rounded-lg p-2 border border-blue-200">
+                    <div>
+                      <span className="text-[11px] text-slate-500">Calculated BMI: </span>
+                      <span className="text-[14px] font-black text-blue-700 font-mono">{calcBmiValue}</span>
+                      <span className="text-[11px] text-slate-400"> kg/m²</span>
+                    </div>
+                    <button onClick={acceptBmi}
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
+                      Accept
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             {nonHdlC !== null && (
               <div className="computed-field flex items-center justify-between mt-2">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Non-HDL-C <span className="normal-case font-medium">(calculated)</span></span>
                 <span className="text-[14px] font-black text-slate-700">{nonHdlC} <span className="text-[11px] font-normal text-slate-400">mg/dL</span></span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-x-6 mt-3 px-4">
-              <Toggle value={bpTx} on={setBpTx} label="BP Med(s)" />
-              <Toggle value={onStatin} on={setOnStatin} label="Statin" />
-              <Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" />
-              <Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" />
+            <div className="grid grid-cols-2 mt-3 px-2">
+              <div><Toggle value={bpTx} on={setBpTx} label="BP Med(s)" /></div>
+              <div className="flex justify-end"><Toggle value={onStatin} on={setOnStatin} label="Statin" /></div>
+              <div><Toggle value={dm} on={setDm} label="Diabetes" sub="Clinical dx" /></div>
+              <div className="flex justify-end"><Toggle value={smoking} on={setSmoking} label="Current Smoking" sub="Within 30 days" /></div>
             </div>
 
             {/* Risk result */}
