@@ -218,17 +218,17 @@ export default function App() {
   }, []);
 
   const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
-  const enhCount = useMemo(() => {
-    let count = Object.entries(enhs).filter(([k,v]) => k !== "metabolic" && v).length;
-    if (enhs.metabolic || metSynCount >= 3) count++;
-    return count;
-  }, [enhs, metSynCount]);
   const toggleVhr = useCallback(id => setVhr(p => ({...p,[id]:!p[id]})), []);
   const vhrCount = useMemo(() => Object.values(vhr).filter(Boolean).length, [vhr]);
   const toggleDmEnh = useCallback(id => setDmEnhs(p => ({...p,[id]:!p[id]})), []);
   const dmEnhCount = useMemo(() => Object.values(dmEnhs).filter(Boolean).length, [dmEnhs]);
   const toggleMetSyn = useCallback(id => setMetSyn(p => ({...p,[id]:!p[id]})), []);
   const metSynCount = useMemo(() => Object.values(metSyn).filter(Boolean).length, [metSyn]);
+  const enhCount = useMemo(() => {
+    let count = Object.entries(enhs).filter(([k,v]) => k !== "metabolic" && v).length;
+    if (enhs.metabolic || metSynCount >= 3) count++;
+    return count;
+  }, [enhs, metSynCount]);
 
   const risk = useMemo(() => {
     if (tab !== "primary") return null;
