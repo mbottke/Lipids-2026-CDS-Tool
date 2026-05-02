@@ -611,17 +611,31 @@ export default function App() {
 
             {/* Risk result */}
             {risk10 !== null && rc10 && (
-              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor: darkMode ? rc10.darkBg : rc10.bg, borderColor:rc10.color+"40" }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-black uppercase tracking-widest" style={{color:rc10.color}}>10-Yr ASCVD Risk</div>
-                    <div className="text-4xl font-black mt-0.5 font-mono tabular-nums" style={{color:rc10.color}}>{risk10}%</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="px-4 py-2 rounded-full text-[14px] font-black text-white shadow-sm" style={{backgroundColor:rc10.color}}>{rc10.label}</div>
-                    <div className="text-[11px] mt-1 font-semibold" style={{color:rc10.color}}>{rc10.range}</div>
-                  </div>
+              <div className="risk-appear mt-4 grid grid-cols-2 gap-2">
+                {/* 10-year */}
+                <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc10.darkBg : rc10.bg, borderColor: rc10.color + "40" }}>
+                  <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc10.color }}>10-Yr ASCVD</div>
+                  <div className="text-3xl font-black mt-0.5 font-mono tabular-nums" style={{ color: rc10.color }}>{risk10}%</div>
+                  <div className="mt-1 inline-block px-2.5 py-1 rounded-full text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: rc10.color }}>{rc10.label}</div>
+                  <div className="text-[10px] mt-1 font-semibold" style={{ color: rc10.color }}>{rc10.range}</div>
                 </div>
+
+                {/* 30-year */}
+                {risk30 !== null && rc30 ? (
+                  <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc30.darkBg : rc30.bg, borderColor: rc30.color + "40" }}>
+                    <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc30.color }}>30-Yr ASCVD</div>
+                    <div className="text-3xl font-black mt-0.5 font-mono tabular-nums" style={{ color: rc30.color }}>{risk30}%</div>
+                    <div className="mt-1 inline-block px-2.5 py-1 rounded-full text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: rc30.color }}>{rc30.label}</div>
+                    <div className="text-[10px] mt-1 font-semibold" style={{ color: rc30.color }}>{rc30.range}</div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl p-3 border-2 bg-slate-50 dark:bg-[#111a24] border-slate-200 dark:border-[#1a2835]">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-[#5a8aaa]">30-Yr ASCVD</div>
+                    <div className="text-[12px] mt-2 font-semibold text-slate-500 dark:text-[#7a9ab5] leading-snug">
+                      Not validated for ages ≥{VALID_30YR_AGE_MAX + 1}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </Card>
