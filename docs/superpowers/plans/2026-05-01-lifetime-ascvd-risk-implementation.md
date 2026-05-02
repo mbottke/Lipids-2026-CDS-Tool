@@ -150,18 +150,28 @@ git commit -m "refactor: extract PREVENT 10-yr math into src/prevent.js"
 
 **Extraction sources** (try in order):
 
-1. **Primary**: `preventr` R package v0.11.0, `sysdata.rda`, objects `b_30yr_ascvd_base_f` and `b_30yr_ascvd_base_m`.
+1. **Primary**: `preventr` R package v0.11.0, `sysdata.rda`, objects `b_30yr_ascvd_base_f` and `b_30yr_ascvd_base_m`. Available three ways:
+   - Local R install: `install.packages("preventr")` then `load(system.file("R/sysdata.rda", package="preventr"))`.
+   - **Online (no R needed)**: download the package source tarball from CRAN at https://cran.r-project.org/web/packages/preventr/index.html (or the package archive at https://cran.r-project.org/src/contrib/) and extract `R/sysdata.rda` from the tarball. The `.rda` file is binary R data; convert to text with any R-capable tool (e.g., `Rscript -e 'load("sysdata.rda"); print(b_30yr_ascvd_base_f)'`) or read it via Python's `pyreadr` package: `python -c 'import pyreadr; print(pyreadr.read_r("sysdata.rda"))'`.
+   - **Online (GitHub mirror)**: the package source tree is mirrored at https://github.com/martin-borkovec/preventr (or similar mirror). Browse `R/sysdata.rda` directly. This has worked in past sessions when CRAN was slow.
 2. **Fallback A**: AHA PREVENT calculator JS source at https://professional.heart.org/en/guidelines-and-statements/prevent-calculator (inspect the page's calculator JS, look for the 30-year coefficient block).
 3. **Fallback B**: Khan SS et al. *Circulation* 2024;149:430-449 supplementary materials, Tables S29 and S30 (or whichever supplement contains the 30-year base model coefficients).
 
 - [ ] **Step 2.1: Extract the coefficients**
 
-If R is available locally:
+Try the sources above in order. If R is available locally:
 
 ```bash
 # In a scratch directory (NOT inside the project)
 R -e 'install.packages("preventr", repos="https://cloud.r-project.org")'
 R -e 'library(preventr); load(system.file("R/sysdata.rda", package="preventr")); print(b_30yr_ascvd_base_f); print(b_30yr_ascvd_base_m)'
+```
+
+If R is not installed, use Python with `pyreadr` after downloading the CRAN tarball or fetching the file from the GitHub mirror:
+
+```bash
+pip install pyreadr
+python -c 'import pyreadr; result = pyreadr.read_r("sysdata.rda"); print(result["b_30yr_ascvd_base_f"]); print(result["b_30yr_ascvd_base_m"])'
 ```
 
 Otherwise, transcribe from the Khan paper supplement or AHA calculator source.
