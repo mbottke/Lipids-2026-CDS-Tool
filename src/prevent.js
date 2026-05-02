@@ -96,6 +96,15 @@ export function calcPREVENT10(inputs) {
   return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
 }
 
+export function calcPREVENT30(inputs) {
+  if (!_hasAllInputs(inputs)) return null;
+  const a = Number(inputs.age);
+  if (a < 30 || a > VALID_30YR_AGE_MAX) return null;
+  const c = PREVENT_30YR[inputs.sex];
+  const x = _xbeta(c, inputs);
+  return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
+}
+
 export function riskCat10(r) {
   if (r === null) return null;
   if (r < 3)  return { label: "Low",          color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<3%" };
