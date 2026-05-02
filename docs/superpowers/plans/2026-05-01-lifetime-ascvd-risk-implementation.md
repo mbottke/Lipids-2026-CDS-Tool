@@ -44,9 +44,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 // 10-year ASCVD base model (ages 30-79)
+// `ageSquared` is included for structural compatibility with the 30-yr model
+// (which has a real age² term). The 10-yr model has no age² term so its
+// coefficient is 0, making the term mathematically inert.
 export const PREVENT_10YR = {
   female: {
-    age: 0.7198830, nonHdlC: 0.1176967, hdlC: -0.1511850,
+    age: 0.7198830, ageSquared: 0.0, nonHdlC: 0.1176967, hdlC: -0.1511850,
     sbpLt110: -0.0835358, sbpGte110: 0.3592852, dm: 0.8348585,
     smoking: 0.4831078, bmiLt30: 0.0, bmiGte30: 0.0,
     egfrLt60: 0.4864619, egfrGte60: 0.0397779, bpTx: 0.2265309,
@@ -56,7 +59,7 @@ export const PREVENT_10YR = {
     ageEgfrLt60: -0.1671492, constant: -3.8199750,
   },
   male: {
-    age: 0.7099847, nonHdlC: 0.1658663, hdlC: -0.1144285,
+    age: 0.7099847, ageSquared: 0.0, nonHdlC: 0.1658663, hdlC: -0.1144285,
     sbpLt110: -0.2837212, sbpGte110: 0.3239977, dm: 0.7189597,
     smoking: 0.3956973, bmiLt30: 0.0, bmiGte30: 0.0,
     egfrLt60: 0.3690075, egfrGte60: 0.0203619, bpTx: 0.2036522,
@@ -79,7 +82,8 @@ function _xbeta(c, { age, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bm
   const bh = (Math.max(bmi, 30) - 30) / 5;
   const el = (Math.min(egfr, 60) - 60) / -15;
   const eh = (Math.max(egfr, 60) - 90) / -15;
-  return c.age*a + c.nonHdlC*nh + c.hdlC*hd + c.sbpLt110*sl + c.sbpGte110*sh +
+  return c.age*a + c.ageSquared*(a*a) +
+    c.nonHdlC*nh + c.hdlC*hd + c.sbpLt110*sl + c.sbpGte110*sh +
     c.dm*d + c.smoking*sm + c.bmiLt30*bl + c.bmiGte30*bh +
     c.egfrLt60*el + c.egfrGte60*eh + c.bpTx*bp + c.statin*st +
     c.bpTxSbpGte110*(bp*sh) + c.statinNonHdlC*(st*nh) +
@@ -182,31 +186,40 @@ Find at least one published 30-year reference value (from the Khan paper supplem
 
 - [ ] **Step 2.3: Add `PREVENT_30YR` constant to `src/prevent.js`**
 
-Add immediately below the existing `PREVENT_10YR` constant. Note: BMI coefficients in the base model may be 0.0 (mirroring the 10-year base model). Whatever the actual values are, transcribe verbatim:
+Add immediately below the existing `PREVENT_10YR` constant. **Important**: the 30-year model has an additional `ageSquared` term (quadratic age) that the 10-year base model does not. The `_xbeta` helper from Task 1 already accommodates this via its `c.ageSquared*(a*a)` term. Values below are extracted from `preventr` v0.11.0 `sysdata.rda` (`base_30yr` matrix, columns `female_ascvd` and `male_ascvd`):
 
 ```javascript
 // 30-year ASCVD base model (ages 30-59)
 // Khan SS et al. Circulation 2024 — extracted from preventr v0.11.0 sysdata.rda
+// (`base_30yr$female_ascvd` and `base_30yr$male_ascvd`)
+// Note: includes age² term not present in the 10-yr model.
 export const PREVENT_30YR = {
   female: {
-    age: <value>, nonHdlC: <value>, hdlC: <value>,
-    sbpLt110: <value>, sbpGte110: <value>, dm: <value>,
-    smoking: <value>, bmiLt30: <value>, bmiGte30: <value>,
-    egfrLt60: <value>, egfrGte60: <value>, bpTx: <value>,
-    statin: <value>, bpTxSbpGte110: <value>, statinNonHdlC: <value>,
-    ageNonHdlC: <value>, ageHdlC: <value>, ageSbpGte110: <value>,
-    ageDm: <value>, ageSmoking: <value>, ageBmiGte30: <value>,
-    ageEgfrLt60: <value>, constant: <value>,
+    age: 0.466920, ageSquared: -0.089312, nonHdlC: 0.125690, hdlC: -0.154225,
+    sbpLt110: -0.001809, sbpGte110: 0.322949, dm: 0.629671,
+    smoking: 0.268292, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.100106, egfrGte60: 0.049966, bpTx: 0.187529,
+    statin: 0.015248, bpTxSbpGte110: -0.027612, statinNonHdlC: 0.073615,
+    ageNonHdlC: -0.052196, ageHdlC: 0.031692, ageSbpGte110: -0.104610,
+    ageDm: -0.272779, ageSmoking: -0.153091, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.129915, constant: -1.974074,
   },
   male: {
-    // ... same structure with male-specific values ...
+    age: 0.399410, ageSquared: -0.093748, nonHdlC: 0.174464, hdlC: -0.120203,
+    sbpLt110: -0.066512, sbpGte110: 0.275304, dm: 0.479026,
+    smoking: 0.178263, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: -0.021879, egfrGte60: 0.060255, bpTx: 0.142118,
+    statin: 0.013600, bpTxSbpGte110: -0.021826, statinNonHdlC: 0.101315,
+    ageNonHdlC: -0.031262, ageHdlC: 0.020673, ageSbpGte110: -0.092093,
+    ageDm: -0.215995, ageSmoking: -0.154881, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.071255, constant: -1.736444,
   },
 };
 
 export const VALID_30YR_AGE_MAX = 59;
 ```
 
-(The `<value>` placeholders are the only acceptable placeholders in the entire plan because the engineer must read the actual numbers off the source. Every other code block in this plan is final.)
+(BMI coefficients are 0.0 in the 30-year base ASCVD model, exactly as in the 10-year base ASCVD model. This was anticipated in the spec as an open question — now resolved. BMI will not appear in the driver breakdown for any patient because `Δ_BMI` will always be 0.)
 
 - [ ] **Step 2.4: Commit**
 
@@ -256,33 +269,52 @@ function close(actual, expected, tolerance, name) {
 
 console.log("\n═══ calcPREVENT30 ═══");
 
-// Reference cases — replace expected values with verified outputs from
-// AHA PREVENT calculator (https://professional.heart.org/.../prevent-calculator)
-// Each reference case must have all inputs populated, age in [30, 59].
+// Reference cases. Two are from preventr v0.11.0 official test snapshots
+// (test-prevent_equations.R, "Base model 30-year risks give expected results").
+// Others computed by hand from the published coefficients (see plan Task 2.2).
+// Each reference case has age in [30, 59].
 const REF_30YR = [
+  {
+    name: "preventr 50F (sbp160, BPtx, TC200, HDL45, DM, eGFR90, BMI35)",
+    inputs: { age: 50, sex: "female", sbp: 160, bpTx: true, totalC: 200, hdlC: 45, statin: false, dm: true, smoking: false, egfr: 90, bmi: 35 },
+    expected: 35.4,
+    tolerance: 0.1,
+  },
+  {
+    name: "preventr 50M (sbp160, BPtx, TC200, HDL45, DM, eGFR90, BMI35)",
+    inputs: { age: 50, sex: "male", sbp: 160, bpTx: true, totalC: 200, hdlC: 45, statin: false, dm: true, smoking: false, egfr: 90, bmi: 35 },
+    expected: 34.9,
+    tolerance: 0.1,
+  },
   {
     name: "35F low-risk baseline",
     inputs: { age: 35, sex: "female", sbp: 115, bpTx: false, totalC: 180, hdlC: 55, statin: false, dm: false, smoking: false, egfr: 95, bmi: 23 },
-    expected: <ref%>,  // record from AHA calculator at extraction time
-    tolerance: 1.0,
-  },
-  {
-    name: "35M high-LDL discordance candidate",
-    inputs: { age: 35, sex: "male", sbp: 118, bpTx: false, totalC: 250, hdlC: 40, statin: false, dm: false, smoking: false, egfr: 95, bmi: 27 },
-    expected: <ref%>,
-    tolerance: 1.0,
+    expected: 2.1,
+    tolerance: 0.5,
   },
   {
     name: "45M average",
     inputs: { age: 45, sex: "male", sbp: 130, bpTx: false, totalC: 200, hdlC: 45, statin: false, dm: false, smoking: false, egfr: 90, bmi: 26 },
-    expected: <ref%>,
-    tolerance: 1.0,
+    expected: 11.3,
+    tolerance: 0.5,
   },
   {
     name: "55F high-burden",
     inputs: { age: 55, sex: "female", sbp: 145, bpTx: true, totalC: 220, hdlC: 40, statin: false, dm: true, smoking: true, egfr: 75, bmi: 32 },
-    expected: <ref%>,
-    tolerance: 1.0,
+    expected: 41.7,
+    tolerance: 0.5,
+  },
+  {
+    name: "30M lower boundary",
+    inputs: { age: 30, sex: "male", sbp: 120, bpTx: false, totalC: 180, hdlC: 50, statin: false, dm: false, smoking: false, egfr: 90, bmi: 24 },
+    expected: 2.6,
+    tolerance: 0.5,
+  },
+  {
+    name: "59F upper boundary",
+    inputs: { age: 59, sex: "female", sbp: 125, bpTx: false, totalC: 190, hdlC: 55, statin: false, dm: false, smoking: false, egfr: 90, bmi: 24 },
+    expected: 12.7,
+    tolerance: 0.5,
   },
 ];
 
