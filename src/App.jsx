@@ -298,6 +298,7 @@ export default function App() {
   const [ascvdLevel, setAscvdLevel] = useState("not_very_high");
   const [cacInfo, setCacInfo] = useState(false);
   const [bioInfo, setBioInfo] = useState(false);
+  const [riskInfo, setRiskInfo] = useState(false);
   const [lifetimeOptimizedOpen, setLifetimeOptimizedOpen] = useState(false);
   const [lifetimeDriversOpen, setLifetimeDriversOpen] = useState(false);
   const [bmiCalc, setBmiCalc] = useState(false);
@@ -317,7 +318,7 @@ export default function App() {
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB(""); setAscvdLevel("not_very_high");
-    setCacInfo(false); setBioInfo(false); setBmiCalc(false);
+    setCacInfo(false); setBioInfo(false); setRiskInfo(false); setBmiCalc(false);
     setStatinInfo(false); setStatinInfoMon(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhr({}); setDmEnhs({}); setMetSyn({});
@@ -510,7 +511,25 @@ export default function App() {
         {/* PRIMARY */}
         {tab === "primary" && (<>
           <Card title="PREVENT-ASCVD Risk Calculator" accent="blue">
-            <p className="text-[11px] text-slate-400 mb-3" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+            <div className="flex items-start justify-between mb-3">
+              <p className="text-[11px] text-slate-400" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+              <button onClick={() => setRiskInfo(p => !p)}
+                className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-[#1e3040] text-slate-400 dark:text-[#3d6580] text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-blue-400 hover:text-blue-500 dark:hover:border-sky-400 dark:hover:text-sky-400 active:scale-95 transition-colors">?</button>
+            </div>
+            {riskInfo && (
+              <div className="mb-3 p-3 bg-blue-50 dark:bg-sky-500/15 border border-blue-200 dark:border-sky-500/30 rounded-lg text-[11px] text-slate-700 dark:text-[#d0e4f0] space-y-2">
+                <div className="font-bold text-blue-800 dark:text-sky-400">What does this risk mean?</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+                  <span className="font-bold text-blue-700 dark:text-sky-400 whitespace-nowrap">10-Yr ASCVD</span>
+                  <span>Probability of having a heart attack, stroke, or fatal coronary event in the <span className="font-bold">next 10 years</span>.</span>
+                  <span className="font-bold text-blue-700 dark:text-sky-400 whitespace-nowrap">30-Yr ASCVD</span>
+                  <span>Probability of the same event over <span className="font-bold">30 years</span> (often called "lifetime risk"). Validated for ages 30–59 only.</span>
+                </div>
+                <div className="text-slate-500 dark:text-[#5a8aaa] border-t border-blue-200 dark:border-sky-500/30 pt-2">
+                  <span className="font-bold">ASCVD</span> = atherosclerotic cardiovascular disease — the underlying process behind heart attacks, ischemic strokes, and peripheral arterial disease. The PREVENT model excludes heart failure (separate model).
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
@@ -618,18 +637,26 @@ export default function App() {
                 {/* 10-year */}
                 <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc10.darkBg : rc10.bg, borderColor: rc10.color + "40" }}>
                   <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc10.color }}>10-Yr ASCVD</div>
-                  <div className="text-3xl font-black mt-0.5 font-mono tabular-nums" style={{ color: rc10.color }}>{risk10}%</div>
-                  <div className="mt-1 inline-block px-2.5 py-1 rounded-full text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: rc10.color }}>{rc10.label}</div>
-                  <div className="text-[10px] mt-1 font-semibold" style={{ color: rc10.color }}>{rc10.range}</div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <div className="text-3xl font-black font-mono tabular-nums leading-none" style={{ color: rc10.color }}>{risk10}%</div>
+                    <div className="flex flex-col items-end gap-0.5 min-w-0">
+                      <div className="px-2 py-0.5 rounded-full text-[11px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc10.color }}>{rc10.label}</div>
+                      <div className="text-[10px] font-semibold" style={{ color: rc10.color }}>{rc10.range}</div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* 30-year */}
                 {risk30 !== null && rc30 ? (
                   <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc30.darkBg : rc30.bg, borderColor: rc30.color + "40" }}>
                     <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc30.color }}>30-Yr ASCVD</div>
-                    <div className="text-3xl font-black mt-0.5 font-mono tabular-nums" style={{ color: rc30.color }}>{risk30}%</div>
-                    <div className="mt-1 inline-block px-2.5 py-1 rounded-full text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: rc30.color }}>{rc30.label}</div>
-                    <div className="text-[10px] mt-1 font-semibold" style={{ color: rc30.color }}>{rc30.range}</div>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <div className="text-3xl font-black font-mono tabular-nums leading-none" style={{ color: rc30.color }}>{risk30}%</div>
+                      <div className="flex flex-col items-end gap-0.5 min-w-0">
+                        <div className="px-2 py-0.5 rounded-full text-[11px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc30.color }}>{rc30.label}</div>
+                        <div className="text-[10px] font-semibold" style={{ color: rc30.color }}>{rc30.range}</div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="rounded-xl p-3 border-2 bg-slate-50 dark:bg-[#111a24] border-slate-200 dark:border-[#1a2835]">
@@ -724,9 +751,9 @@ export default function App() {
                                 <div key={d.factor} className="flex items-center gap-2">
                                   <div className="text-[11px] font-bold text-slate-700 dark:text-[#d0e4f0] w-24 shrink-0">{d.label}</div>
                                   <div className="flex-1 h-3 rounded bg-slate-100 dark:bg-[#0a1018] relative overflow-hidden">
-                                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 dark:bg-amber-400/70" style={{ width: widthPct + "%" }} />
+                                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 dark:bg-emerald-400/70" style={{ width: widthPct + "%" }} />
                                   </div>
-                                  <div className="text-[11px] font-mono tabular-nums font-bold text-amber-700 dark:text-amber-400 w-12 text-right shrink-0">−{d.delta}%</div>
+                                  <div className="text-[11px] font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400 w-12 text-right shrink-0">{d.delta}%</div>
                                 </div>
                               );
                             })}
