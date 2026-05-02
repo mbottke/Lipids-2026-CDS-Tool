@@ -1,67 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-
-// ══════════════════════════════════════════════════════════════════════════════
-//  PREVENT-ASCVD 10-Year Base Model Coefficients
-//  Source: Khan SS et al. Circulation 2024;149:430-449
-//  Extracted from validated `preventr` R package v0.11.0 (sysdata.rda)
-//  These are the logistic regression coefficients for the base model,
-//  sex-specific, ASCVD outcome, 10-year horizon.
-// ══════════════════════════════════════════════════════════════════════════════
-const PREVENT = {
-  female: {
-    age: 0.7198830, nonHdlC: 0.1176967, hdlC: -0.1511850,
-    sbpLt110: -0.0835358, sbpGte110: 0.3592852, dm: 0.8348585,
-    smoking: 0.4831078, bmiLt30: 0.0, bmiGte30: 0.0,
-    egfrLt60: 0.4864619, egfrGte60: 0.0397779, bpTx: 0.2265309,
-    statin: -0.0592374, bpTxSbpGte110: -0.0395762, statinNonHdlC: 0.0844423,
-    ageNonHdlC: -0.0567839, ageHdlC: 0.0325692, ageSbpGte110: -0.1035985,
-    ageDm: -0.2417542, ageSmoking: -0.0791142, ageBmiGte30: 0.0,
-    ageEgfrLt60: -0.1671492, constant: -3.8199750,
-  },
-  male: {
-    age: 0.7099847, nonHdlC: 0.1658663, hdlC: -0.1144285,
-    sbpLt110: -0.2837212, sbpGte110: 0.3239977, dm: 0.7189597,
-    smoking: 0.3956973, bmiLt30: 0.0, bmiGte30: 0.0,
-    egfrLt60: 0.3690075, egfrGte60: 0.0203619, bpTx: 0.2036522,
-    statin: -0.0865581, bpTxSbpGte110: -0.0322916, statinNonHdlC: 0.1145630,
-    ageNonHdlC: -0.0300005, ageHdlC: 0.0232747, ageSbpGte110: -0.0927024,
-    ageDm: -0.2018525, ageSmoking: -0.0970527, ageBmiGte30: 0.0,
-    ageEgfrLt60: -0.1217081, constant: -3.5006550,
-  },
-};
-
-function calcPREVENT({ age, sex, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bmi }) {
-  if (!age || !sbp || !totalC || !hdlC || !egfr || !bmi) return null;
-  const c = PREVENT[sex];
-  const toMmol = (mg) => mg / 38.67;
-  const a = (age - 55) / 10;
-  const nh = toMmol(totalC - hdlC) - 3.5;
-  const hd = (toMmol(hdlC) - 1.3) / 0.3;
-  const sl = (Math.min(sbp, 110) - 110) / 20;
-  const sh = (Math.max(sbp, 110) - 130) / 20;
-  const d = dm ? 1 : 0, sm = smoking ? 1 : 0, bp = bpTx ? 1 : 0, st = statin ? 1 : 0;
-  const bl = (Math.min(bmi, 30) - 25) / 5;
-  const bh = (Math.max(bmi, 30) - 30) / 5;
-  const el = (Math.min(egfr, 60) - 60) / -15;
-  const eh = (Math.max(egfr, 60) - 90) / -15;
-  const x =
-    c.age*a + c.nonHdlC*nh + c.hdlC*hd + c.sbpLt110*sl + c.sbpGte110*sh +
-    c.dm*d + c.smoking*sm + c.bmiLt30*bl + c.bmiGte30*bh +
-    c.egfrLt60*el + c.egfrGte60*eh + c.bpTx*bp + c.statin*st +
-    c.bpTxSbpGte110*(bp*sh) + c.statinNonHdlC*(st*nh) +
-    c.ageNonHdlC*(a*nh) + c.ageHdlC*(a*hd) + c.ageSbpGte110*(a*sh) +
-    c.ageDm*(a*d) + c.ageSmoking*(a*sm) + c.ageBmiGte30*(a*bh) +
-    c.ageEgfrLt60*(a*el) + c.constant;
-  return Math.round((Math.exp(x)/(1+Math.exp(x)))*1000)/10;
-}
-
-function riskCat(r) {
-  if (r === null) return null;
-  if (r < 3) return { label: "Low", color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<3%" };
-  if (r < 5) return { label: "Borderline", color: "#ca8a04", bg: "#fefce8", darkBg: "rgba(202, 138, 4, 0.10)", range: "3–<5%" };
-  if (r < 10) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", darkBg: "rgba(234, 88, 12, 0.10)", range: "5–<10%" };
-  return { label: "High", color: "#dc2626", bg: "#fef2f2", darkBg: "rgba(220, 38, 38, 0.10)", range: "≥10%" };
-}
+import {
+  calcPREVENT10, calcPREVENT30,
+  riskCat10, riskCat30,
+  discordance, optimizedInputs, driverDeltas,
+  VALID_30YR_AGE_MAX,
+} from "./prevent.js";
 
 const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
@@ -355,6 +298,9 @@ export default function App() {
   const [ascvdLevel, setAscvdLevel] = useState("not_very_high");
   const [cacInfo, setCacInfo] = useState(false);
   const [bioInfo, setBioInfo] = useState(false);
+  const [riskInfo, setRiskInfo] = useState(false);
+  const [lifetimeOptimizedOpen, setLifetimeOptimizedOpen] = useState(false);
+  const [lifetimeDriversOpen, setLifetimeDriversOpen] = useState(false);
   const [bmiCalc, setBmiCalc] = useState(false);
   const [statinInfo, setStatinInfo] = useState(false);
   const [statinInfoMon, setStatinInfoMon] = useState(false);
@@ -372,10 +318,11 @@ export default function App() {
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB(""); setAscvdLevel("not_very_high");
-    setCacInfo(false); setBioInfo(false); setBmiCalc(false);
+    setCacInfo(false); setBioInfo(false); setRiskInfo(false); setBmiCalc(false);
     setStatinInfo(false); setStatinInfoMon(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhr({}); setDmEnhs({}); setMetSyn({});
+    setLifetimeOptimizedOpen(false); setLifetimeDriversOpen(false);
   }, []);
 
   const calcBmiValue = useMemo(() => {
@@ -413,12 +360,39 @@ export default function App() {
     return count;
   }, [enhs, metSynCount]);
 
-  const risk = useMemo(() => {
-    if (tab !== "primary") return null;
-    return calcPREVENT({ age, sex, sbp, bpTx, totalC, hdlC, statin:onStatin, dm, smoking, egfr, bmi });
-  }, [tab, age, sex, sbp, bpTx, totalC, hdlC, onStatin, dm, smoking, egfr, bmi]);
+  const inputsObj = useMemo(() => ({
+    age, sex, sbp, bpTx, totalC, hdlC, statin: onStatin, dm, smoking, egfr, bmi,
+  }), [age, sex, sbp, bpTx, totalC, hdlC, onStatin, dm, smoking, egfr, bmi]);
 
-  const rc = useMemo(() => riskCat(risk), [risk]);
+  const risk10 = useMemo(() => {
+    if (tab !== "primary") return null;
+    return calcPREVENT10(inputsObj);
+  }, [tab, inputsObj]);
+
+  const risk30 = useMemo(() => {
+    if (tab !== "primary") return null;
+    return calcPREVENT30(inputsObj);
+  }, [tab, inputsObj]);
+
+  const rc10 = useMemo(() => riskCat10(risk10), [risk10]);
+  const rc30 = useMemo(() => riskCat30(risk30), [risk30]);
+
+  const discord = useMemo(() => discordance(risk10, risk30, age), [risk10, risk30, age]);
+
+  const optInputs = useMemo(() => {
+    if (risk30 === null) return null;
+    return optimizedInputs(inputsObj);
+  }, [risk30, inputsObj]);
+
+  const optRisk30 = useMemo(() => {
+    if (optInputs === null) return null;
+    return calcPREVENT30(optInputs);
+  }, [optInputs]);
+
+  const drivers = useMemo(() => {
+    if (risk30 === null) return [];
+    return driverDeltas(inputsObj);
+  }, [risk30, inputsObj]);
 
   const nonHdlC = useMemo(() => {
     if (totalC === "" || hdlC === "") return null;
@@ -438,7 +412,7 @@ export default function App() {
     if (tab === "severe") {
       return { g:{ldl:100,nh:130,p:50}, int:"high", esc:true, txt:"LDL ≥190 — high-intensity statin; evaluate for familial hypercholesterolemia", clr:"red" };
     }
-    if (risk === null) return null;
+    if (risk10 === null) return null;
     // CAC override
     if (cac !== "") {
       const c = Number(cac), p = cacPct !== "" ? Number(cacPct) : null;
@@ -447,12 +421,12 @@ export default function App() {
       if (c >= 100 || (p !== null && p >= 75)) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"CAC ≥100 or ≥75th %ile — High-intensity statin to LDL <70.", clr:"amber" };
       if (c >= 1) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"CAC 1–99 (<75th %ile) — Moderate-intensity statin to LDL <100.", clr:"blue" };
     }
-    if (risk >= 10) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"High 10-year ASCVD risk (≥10%) — High-intensity statin to LDL <70.", clr:"red" };
-    if (risk >= 5) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"Intermediate risk (5–<10%) — Moderate-intensity statin to LDL <100 after shared decision-making.", clr:"amber" };
-    if (risk >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
-    if (risk >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
+    if (risk10 >= 10) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"High 10-year ASCVD risk (≥10%) — High-intensity statin to LDL <70.", clr:"red" };
+    if (risk10 >= 5) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"Intermediate risk (5–<10%) — Moderate-intensity statin to LDL <100 after shared decision-making.", clr:"amber" };
+    if (risk10 >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
+    if (risk10 >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
     return { g:null, int:"none", esc:false, txt:"Low risk (<3%) — Lifestyle optimization. Reassess periodically.", clr:"emerald" };
-  }, [tab, risk, enhCount, cac, cacPct, vhrCount]);
+  }, [tab, risk10, enhCount, cac, cacPct, vhrCount]);
 
   // Biomarker interpretation
   const lpaNote = useMemo(() => {
@@ -537,7 +511,25 @@ export default function App() {
         {/* PRIMARY */}
         {tab === "primary" && (<>
           <Card title="PREVENT-ASCVD Risk Calculator" accent="blue">
-            <p className="text-[11px] text-slate-400 mb-3" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+            <div className="flex items-start justify-between mb-3">
+              <p className="text-[11px] text-slate-400" style={{color: darkMode ? "var(--accent-sub)" : undefined}}>Ages 30–79 · No known ASCVD · Replaces Pooled Cohort Equations</p>
+              <button onClick={() => setRiskInfo(p => !p)}
+                className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-[#1e3040] text-slate-400 dark:text-[#3d6580] text-[12px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-blue-400 hover:text-blue-500 dark:hover:border-sky-400 dark:hover:text-sky-400 active:scale-95 transition-colors">?</button>
+            </div>
+            {riskInfo && (
+              <div className="mb-3 p-3 bg-blue-50 dark:bg-sky-500/15 border border-blue-200 dark:border-sky-500/30 rounded-lg text-[11px] text-slate-700 dark:text-[#d0e4f0] space-y-2">
+                <div className="font-bold text-blue-800 dark:text-sky-400">What does this risk mean?</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+                  <span className="font-bold text-blue-700 dark:text-sky-400 whitespace-nowrap">10-Yr ASCVD</span>
+                  <span>Probability of having a heart attack, stroke, or fatal coronary event in the <span className="font-bold">next 10 years</span>.</span>
+                  <span className="font-bold text-blue-700 dark:text-sky-400 whitespace-nowrap">30-Yr ASCVD</span>
+                  <span>Probability of the same event over <span className="font-bold">30 years</span> (often called "lifetime risk"). Validated for ages 30–59 only.</span>
+                </div>
+                <div className="text-slate-500 dark:text-[#5a8aaa] border-t border-blue-200 dark:border-sky-500/30 pt-2">
+                  <span className="font-bold">ASCVD</span> = atherosclerotic cardiovascular disease — the underlying process behind heart attacks, ischemic strokes, and peripheral arterial disease. The PREVENT model excludes heart failure (separate model).
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
@@ -640,17 +632,139 @@ export default function App() {
             </div>
 
             {/* Risk result */}
-            {risk !== null && rc && (
-              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor: darkMode ? rc.darkBg : rc.bg, borderColor:rc.color+"40" }}>
-                <div className="flex items-center justify-between">
+            {risk10 !== null && rc10 && (
+              <div className="risk-appear mt-4 grid grid-cols-2 gap-2">
+                {/* 10-year */}
+                <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc10.darkBg : rc10.bg, borderColor: rc10.color + "40" }}>
+                  <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc10.color }}>10-Yr ASCVD</div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <div className="text-3xl font-black font-mono tabular-nums leading-none" style={{ color: rc10.color }}>{risk10}%</div>
+                    <div className="flex flex-col items-end gap-0.5 min-w-0">
+                      <div className="px-2 py-0.5 rounded-full text-[11px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc10.color }}>{rc10.label}</div>
+                      <div className="text-[10px] font-semibold" style={{ color: rc10.color }}>{rc10.range}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 30-year */}
+                {risk30 !== null && rc30 ? (
+                  <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc30.darkBg : rc30.bg, borderColor: rc30.color + "40" }}>
+                    <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc30.color }}>30-Yr ASCVD</div>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <div className="text-3xl font-black font-mono tabular-nums leading-none" style={{ color: rc30.color }}>{risk30}%</div>
+                      <div className="flex flex-col items-end gap-0.5 min-w-0">
+                        <div className="px-2 py-0.5 rounded-full text-[11px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc30.color }}>{rc30.label}</div>
+                        <div className="text-[10px] font-semibold" style={{ color: rc30.color }}>{rc30.range}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl p-3 border-2 bg-slate-50 dark:bg-[#111a24] border-slate-200 dark:border-[#1a2835]">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-[#5a8aaa]">30-Yr ASCVD</div>
+                    <div className="text-[12px] mt-2 font-semibold text-slate-500 dark:text-[#7a9ab5] leading-snug">
+                      Not validated for ages ≥{VALID_30YR_AGE_MAX + 1}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Discordance callout: low 10-yr but elevated 30-yr */}
+            {discord && (
+              <div className="mt-3 p-3 rounded-xl border bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30">
+                <div className="flex items-start gap-2">
+                  <div className="text-amber-700 dark:text-amber-400 text-[14px] font-black mt-0.5">⚠</div>
                   <div>
-                    <div className="text-[11px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
-                    <div className="text-4xl font-black mt-0.5 font-mono tabular-nums" style={{color:rc.color}}>{risk}%</div>
+                    <div className="text-[12px] font-black text-amber-800 dark:text-amber-300 leading-tight">Discordance: low 10-yr, elevated lifetime risk</div>
+                    <div className="text-[11px] text-amber-700 dark:text-amber-300/80 mt-0.5 leading-snug">
+                      Consider shared decision-making, CAC scoring, Lp(a) measurement, and earlier statin/lifestyle intervention.
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="px-4 py-2 rounded-full text-[14px] font-black text-white shadow-sm" style={{backgroundColor:rc.color}}>{rc.label}</div>
-                    <div className="text-[11px] mt-1 font-semibold" style={{color:rc.color}}>{rc.range}</div>
-                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Lifetime insights (only when 30-yr is available) */}
+            {risk30 !== null && (
+              <div className="mt-3 space-y-2">
+                {/* If optimized */}
+                <div className="rounded-xl border border-slate-200 dark:border-[#1a2835] bg-white dark:bg-[#111a24] overflow-hidden">
+                  <button
+                    onClick={() => setLifetimeOptimizedOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-left active:opacity-70 cursor-pointer"
+                  >
+                    <span className="text-[12px] font-bold text-slate-700 dark:text-[#d0e4f0]">
+                      {lifetimeOptimizedOpen ? "▾" : "▸"} Risk if optimized
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 dark:text-[#5a8aaa]">tap</span>
+                  </button>
+                  {lifetimeOptimizedOpen && (
+                    <div className="px-3 pb-3 pt-0 border-t border-slate-200 dark:border-[#1a2835]">
+                      {(() => {
+                        if (optRisk30 === null) return <div className="text-[11px] text-slate-500 dark:text-[#5a8aaa] mt-2">Unable to compute optimized projection.</div>;
+                        const delta = Math.round((risk30 - optRisk30) * 10) / 10;
+                        if (delta <= 0) return (
+                          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-2">
+                            Risk factors already near optimal.
+                          </div>
+                        );
+                        return (
+                          <div className="mt-2">
+                            <div className="text-[11px] text-slate-500 dark:text-[#5a8aaa] leading-snug">
+                              If risk factors optimized (BP 110, no smoking, BMI ≤24, non-HDL ≤120, HDL ≥50):
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                              <span className="text-2xl font-black font-mono tabular-nums text-emerald-700 dark:text-emerald-400">{optRisk30}%</span>
+                              <span className="text-[12px] font-bold text-emerald-700 dark:text-emerald-400">↓ −{delta}%</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Drivers */}
+                <div className="rounded-xl border border-slate-200 dark:border-[#1a2835] bg-white dark:bg-[#111a24] overflow-hidden">
+                  <button
+                    onClick={() => setLifetimeDriversOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-left active:opacity-70 cursor-pointer"
+                  >
+                    <span className="text-[12px] font-bold text-slate-700 dark:text-[#d0e4f0]">
+                      {lifetimeDriversOpen ? "▾" : "▸"} What's driving the 30-yr risk?
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 dark:text-[#5a8aaa]">tap</span>
+                  </button>
+                  {lifetimeDriversOpen && (
+                    <div className="px-3 pb-3 pt-0 border-t border-slate-200 dark:border-[#1a2835]">
+                      {drivers.length === 0 ? (
+                        <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-2">
+                          All modifiable factors near optimal.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mt-2 space-y-1.5">
+                            {drivers.map(d => {
+                              const maxDelta = drivers[0].delta || 1;
+                              const widthPct = Math.round((d.delta / maxDelta) * 100);
+                              return (
+                                <div key={d.factor} className="flex items-center gap-2">
+                                  <div className="text-[11px] font-bold text-slate-700 dark:text-[#d0e4f0] w-24 shrink-0">{d.label}</div>
+                                  <div className="flex-1 h-3 rounded bg-slate-100 dark:bg-[#0a1018] relative overflow-hidden">
+                                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 dark:bg-emerald-400/70" style={{ width: widthPct + "%" }} />
+                                  </div>
+                                  <div className="text-[11px] font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400 w-12 text-right shrink-0">{d.delta}%</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 text-[10px] text-slate-400 dark:text-[#5a8aaa] leading-snug">
+                            Single-factor projection. Values may not sum due to interactions in the PREVENT model.
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -869,7 +983,7 @@ export default function App() {
         </Card>
 
         {/* ── RECOMMENDATION ── */}
-        {rec && ((tab==="primary" && risk!==null) || tab!=="primary") && (<>
+        {rec && ((tab==="primary" && risk10!==null) || tab!=="primary") && (<>
           <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
             <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white mb-1">Recommendation</div>
             <div className={`text-[14px] font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
