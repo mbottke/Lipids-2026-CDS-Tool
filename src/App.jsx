@@ -638,9 +638,9 @@ export default function App() {
                 <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc10.darkBg : rc10.bg, borderColor: rc10.color + "40" }}>
                   <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc10.color }}>10-Yr ASCVD</div>
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <div className="text-3xl font-black font-mono tabular-nums leading-none" style={{ color: rc10.color }}>{risk10}%</div>
-                    <div className="flex flex-col items-end gap-0.5 min-w-0">
-                      <div className="px-2 py-0.5 rounded-full text-[11px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc10.color }}>{rc10.label}</div>
+                    <div className="text-2xl font-black font-mono tabular-nums leading-none shrink-0" style={{ color: rc10.color }}>{risk10}%</div>
+                    <div className="flex flex-col items-end gap-0.5 shrink-0">
+                      <div className="px-1.5 py-0.5 rounded-full text-[9px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc10.color }}>{rc10.label}</div>
                       <div className="text-[10px] font-semibold" style={{ color: rc10.color }}>{rc10.range}</div>
                     </div>
                   </div>
@@ -651,9 +651,9 @@ export default function App() {
                   <div className="rounded-xl p-3 border-2" style={{ backgroundColor: darkMode ? rc30.darkBg : rc30.bg, borderColor: rc30.color + "40" }}>
                     <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: rc30.color }}>30-Yr ASCVD</div>
                     <div className="mt-1 flex items-center justify-between gap-2">
-                      <div className="text-3xl font-black font-mono tabular-nums leading-none" style={{ color: rc30.color }}>{risk30}%</div>
-                      <div className="flex flex-col items-end gap-0.5 min-w-0">
-                        <div className="px-2 py-0.5 rounded-full text-[11px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc30.color }}>{rc30.label}</div>
+                      <div className="text-2xl font-black font-mono tabular-nums leading-none shrink-0" style={{ color: rc30.color }}>{risk30}%</div>
+                      <div className="flex flex-col items-end gap-0.5 shrink-0">
+                        <div className="px-1.5 py-0.5 rounded-full text-[9px] font-black text-white shadow-sm whitespace-nowrap" style={{ backgroundColor: rc30.color }}>{rc30.label}</div>
                         <div className="text-[10px] font-semibold" style={{ color: rc30.color }}>{rc30.range}</div>
                       </div>
                     </div>
