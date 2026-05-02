@@ -298,6 +298,8 @@ export default function App() {
   const [ascvdLevel, setAscvdLevel] = useState("not_very_high");
   const [cacInfo, setCacInfo] = useState(false);
   const [bioInfo, setBioInfo] = useState(false);
+  const [lifetimeOptimizedOpen, setLifetimeOptimizedOpen] = useState(false);
+  const [lifetimeDriversOpen, setLifetimeDriversOpen] = useState(false);
   const [bmiCalc, setBmiCalc] = useState(false);
   const [statinInfo, setStatinInfo] = useState(false);
   const [statinInfoMon, setStatinInfoMon] = useState(false);
@@ -319,6 +321,7 @@ export default function App() {
     setStatinInfo(false); setStatinInfoMon(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhr({}); setDmEnhs({}); setMetSyn({});
+    setLifetimeOptimizedOpen(false); setLifetimeDriversOpen(false);
   }, []);
 
   const calcBmiValue = useMemo(() => {
@@ -650,6 +653,91 @@ export default function App() {
                       Consider shared decision-making, CAC scoring, Lp(a) measurement, and earlier statin/lifestyle intervention.
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Lifetime insights (only when 30-yr is available) */}
+            {risk30 !== null && (
+              <div className="mt-3 space-y-2">
+                {/* If optimized */}
+                <div className="rounded-xl border border-slate-200 dark:border-[#1a2835] bg-white dark:bg-[#111a24] overflow-hidden">
+                  <button
+                    onClick={() => setLifetimeOptimizedOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-left active:opacity-70 cursor-pointer"
+                  >
+                    <span className="text-[12px] font-bold text-slate-700 dark:text-[#d0e4f0]">
+                      {lifetimeOptimizedOpen ? "▾" : "▸"} Risk if optimized
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 dark:text-[#5a8aaa]">tap</span>
+                  </button>
+                  {lifetimeOptimizedOpen && (
+                    <div className="px-3 pb-3 pt-0 border-t border-slate-200 dark:border-[#1a2835]">
+                      {(() => {
+                        if (optRisk30 === null) return <div className="text-[11px] text-slate-500 dark:text-[#5a8aaa] mt-2">Unable to compute optimized projection.</div>;
+                        const delta = Math.round((risk30 - optRisk30) * 10) / 10;
+                        if (delta <= 0) return (
+                          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-2">
+                            Risk factors already near optimal.
+                          </div>
+                        );
+                        return (
+                          <div className="mt-2">
+                            <div className="text-[11px] text-slate-500 dark:text-[#5a8aaa] leading-snug">
+                              If risk factors optimized (BP 110, no smoking, BMI ≤24, non-HDL ≤120, HDL ≥50):
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                              <span className="text-2xl font-black font-mono tabular-nums text-emerald-700 dark:text-emerald-400">{optRisk30}%</span>
+                              <span className="text-[12px] font-bold text-emerald-700 dark:text-emerald-400">↓ −{delta}%</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Drivers */}
+                <div className="rounded-xl border border-slate-200 dark:border-[#1a2835] bg-white dark:bg-[#111a24] overflow-hidden">
+                  <button
+                    onClick={() => setLifetimeDriversOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-left active:opacity-70 cursor-pointer"
+                  >
+                    <span className="text-[12px] font-bold text-slate-700 dark:text-[#d0e4f0]">
+                      {lifetimeDriversOpen ? "▾" : "▸"} What's driving the 30-yr risk?
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 dark:text-[#5a8aaa]">tap</span>
+                  </button>
+                  {lifetimeDriversOpen && (
+                    <div className="px-3 pb-3 pt-0 border-t border-slate-200 dark:border-[#1a2835]">
+                      {drivers.length === 0 ? (
+                        <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-2">
+                          All modifiable factors near optimal.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mt-2 space-y-1.5">
+                            {drivers.map(d => {
+                              const maxDelta = drivers[0].delta || 1;
+                              const widthPct = Math.round((d.delta / maxDelta) * 100);
+                              return (
+                                <div key={d.factor} className="flex items-center gap-2">
+                                  <div className="text-[11px] font-bold text-slate-700 dark:text-[#d0e4f0] w-24 shrink-0">{d.label}</div>
+                                  <div className="flex-1 h-3 rounded bg-slate-100 dark:bg-[#0a1018] relative overflow-hidden">
+                                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 dark:bg-amber-400/70" style={{ width: widthPct + "%" }} />
+                                  </div>
+                                  <div className="text-[11px] font-mono tabular-nums font-bold text-amber-700 dark:text-amber-400 w-12 text-right shrink-0">−{d.delta}%</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 text-[10px] text-slate-400 dark:text-[#5a8aaa] leading-snug">
+                            Single-factor projection. Values may not sum due to interactions in the PREVENT model.
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
