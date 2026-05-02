@@ -129,3 +129,22 @@ export function discordance(risk10, risk30, age) {
   if (a < 30 || a > VALID_30YR_AGE_MAX) return false;
   return risk10 < DISCORDANCE_RISK10_MAX && risk30 >= DISCORDANCE_RISK30_MIN;
 }
+
+export function optimizedInputs(inputs) {
+  const sbp = Math.min(Number(inputs.sbp), 110);
+  const bmi = Math.min(Number(inputs.bmi), 24);
+  const hdlC = Math.max(Number(inputs.hdlC), 50);
+  const currentNonHdl = Number(inputs.totalC) - Number(inputs.hdlC);
+  const targetNonHdl = Math.min(currentNonHdl, 120);
+  const totalC = targetNonHdl + hdlC;
+  return {
+    ...inputs,
+    sbp,
+    bpTx: false,
+    smoking: false,
+    bmi,
+    hdlC,
+    totalC,
+    statin: false,
+  };
+}

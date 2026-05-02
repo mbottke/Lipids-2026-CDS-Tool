@@ -2,7 +2,7 @@
 // test-prevent-30yr.mjs — tests for PREVENT 30-year and insight helpers
 
 import {
-  calcPREVENT30, riskCat30, discordance,
+  calcPREVENT30, riskCat30, discordance, optimizedInputs,
   DISCORDANCE_RISK10_MAX, DISCORDANCE_RISK30_MIN,
 } from "./src/prevent.js";
 
@@ -110,6 +110,49 @@ eq(discordance(2,  25, 60), false, "age 60 → false (out of range)");
 eq(discordance(2,  25, 29), false, "age 29 → false (out of range)");
 eq(discordance(null, 25, 35), false, "null 10y → false");
 eq(discordance(2, null, 35),  false, "null 30y → false");
+
+console.log("\n═══ optimizedInputs ═══");
+const patient = {
+  age: 40, sex: "male", sbp: 145, bpTx: true, totalC: 240, hdlC: 38,
+  statin: true, dm: false, smoking: true, egfr: 88, bmi: 30,
+};
+const opt = optimizedInputs(patient);
+eq(opt.age, 40, "age preserved");
+eq(opt.sex, "male", "sex preserved");
+eq(opt.dm, false, "dm preserved");
+eq(opt.egfr, 88, "egfr preserved");
+eq(opt.sbp, 110, "high sbp pulled down to 110");
+eq(opt.bpTx, false, "bpTx forced false");
+eq(opt.smoking, false, "smoking forced false");
+eq(opt.bmi, 24, "high bmi pulled down to 24");
+eq(opt.statin, false, "statin forced false");
+eq(opt.hdlC, 50, "low HDL raised to 50");
+// non-HDL = totalC - hdlC = 240 - 38 = 202 (high) → cap at 120
+// optimal totalC = 120 + 50 = 170
+eq(opt.totalC, 170, "high non-HDL produces totalC = 170");
+
+// already-good patient
+const goodPatient = {
+  age: 40, sex: "male", sbp: 105, bpTx: false, totalC: 165, hdlC: 70,
+  statin: false, dm: false, smoking: false, egfr: 95, bmi: 22,
+};
+const optGood = optimizedInputs(goodPatient);
+eq(optGood.sbp, 105, "low sbp preserved (not pulled up to 110)");
+eq(optGood.bmi, 22, "low bmi preserved (not pulled up to 24)");
+eq(optGood.hdlC, 70, "good HDL preserved (not pulled down to 50)");
+// non-HDL = 165 - 70 = 95 (already < 120) → preserved at 95
+// totalC = 95 + 70 = 165
+eq(optGood.totalC, 165, "already-good non-HDL preserved");
+
+console.log("\n═══ optimized-risk sanity ═══");
+const sanityPatient = {
+  age: 45, sex: "male", sbp: 145, bpTx: true, totalC: 230, hdlC: 38,
+  statin: false, dm: false, smoking: true, egfr: 85, bmi: 31,
+};
+const currentRisk = calcPREVENT30(sanityPatient);
+const optimizedRisk = calcPREVENT30(optimizedInputs(sanityPatient));
+eq(optimizedRisk <= currentRisk, true,
+   `optimized 30y (${optimizedRisk}%) ≤ current (${currentRisk}%)`);
 
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail > 0 ? 1 : 0);
