@@ -148,3 +148,35 @@ export function optimizedInputs(inputs) {
     statin: false,
   };
 }
+
+const NOISE_FLOOR = 0.5;
+
+function _lipidsOverride(inputs) {
+  const hdlC = Math.max(Number(inputs.hdlC), 50);
+  const currentNonHdl = Number(inputs.totalC) - Number(inputs.hdlC);
+  const targetNonHdl = Math.min(currentNonHdl, 120);
+  return { hdlC, totalC: targetNonHdl + hdlC };
+}
+
+export function driverDeltas(inputs) {
+  const current = calcPREVENT30(inputs);
+  if (current === null) return [];
+
+  const candidates = [
+    { factor: "bp",      label: "Blood Pressure", override: { sbp: Math.min(Number(inputs.sbp), 110), bpTx: false } },
+    { factor: "lipids",  label: "Lipids",         override: _lipidsOverride(inputs) },
+    { factor: "smoking", label: "Smoking",        override: { smoking: false } },
+    { factor: "bmi",     label: "BMI",            override: { bmi: Math.min(Number(inputs.bmi), 24) } },
+  ];
+
+  const out = [];
+  for (const c of candidates) {
+    const swapped = { ...inputs, ...c.override };
+    const r = calcPREVENT30(swapped);
+    if (r === null) continue;
+    const delta = Math.round((current - r) * 10) / 10;
+    if (delta >= NOISE_FLOOR) out.push({ factor: c.factor, label: c.label, delta });
+  }
+  out.sort((a, b) => b.delta - a.delta);
+  return out;
+}

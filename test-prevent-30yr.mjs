@@ -2,7 +2,7 @@
 // test-prevent-30yr.mjs — tests for PREVENT 30-year and insight helpers
 
 import {
-  calcPREVENT30, riskCat30, discordance, optimizedInputs,
+  calcPREVENT30, riskCat30, discordance, optimizedInputs, driverDeltas,
   DISCORDANCE_RISK10_MAX, DISCORDANCE_RISK30_MIN,
 } from "./src/prevent.js";
 
@@ -153,6 +153,35 @@ const currentRisk = calcPREVENT30(sanityPatient);
 const optimizedRisk = calcPREVENT30(optimizedInputs(sanityPatient));
 eq(optimizedRisk <= currentRisk, true,
    `optimized 30y (${optimizedRisk}%) ≤ current (${currentRisk}%)`);
+
+console.log("\n═══ driverDeltas ═══");
+const driverPatient = {
+  age: 50, sex: "male", sbp: 150, bpTx: true, totalC: 240, hdlC: 38,
+  statin: false, dm: false, smoking: true, egfr: 85, bmi: 31,
+};
+const drivers = driverDeltas(driverPatient);
+eq(Array.isArray(drivers), true, "returns an array");
+eq(drivers.every(d => typeof d.factor === "string" && typeof d.label === "string" && typeof d.delta === "number"), true, "entries have factor/label/delta");
+
+const factorIds = drivers.map(d => d.factor);
+eq(factorIds.includes("bp"),      true, "includes bp");
+eq(factorIds.includes("lipids"),  true, "includes lipids");
+eq(factorIds.includes("smoking"), true, "includes smoking");
+
+// sorted descending
+for (let i = 1; i < drivers.length; i++) {
+  eq(drivers[i-1].delta >= drivers[i].delta, true, `entry ${i-1} delta ≥ entry ${i} delta`);
+}
+
+// noise floor
+eq(drivers.every(d => d.delta >= 0.5), true, "all deltas ≥ 0.5% (noise floor)");
+
+// already-optimal patient produces empty array
+const optimalPatient = {
+  age: 40, sex: "male", sbp: 110, bpTx: false, totalC: 170, hdlC: 50,
+  statin: false, dm: false, smoking: false, egfr: 95, bmi: 24,
+};
+eq(driverDeltas(optimalPatient).length, 0, "already-optimal patient produces empty array");
 
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail > 0 ? 1 : 0);
