@@ -638,6 +638,21 @@ export default function App() {
                 )}
               </div>
             )}
+
+            {/* Discordance callout: low 10-yr but elevated 30-yr */}
+            {discord && (
+              <div className="mt-3 p-3 rounded-xl border bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30">
+                <div className="flex items-start gap-2">
+                  <div className="text-amber-700 dark:text-amber-400 text-[14px] font-black mt-0.5">⚠</div>
+                  <div>
+                    <div className="text-[12px] font-black text-amber-800 dark:text-amber-300 leading-tight">Discordance: low 10-yr, elevated lifetime risk</div>
+                    <div className="text-[11px] text-amber-700 dark:text-amber-300/80 mt-0.5 leading-snug">
+                      Consider shared decision-making, CAC scoring, Lp(a) measurement, and earlier statin/lifestyle intervention.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Risk enhancers */}
