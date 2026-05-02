@@ -32,6 +32,37 @@ export const PREVENT_10YR = {
   },
 };
 
+// 30-year ASCVD base model (ages 30-59)
+// Khan SS et al. Circulation 2024 — extracted from preventr v0.11.0 sysdata.rda
+// (`base_30yr$female_ascvd` and `base_30yr$male_ascvd`).
+// Note: includes age² term not present in the 10-yr model.
+// Verified against preventr official tests: 50F=35.4%, 50M=34.9%
+// (test-prevent_equations.R "Base model 30-year risks give expected results").
+export const PREVENT_30YR = {
+  female: {
+    age: 0.466920, ageSquared: -0.089312, nonHdlC: 0.125690, hdlC: -0.154225,
+    sbpLt110: -0.001809, sbpGte110: 0.322949, dm: 0.629671,
+    smoking: 0.268292, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.100106, egfrGte60: 0.049966, bpTx: 0.187529,
+    statin: 0.015248, bpTxSbpGte110: -0.027612, statinNonHdlC: 0.073615,
+    ageNonHdlC: -0.052196, ageHdlC: 0.031692, ageSbpGte110: -0.104610,
+    ageDm: -0.272779, ageSmoking: -0.153091, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.129915, constant: -1.974074,
+  },
+  male: {
+    age: 0.399410, ageSquared: -0.093748, nonHdlC: 0.174464, hdlC: -0.120203,
+    sbpLt110: -0.066512, sbpGte110: 0.275304, dm: 0.479026,
+    smoking: 0.178263, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: -0.021879, egfrGte60: 0.060255, bpTx: 0.142118,
+    statin: 0.013600, bpTxSbpGte110: -0.021826, statinNonHdlC: 0.101315,
+    ageNonHdlC: -0.031262, ageHdlC: 0.020673, ageSbpGte110: -0.092093,
+    ageDm: -0.215995, ageSmoking: -0.154881, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.071255, constant: -1.736444,
+  },
+};
+
+export const VALID_30YR_AGE_MAX = 59;
+
 function _xbeta(c, { age, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bmi }) {
   const toMmol = (mg) => mg / 38.67;
   const a = (age - 55) / 10;
