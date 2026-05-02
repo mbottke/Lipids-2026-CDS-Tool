@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // test-prevent-30yr.mjs — tests for PREVENT 30-year and insight helpers
 
-import { calcPREVENT30 } from "./src/prevent.js";
+import { calcPREVENT30, riskCat30 } from "./src/prevent.js";
 
 let pass = 0, fail = 0;
 
@@ -84,6 +84,17 @@ eq(calcPREVENT30({ ...validInputs, totalC: "" }), null, "missing totalC returns 
 eq(calcPREVENT30({ ...validInputs, hdlC: "" }), null, "missing hdlC returns null");
 eq(calcPREVENT30({ ...validInputs, egfr: "" }), null, "missing egfr returns null");
 eq(calcPREVENT30({ ...validInputs, bmi: "" }), null, "missing bmi returns null");
+
+console.log("\n═══ riskCat30 ═══");
+eq(riskCat30(null), null, "null input returns null");
+eq(riskCat30(5).label,  "Low",          "5%  → Low");
+eq(riskCat30(9.9).label, "Low",         "9.9% → Low");
+eq(riskCat30(10).label, "Borderline",   "10% → Borderline");
+eq(riskCat30(19.9).label, "Borderline", "19.9% → Borderline");
+eq(riskCat30(20).label, "Intermediate", "20% → Intermediate");
+eq(riskCat30(29.9).label, "Intermediate", "29.9% → Intermediate");
+eq(riskCat30(30).label, "High",         "30% → High");
+eq(riskCat30(50).label, "High",         "50% → High");
 
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail > 0 ? 1 : 0);
