@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // test-prevent-30yr.mjs — tests for PREVENT 30-year and insight helpers
 
-import { calcPREVENT30, riskCat30 } from "./src/prevent.js";
+import {
+  calcPREVENT30, riskCat30, discordance,
+  DISCORDANCE_RISK10_MAX, DISCORDANCE_RISK30_MIN,
+} from "./src/prevent.js";
 
 let pass = 0, fail = 0;
 
@@ -95,6 +98,18 @@ eq(riskCat30(20).label, "Intermediate", "20% → Intermediate");
 eq(riskCat30(29.9).label, "Intermediate", "29.9% → Intermediate");
 eq(riskCat30(30).label, "High",         "30% → High");
 eq(riskCat30(50).label, "High",         "50% → High");
+
+console.log("\n═══ discordance ═══");
+eq(DISCORDANCE_RISK10_MAX, 5,  "DISCORDANCE_RISK10_MAX = 5");
+eq(DISCORDANCE_RISK30_MIN, 20, "DISCORDANCE_RISK30_MIN = 20");
+eq(discordance(2,  25, 35), true,  "low 10y, high 30y, age 35 → true");
+eq(discordance(4.9, 20, 40), true,  "boundary: just below 5/at 20 → true");
+eq(discordance(5,  25, 35), false, "10y at threshold not below → false");
+eq(discordance(2,  19, 35), false, "30y below threshold → false");
+eq(discordance(2,  25, 60), false, "age 60 → false (out of range)");
+eq(discordance(2,  25, 29), false, "age 29 → false (out of range)");
+eq(discordance(null, 25, 35), false, "null 10y → false");
+eq(discordance(2, null, 35),  false, "null 30y → false");
 
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail > 0 ? 1 : 0);

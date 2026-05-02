@@ -62,6 +62,8 @@ export const PREVENT_30YR = {
 };
 
 export const VALID_30YR_AGE_MAX = 59;
+export const DISCORDANCE_RISK10_MAX = 5;
+export const DISCORDANCE_RISK30_MIN = 20;
 
 function _xbeta(c, { age, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bmi }) {
   const toMmol = (mg) => mg / 38.67;
@@ -119,4 +121,11 @@ export function riskCat30(r) {
   if (r < 20) return { label: "Borderline",   color: "#ca8a04", bg: "#fefce8", darkBg: "rgba(202, 138, 4, 0.10)",  range: "10–<20%" };
   if (r < 30) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", darkBg: "rgba(234, 88, 12, 0.10)",  range: "20–<30%" };
   return         { label: "High",          color: "#dc2626", bg: "#fef2f2", darkBg: "rgba(220, 38, 38, 0.10)",  range: "≥30%" };
+}
+
+export function discordance(risk10, risk30, age) {
+  if (risk10 === null || risk30 === null) return false;
+  const a = Number(age);
+  if (a < 30 || a > VALID_30YR_AGE_MAX) return false;
+  return risk10 < DISCORDANCE_RISK10_MAX && risk30 >= DISCORDANCE_RISK30_MIN;
 }
