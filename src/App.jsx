@@ -1,5 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { calcPREVENT10, riskCat10 } from "./prevent.js";
+import {
+  calcPREVENT10, calcPREVENT30,
+  riskCat10, riskCat30,
+  discordance, optimizedInputs, driverDeltas,
+  VALID_30YR_AGE_MAX,
+} from "./prevent.js";
 
 const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
@@ -351,12 +356,39 @@ export default function App() {
     return count;
   }, [enhs, metSynCount]);
 
-  const risk = useMemo(() => {
-    if (tab !== "primary") return null;
-    return calcPREVENT10({ age, sex, sbp, bpTx, totalC, hdlC, statin:onStatin, dm, smoking, egfr, bmi });
-  }, [tab, age, sex, sbp, bpTx, totalC, hdlC, onStatin, dm, smoking, egfr, bmi]);
+  const inputsObj = useMemo(() => ({
+    age, sex, sbp, bpTx, totalC, hdlC, statin: onStatin, dm, smoking, egfr, bmi,
+  }), [age, sex, sbp, bpTx, totalC, hdlC, onStatin, dm, smoking, egfr, bmi]);
 
-  const rc = useMemo(() => riskCat10(risk), [risk]);
+  const risk10 = useMemo(() => {
+    if (tab !== "primary") return null;
+    return calcPREVENT10(inputsObj);
+  }, [tab, inputsObj]);
+
+  const risk30 = useMemo(() => {
+    if (tab !== "primary") return null;
+    return calcPREVENT30(inputsObj);
+  }, [tab, inputsObj]);
+
+  const rc10 = useMemo(() => riskCat10(risk10), [risk10]);
+  const rc30 = useMemo(() => riskCat30(risk30), [risk30]);
+
+  const discord = useMemo(() => discordance(risk10, risk30, age), [risk10, risk30, age]);
+
+  const optInputs = useMemo(() => {
+    if (risk30 === null) return null;
+    return optimizedInputs(inputsObj);
+  }, [risk30, inputsObj]);
+
+  const optRisk30 = useMemo(() => {
+    if (optInputs === null) return null;
+    return calcPREVENT30(optInputs);
+  }, [optInputs]);
+
+  const drivers = useMemo(() => {
+    if (risk30 === null) return [];
+    return driverDeltas(inputsObj);
+  }, [risk30, inputsObj]);
 
   const nonHdlC = useMemo(() => {
     if (totalC === "" || hdlC === "") return null;
@@ -376,7 +408,7 @@ export default function App() {
     if (tab === "severe") {
       return { g:{ldl:100,nh:130,p:50}, int:"high", esc:true, txt:"LDL ≥190 — high-intensity statin; evaluate for familial hypercholesterolemia", clr:"red" };
     }
-    if (risk === null) return null;
+    if (risk10 === null) return null;
     // CAC override
     if (cac !== "") {
       const c = Number(cac), p = cacPct !== "" ? Number(cacPct) : null;
@@ -385,12 +417,12 @@ export default function App() {
       if (c >= 100 || (p !== null && p >= 75)) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"CAC ≥100 or ≥75th %ile — High-intensity statin to LDL <70.", clr:"amber" };
       if (c >= 1) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"CAC 1–99 (<75th %ile) — Moderate-intensity statin to LDL <100.", clr:"blue" };
     }
-    if (risk >= 10) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"High 10-year ASCVD risk (≥10%) — High-intensity statin to LDL <70.", clr:"red" };
-    if (risk >= 5) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"Intermediate risk (5–<10%) — Moderate-intensity statin to LDL <100 after shared decision-making.", clr:"amber" };
-    if (risk >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
-    if (risk >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
+    if (risk10 >= 10) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"High 10-year ASCVD risk (≥10%) — High-intensity statin to LDL <70.", clr:"red" };
+    if (risk10 >= 5) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"Intermediate risk (5–<10%) — Moderate-intensity statin to LDL <100 after shared decision-making.", clr:"amber" };
+    if (risk10 >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
+    if (risk10 >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
     return { g:null, int:"none", esc:false, txt:"Low risk (<3%) — Lifestyle optimization. Reassess periodically.", clr:"emerald" };
-  }, [tab, risk, enhCount, cac, cacPct, vhrCount]);
+  }, [tab, risk10, enhCount, cac, cacPct, vhrCount]);
 
   // Biomarker interpretation
   const lpaNote = useMemo(() => {
@@ -578,16 +610,16 @@ export default function App() {
             </div>
 
             {/* Risk result */}
-            {risk !== null && rc && (
-              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor: darkMode ? rc.darkBg : rc.bg, borderColor:rc.color+"40" }}>
+            {risk10 !== null && rc10 && (
+              <div className="risk-appear rounded-xl p-4 mt-4 border-2" style={{ backgroundColor: darkMode ? rc10.darkBg : rc10.bg, borderColor:rc10.color+"40" }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-black uppercase tracking-widest" style={{color:rc.color}}>10-Yr ASCVD Risk</div>
-                    <div className="text-4xl font-black mt-0.5 font-mono tabular-nums" style={{color:rc.color}}>{risk}%</div>
+                    <div className="text-[11px] font-black uppercase tracking-widest" style={{color:rc10.color}}>10-Yr ASCVD Risk</div>
+                    <div className="text-4xl font-black mt-0.5 font-mono tabular-nums" style={{color:rc10.color}}>{risk10}%</div>
                   </div>
                   <div className="text-right">
-                    <div className="px-4 py-2 rounded-full text-[14px] font-black text-white shadow-sm" style={{backgroundColor:rc.color}}>{rc.label}</div>
-                    <div className="text-[11px] mt-1 font-semibold" style={{color:rc.color}}>{rc.range}</div>
+                    <div className="px-4 py-2 rounded-full text-[14px] font-black text-white shadow-sm" style={{backgroundColor:rc10.color}}>{rc10.label}</div>
+                    <div className="text-[11px] mt-1 font-semibold" style={{color:rc10.color}}>{rc10.range}</div>
                   </div>
                 </div>
               </div>
@@ -807,7 +839,7 @@ export default function App() {
         </Card>
 
         {/* ── RECOMMENDATION ── */}
-        {rec && ((tab==="primary" && risk!==null) || tab!=="primary") && (<>
+        {rec && ((tab==="primary" && risk10!==null) || tab!=="primary") && (<>
           <div className={`rounded-xl border-2 p-4 ${recBg[rec.clr]}`}>
             <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white mb-1">Recommendation</div>
             <div className={`text-[14px] font-bold leading-snug ${recTxt[rec.clr]}`}>{rec.txt}</div>
