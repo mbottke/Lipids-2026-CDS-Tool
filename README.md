@@ -9,6 +9,10 @@ Built for physician use at the point of care. Mobile-first PWA — add to home s
 - **PREVENT-ASCVD Calculator** — exact coefficients from Khan et al. (Circulation 2024;149:430-449), extracted from the validated `preventr` R package
 - **4 Patient Pathways** — Primary prevention, Secondary (ASCVD), Diabetes, Severe hypercholesterolemia (LDL ≥190)
 - **Full CDS** — LDL/non-HDL goals, treatment escalation ladder, risk enhancers checklist, CAC/Lp(a)/ApoB interpretation
+- **PREVENT total CVD** (ASCVD + heart failure), 10- and 30-year — shown beside ASCVD risk; used only for the blood pressure drug-therapy threshold (≥7.5%)
+- **LDL ≥190 workup** — goal tiers (<100 / <70 / <55) with the factors that lower the goal, Dutch Lipid Clinic Network score, genetic testing and cascade screening steps
+- **Treatment ladder extras** — lifestyle LDL-C effects, statin-intolerance pathway, enlicitide (oral PCSK9 inhibitor), PO/SC/IV route labels
+- **Blood pressure card** — 2025 AHA/ACC category, treatment threshold, goal, initial and subsequent agents
 - **PWA** — Offline-capable, installable on iOS/Android home screen, cached fonts
 
 ## Stack
@@ -31,7 +35,33 @@ React 19 · Vite 6 · Tailwind CSS 3 · vite-plugin-pwa (Workbox)
 
 - **Guideline**: Blumenthal RS et al. 2026 ACC/AHA/Multisociety Guideline on the Management of Dyslipidemia. *JACC/Circulation* 2026.
 - **PREVENT Equations**: Khan SS et al. Development and Validation of the AHA PREVENT Equations. *Circulation* 2024;149:430-449.
-- **Coefficients**: Extracted from `preventr` R package v0.11.0 (CRAN), `sysdata.rda`, base model, 10-year ASCVD, sex-specific.
+- **Coefficients**: Extracted from `preventr` R package (CRAN), `sysdata.rda`, base model, sex-specific — ASCVD from v0.11.0, total CVD from v0.12.2.
+- **Hypertension**: Jones DW et al. 2025 AHA/ACC/Multisociety Guideline for the Prevention, Detection, Evaluation and Management of High Blood Pressure in Adults. *Circulation* 2025;152:e114-e218.
+- **FH score**: Dutch Lipid Clinic Network criteria — Nordestgaard BG et al. *Eur Heart J* 2013;34:3478-3490.
+- **Statin intolerance**: 2026 ACC/AHA guideline §4.2.11; Cheeley MK et al. (NLA) *J Clin Lipidol* 2022;16:361-375; Patel SB et al. (AACE) *Endocr Pract* 2025;31:236-262 and 31:1207-1238; Mach F et al. (ESC/EAS) *Eur Heart J* 2025;46:4359-4378.
+- **Enlicitide**: LIPFENDRA prescribing information (FDA, 7/2026).
+
+## Tests
+
+```bash
+node test-prevent-cvd.mjs
+```
+
+```bash
+node test-prevent-30yr.mjs
+```
+
+```bash
+node test-fh.mjs
+```
+
+```bash
+node test-bp.mjs
+```
+
+```bash
+node test-clinical.mjs
+```
 
 ## Disclaimer
 
