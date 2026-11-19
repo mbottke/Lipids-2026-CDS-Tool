@@ -32,7 +32,7 @@ export function Num({ label, unit, value, on, min, max, step=1, ph }) {
         <input id={id} type="number" inputMode="decimal" value={value}
           onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
           min={min} max={max} step={step} placeholder={ph}
-          className="flex-1 px-3 py-3 text-[16px] font-mono text-ink outline-none bg-transparent min-w-0 placeholder:text-faint" />
+          className="flex-1 w-full px-3 py-3 text-[16px] font-mono text-ink outline-none bg-transparent min-w-0 placeholder:text-faint" />
         {unit && <span className="pr-3 text-[13px] text-faint whitespace-nowrap">{unit}</span>}
       </div>
     </div>
@@ -55,7 +55,7 @@ function SIField({ label, unit, factor, value, on, ph }) {
       <div className="flex items-center border border-edge rounded-lg overflow-hidden input-glow transition-shadow duration-150 bg-surface">
         <input id={id} type="number" inputMode="decimal" value={txt} step={0.1} placeholder={ph}
           onChange={e => handle(e.target.value)}
-          className="flex-1 px-3 py-3 text-[16px] font-mono text-ink outline-none bg-transparent min-w-0 placeholder:text-faint" />
+          className="flex-1 w-full px-3 py-3 text-[16px] font-mono text-ink outline-none bg-transparent min-w-0 placeholder:text-faint" />
         <span className="pr-3 text-[13px] text-faint whitespace-nowrap">{unit}</span>
       </div>
     </div>
@@ -174,7 +174,7 @@ export function Disclosure({ open, on, label, hint, children }) {
   return (
     <div className="rounded-lg border border-line bg-surface overflow-hidden">
       <button type="button" onClick={on} aria-expanded={!!open}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left active:opacity-70 cursor-pointer min-h-[44px]">
+        className="focus-inset w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left active:opacity-70 cursor-pointer min-h-[44px]">
         <span className="text-[13px] font-semibold text-ink">{label}</span>
         <span className="flex items-center gap-2 shrink-0 text-[12px] text-muted">
           {hint}

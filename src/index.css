@@ -209,3 +209,18 @@ input:focus-visible {
     scrollbar-color: var(--edge) transparent;
   }
 }
+
+/* Focus ring drawn inside the control, for buttons whose container clips */
+.focus-inset:focus-visible {
+  outline-offset: -2px;
+}
+
+/* A focused control stays clear of the scroll edge, and on small screens of the plan bar */
+[data-scroll] {
+  scroll-padding: 12px 0 calc(60px + var(--sab));
+}
+@media (min-width: 1024px) {
+  [data-scroll] {
+    scroll-padding-bottom: 12px;
+  }
+}

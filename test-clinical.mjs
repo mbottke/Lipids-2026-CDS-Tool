@@ -519,7 +519,7 @@ assert(apoBInterpret(54, 55).lv === "At goal", "ApoB 54, LDL goal <55 → at goa
 assert(apoBInterpret(60, 55).lv === "Above goal", "ApoB 60, LDL goal <55 → above goal (<55)");
 assert(apoBInterpret(130, 70).c === "red", "ApoB 130 above goal → red");
 // No treatment goal: risk-enhancer threshold ≥120 (Table 13)
-assert(apoBInterpret(119).lv === "Not Elevated", "ApoB 119, no goal → not elevated");
+assert(apoBInterpret(119).lv === "Not elevated", "ApoB 119, no goal → not elevated");
 assert(apoBInterpret(120).lv === "Elevated", "ApoB 120, no goal → risk enhancer (exact boundary)");
 
 

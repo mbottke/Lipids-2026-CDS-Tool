@@ -81,7 +81,10 @@ none(/~\d/, "rule 7: ≈ for approximately, never ~");
 { const bad = [];
   for (const f of JS) for (const m of code[f].matchAll(/<Cor>([\s\S]*?)<\/Cor>/g)) if (!/^COR (1|2a|2b|3)$/.test(m[1].trim())) bad.push(`${f}: <Cor>${m[1].trim()}</Cor>`);
   ok(bad.length === 0, "rule 8: a COR chip holds only COR and a grade", bad.slice(0, 4).join("\n       ")); }
-none(/"(Very High|At Goal|Above Goal|Not At Goal)"/, "rule 9: sentence case in badges");
+none(/"(Very High|At Goal|Above Goal|Not At Goal|Not Elevated)"/, "rule 9: sentence case in badges");
+none(/\b\d+-Yr\b/, "rule 9: 10-yr, not 10-Yr");
+none(/\bLDL (?!below \d|≥190")(?!≥190<)[a-z]/, "rule 1: bare LDL only in the goal phrase and the tab label");
+ok(/without a lifestyle trial/.test(code["src/BloodPressure.jsx"]), "blood pressure conditions still say what they change: no lifestyle trial first");
 none(/(?<![.\w])targets?\b(?!=|-organ)/i, "rule 10: goal, never target");
 none(/lipid panel/i, "rule 10: lipid profile, never lipid panel");
 none(/Referral to lipid specialist/, "rule 10: Refer to a lipid specialist");

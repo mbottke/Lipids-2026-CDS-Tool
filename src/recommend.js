@@ -157,7 +157,7 @@ export function recPrimary({ risk10 = null, risk30 = null, age = "", ldl = "", e
     const ldlHigh = !blank(ldl) && Number(ldl) >= 160 && Number(ldl) < 190;
     const lifetime = risk30 !== null && risk30 >= 10;
     if (young && (lifetime || ldlHigh)) return { g: G100(30), int: "moderate", esc: false, clr: "amber", src: "lifetime",
-      txt: `Low 10-year risk (<3%) with ${lifetime ? "30-year risk ≥10%" : ""}${lifetime && ldlHigh ? " and " : ""}${ldlHigh ? "LDL-C 160–189" : ""}. A moderate-intensity statin is reasonable to reduce lifetime LDL exposure.` };
+      txt: `Low 10-year risk (<3%) with ${lifetime ? "30-year risk ≥10%" : ""}${lifetime && ldlHigh ? " and " : ""}${ldlHigh ? "LDL-C 160–189" : ""}. A moderate-intensity statin is reasonable to reduce lifetime LDL-C exposure.` };
     return { g: null, int: "none", esc: false, clr: "emerald", src: "risk",
       txt: "Low risk (<3%). Lifestyle optimization with periodic reassessment." };
   };
@@ -198,7 +198,7 @@ export function apoBInterpret(val, ldlGoal = null) {
   }
   return v >= APOB_ENHANCER
     ? { lv: "Elevated", c: "amber", goal: null, n: `At or above ${APOB_ENHANCER} mg/dL: counts as a risk enhancer and favors starting therapy.` }
-    : { lv: "Not Elevated", c: "emerald", goal: null, n: `Below the ${APOB_ENHANCER} mg/dL risk-enhancer threshold.` };
+    : { lv: "Not elevated", c: "emerald", goal: null, n: `Below the ${APOB_ENHANCER} mg/dL risk-enhancer threshold.` };
 }
 
 // ── Hypertriglyceridemia (§4.2.9) ─────────────────────────────────────────────
@@ -211,30 +211,43 @@ export function tgAdvice(tg) {
   if (v >= 500) return { sev: "severe",
     txt: "Severe (500–999): a fibrate or prescription omega-3 is reasonable to lower pancreatitis risk after dietary intervention. Look for secondary causes. Fenofibrate is contraindicated with eGFR <30 or active liver or gallbladder disease. Never gemfibrozil with a statin." };
   return { sev: "moderate",
-    txt: "Lifestyle first: less added sugar, alcohol and saturated fat, regular exercise, 5–10% weight loss. The statin decision follows ASCVD risk. Track non-HDL-C or apoB rather than LDL-C. Icosapent ethyl may be reasonable at age ≥50 with ASCVD, or diabetes plus at least one risk factor, once LDL is below 100 on a statin (REDUCE-IT: AF and bleeding signals)." };
+    txt: "Lifestyle first: less added sugar, alcohol and saturated fat, regular exercise, 5–10% weight loss. The statin decision follows ASCVD risk. Track non-HDL-C or apoB rather than LDL-C. Icosapent ethyl may be reasonable at age ≥50 with ASCVD, or diabetes plus at least one risk factor, once LDL-C is below 100 on a statin (REDUCE-IT: AF and bleeding signals)." };
 }
 
 // ── Goal status for the plan ─────────────────────────────────────────────────
 // Every goal is written "<N", so "at goal" means strictly below it.
 // ldl and goal are mg/dL. → null when either is missing.
-export function goalStatus(ldl, goal) {
+// In mmol/L the two values are compared as shown, to one decimal: 55 mg/dL is 1.42 mmol/L
+// but the goal reads "<1.4", so a value shown as 1.4 is not at goal. `above` is in the
+// active unit.
+const MGDL_PER_MMOL = 38.67;
+export function goalStatus(ldl, goal, si = false) {
   if (ldl === "" || ldl === null || ldl === undefined || goal === null || goal === undefined) return null;
   const v = Number(ldl);
   if (!Number.isFinite(v) || v <= 0) return null;
-  const above = v - goal;
-  return { atGoal: v < goal, above, needed: above > 0 ? Math.round((above / v) * 100) : 0 };
+  const pct = (above) => (above > 0 ? Math.round(((v - goal) / v) * 100) : 0);
+  if (!si) { const above = v - goal; return { atGoal: v < goal, above, needed: pct(above) }; }
+  const shown = (x) => Math.round((x / MGDL_PER_MMOL) * 10) / 10;
+  const above = Math.round((shown(v) - shown(goal)) * 10) / 10;
+  return { atGoal: shown(v) < shown(goal), above, needed: pct(above) };
 }
 
 // ── Plan sentence in the active unit ─────────────────────────────────────────
 // The sentences above are written in mg/dL. In mmol/L mode the LDL-C values in
 // them are converted for display. CAC scores and percentages are left alone.
-const MGDL_PER_MMOL = 38.67;
+const mmol = (n) => (Number(n) / MGDL_PER_MMOL).toFixed(1);
+// Upper end of a closed range: one step below the next threshold (160–189 → 4.1–4.8, since ≥190 is ≥4.9).
+const mmolUpper = (n) => ((Math.round(((Number(n) + 1) / MGDL_PER_MMOL) * 10) - 1) / 10).toFixed(1);
 export function inUnit(txt, si) {
   if (!si || !txt) return txt;
-  const c = (n) => (Number(n) / MGDL_PER_MMOL).toFixed(1);
   return txt
-    .replace(/below (\d+) mg\/dL/g, (_, n) => `below ${c(n)} mmol/L`)
-    .replace(/below (\d+) is reasonable/g, (_, n) => `below ${c(n)} is reasonable`)
-    .replace(/LDL-C ≥(\d+)/g, (_, n) => `LDL-C ≥${c(n)}`)
-    .replace(/LDL-C (\d+)–(\d+)/g, (_, a, b) => `LDL-C ${c(a)}–${c(b)}`);
+    .replace(/below (\d+) mg\/dL/g, (_, n) => `below ${mmol(n)} mmol/L`)
+    .replace(/below (\d+) is reasonable/g, (_, n) => `below ${mmol(n)} is reasonable`)
+    .replace(/LDL-C ≥(\d+)/g, (_, n) => `LDL-C ≥${mmol(n)}`)
+    .replace(/LDL-C (\d+)–(\d+)/g, (_, a, b) => `LDL-C ${mmol(a)}–${mmolUpper(b)}`);
+}
+// Notes that also carry apoB or triglyceride values in mg/dL: convert only the LDL-C goal they mention.
+export function ldlInUnit(txt, si) {
+  if (!si || !txt) return txt;
+  return txt.replace(/LDL-C (is )?below (\d+)/g, (_, is, n) => `LDL-C ${is || ""}below ${mmol(n)} mmol/L`);
 }

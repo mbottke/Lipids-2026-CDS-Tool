@@ -62,3 +62,30 @@ Request (verbatim): "Do additional passes using the pass skill and utilizing the
 - Task 9: Ruling: enlicitide keeps "≈56% LDL-C reduction" without "added to a statin" — the label figure was recorded earlier without the background therapy — cost if wrong: one inconsistent parenthetical.
 - Task 9: Ruling: the boxed lead banners on the LDL ≥190 and Diabetes tabs became one muted sentence under the section head — the plan directly below now carries the headline — cost if wrong: the tab's rule is less prominent before the plan is reached.
 - Phase 6 — Check: test-copy 23, prevent-cvd 29, recommend 59, clinical 263, bp 39, fh 48, prevent-30yr 60, crossvalidate exit 0, vite build ok. Browser: layout 65/65, flows 30/30, clip 320 and 390 = 0, axe 0 on 16 variants, 0 console errors. Screenshots read at 100%: primary-390 day and night, ldl190-390 day, primary-1440 day, ascvd-1440 day. WebKit: not run, no build in this container.
+
+## Phase 7 — Review of 7d989cd
+- Fresh reviewer (opus, xhigh, read-only, own server on :4191): 7 Important, 8 Minor, 3 rulings judged incomplete, 5 declined to judge. Codex review 5969905465: 1 finding (comment 4624804045), the same as reviewer finding 3.
+- Every cited line was opened and every measured claim reproduced by a new check that failed before the fix (layout.cjs sections named "review: …", 24 failing. test-recommend 7 failing. test-copy 4 failing).
+
+## Phase 8 — Fix pass (one pass, each fix RED → GREEN, then the whole suite)
+- Re-grade: all 7 Important stand. Minors 8, 9, 10, 11, 12, 14, 15 are raised to "fix": each is seen or heard by a person and a test pins it. Minor 13 is not visible.
+- Final: fixed 1, plan below the fold of the rail on laptops — the Plan now follows the 10-year block in the rail and inline — layout "plan is fully in view in the rail at laptop heights" RED (bottom 775 of 720) → GREEN at 1280 x 720, 1366 x 768, 1024 x 600.
+- Final: fixed 2, blood pressure heading had lost "without a lifestyle trial" and so contradicted the low-risk action text — restored: "Start drug therapy at ≥130/80 without a lifestyle trial if any apply" — test-copy RED → GREEN. This was a wording edit that changed clinical meaning. The no-clinical-change rule caught it only through review.
+- Final: fixed 3 and Codex 4624804045, plan bar dropped keyboard focus to the page — the Plan is focusable and takes focus when the bar is pressed — layout "plan bar hands focus to the plan" RED (BODY) → GREEN.
+- Final: fixed 4, focused controls under the plan bar — scroll padding on the scroll area — layout "focused control is never under the plan bar" RED (10 to 14 stops per tab) → GREEN 0.
+- Final: fixed 5, focus ring clipped on disclosures, the two-segment unit control and the bar — ring drawn inside those controls — same check RED → GREEN 0.
+- Final: fixed 6, mmol/L status contradicted itself at 1.4, 1.8 and 2.6 — goalStatus(ldl, goal, si) compares the values as shown — test-recommend "goal status in mmol/L" RED 6 → GREEN, layout RED → GREEN.
+- Final: Ruling: in mmol/L "at goal" is judged on the one-decimal values shown, not on mg/dL (reverses Review Focus 3 as written) — a clinician reading "LDL-C 1.4, goal <1.4" must not be told "at goal" — cost if wrong: a value stored as 54 mg/dL reads at goal in mg/dL and not at goal in mmol/L. Each display is consistent with what it shows.
+- Final: fixed 7, mmol/L scrolled sideways at 320 to 390 px (present in the base build) — the field may shrink — layout RED (389 in 310) → GREEN.
+- Final: fixed 8, risk enhancers could close while in use — any enhancer toggle keeps the section open — layout RED → GREEN.
+- Final: fixed 9, BMI calculator controls under 44 px and a close button that took taps from the row below, dose chips 35 px wide at 320 px — layout "small panels" RED → GREEN.
+- Final: fixed 10, mg/dL thresholds left in mmol/L mode on the LDL ≥190 tab, the ASCVD tab, monitoring, the lifestyle note, and the apoB and triglyceride notes. Range 160–189 now reads 4.1–4.8 — layout RED (11) → GREEN 0, test-recommend RED → GREEN.
+- Final: fixed 11, CKD on the ASCVD tab and HeFH on the LDL ≥190 tab were pressable while set automatically, and a press left them set after the source was corrected (present in the base build, wrong goal persisted) — read-only rows — layout RED → GREEN.
+- Final: fixed 12, "Not Elevated", "10-Yr", bare "LDL" in two sentences — test-copy RED 3 → GREEN.
+- Final: fixed 14, info toggles, "BMI calc" and "Point bands" did not state whether they were open — aria-expanded — layout RED 6 → GREEN.
+- Final: fixed 15, plan bar text truncated at 320 px — intensity hidden below 360 px, still in the accessible name — layout RED → GREEN.
+- Final: minor (deferred): rec.clr is set on every recommendation and no longer read. siChol duplicates chol.
+- Final: Ruling: plan bar and iOS safe area (reviewer declined, no WebKit) — the bar's minimum height is now 44 px plus the safe-area inset, so its content sits above the home indicator — cost if wrong: not verified on a device.
+- Final: Ruling: plan bar and the on-screen keyboard (reviewer declined) — left as is — a person typing may see the bar above or behind the keyboard depending on the browser — cost if wrong: 44 px of the page covered while typing. Not verified.
+- Final: Ruling: "added to a statin" on the ladder percentages for ezetimibe, bempedoic acid, evolocumab, alirocumab and inclisiran (reviewer declined to judge the basis) — the numbers are unchanged and the label states the background the figures were already describing. Not re-checked against the trials in this pass — cost if wrong: a label that overstates how the figure was measured. Held for the owner.
+- Suite after the pass: test-copy 26, prevent-cvd 29, recommend 66, clinical 263, bp 39, fh 48, prevent-30yr 60, crossvalidate exit 0, vite build ok. Browser: layout 93/93, flows 30/30, clip 320 and 390 = 0, axe 0 on 16 variants. Screenshot read at 100%: 1280 x 720 rail, 390 plan, 390 plan bar.

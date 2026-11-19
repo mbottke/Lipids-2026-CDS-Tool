@@ -7,11 +7,11 @@ import {
   discordance, optimizedInputs, driverDeltas,
   CVD_BP_TX_THRESHOLD,
 } from "./prevent.js";
-import { Toggle, Num, SINum, Card, Badge, Route, SectionHead, Disclosure, LeaderRow, LABEL, CHOL_F, TG_F } from "./ui.jsx";
+import { Toggle, Num, SINum, Card, Badge, Route, SectionHead, Disclosure, LeaderRow, LABEL, CHOL_F, TG_F, chol } from "./ui.jsx";
 import { dlcnScore, estimateUntreatedLdl, ldlCorrectionFactor, severeGoal, DLCN_CLINICAL_FH_MIN } from "./fh.js";
 import {
   vhrStatus, recPrimary, recSecondary, recDiabetes, recSevere,
-  lpaInterpret, apoBInterpret, tgAdvice,
+  lpaInterpret, apoBInterpret, tgAdvice, ldlInUnit,
 } from "./recommend.js";
 import { AscvdTab, DiabetesTab } from "./RiskTabs.jsx";
 import { SevereGoalTiers, FHWorkup } from "./SevereTab.jsx";
@@ -262,6 +262,7 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
   return (
     <div className={variant === "rail" ? "lg:border-l lg:border-line lg:pl-10 flex flex-col gap-5" : "border-t border-line pt-5 flex flex-col gap-5"}>
       <RiskBlock eyebrow="10-year ASCVD risk" value={risk10} rc={rc10} dark={dark} cuts={[3, 5, 10]} max={15} />
+      {children}
       <div className="h-px bg-line" />
       {risk30 !== null && rc30 ? (
         <div className="flex flex-col gap-2.5">
@@ -274,7 +275,6 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
           <div className="text-[13px] text-muted">Not validated for ages 60 and above.</div>
         </div>
       )}
-      {children}
       {cvd10 !== null && (
         <>
           <div className="h-px bg-line" />
@@ -471,7 +471,7 @@ export default function App() {
     }
   }, [calcBmiValue]);
 
-  const toggleEnh = useCallback(id => setEnhs(p => ({...p,[id]:!p[id]})), []);
+  const toggleEnh = useCallback(id => { setEnhOpen(true); setEnhs(p => ({...p,[id]:!p[id]})); }, []);
   const toggleVhrMajor = useCallback(id => setVhrMajor(p => ({...p,[id]:!p[id]})), []);
   const toggleVhrFeat = useCallback(id => setVhrFeat(p => ({...p,[id]:!p[id]})), []);
   const toggleSecF = useCallback(id => setSecF(p => ({...p,[id]:!p[id]})), []);
@@ -482,7 +482,7 @@ export default function App() {
   const vhrS = useMemo(() => vhrStatus(vhrMajor, vhrFeat), [vhrMajor, vhrFeat]);
   const toggleDmEnh = useCallback(id => setDmEnhs(p => ({...p,[id]:!p[id]})), []);
   const dmEnhCount = useMemo(() => Object.values(dmEnhs).filter(Boolean).length, [dmEnhs]);
-  const toggleMetSyn = useCallback(id => setMetSyn(p => ({...p,[id]:!p[id]})), []);
+  const toggleMetSyn = useCallback(id => { setEnhOpen(true); setMetSyn(p => ({...p,[id]:!p[id]})); }, []);
   const metSynCount = useMemo(() => Object.values(metSyn).filter(Boolean).length, [metSyn]);
   const enhCount = useMemo(() => {
     let count = Object.entries(enhs).filter(([k,v]) => k !== "metabolic" && v).length;
@@ -642,10 +642,14 @@ export default function App() {
   ];
 
   const showPlan = !!rec && (tab !== "primary" || risk10 !== null);
-  const goToPlan = () => planEl?.scrollIntoView({
-    block: "start",
-    behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-  });
+  const goToPlan = () => {
+    // Focus first: the bar unmounts once the plan is in view, and focus would otherwise fall to the page.
+    planEl?.querySelector("[data-plan]")?.focus({ preventScroll: true });
+    planEl?.scrollIntoView({
+      block: "start",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  };
   const lifeShown = lifeOpen ?? (rec?.int === "lifestyle" || rec?.int === "none");
   const enhShown = enhOpen ?? (enhCount > 0 || rc10?.rank === 2 || rc10?.rank === 3);
 
@@ -669,10 +673,10 @@ export default function App() {
               </button>
               <div role="group" aria-label="Units" className="hidden sm:flex h-11 rounded-lg border border-line bg-surface overflow-hidden">
                 <button onClick={() => setUnits('us')} aria-pressed={!si}
-                  className={`px-3 text-[12px] font-semibold cursor-pointer transition-colors ${!si ? "bg-accent-soft text-accent" : "text-muted hover:text-ink"}`}>mg/dL</button>
+                  className={`focus-inset px-3 text-[12px] font-semibold cursor-pointer transition-colors ${!si ? "bg-accent-soft text-accent" : "text-muted hover:text-ink"}`}>mg/dL</button>
                 <div className="w-px bg-line" />
                 <button onClick={() => setUnits('si')} aria-pressed={si}
-                  className={`px-3 text-[12px] font-semibold cursor-pointer transition-colors ${si ? "bg-accent-soft text-accent" : "text-muted hover:text-ink"}`}>mmol/L</button>
+                  className={`focus-inset px-3 text-[12px] font-semibold cursor-pointer transition-colors ${si ? "bg-accent-soft text-accent" : "text-muted hover:text-ink"}`}>mmol/L</button>
               </div>
               <button onClick={() => setDarkMode(d => !d)} aria-label={darkMode ? "Switch to light theme" : "Switch to dark theme"}
                 className="w-11 h-11 flex items-center justify-center rounded-lg border border-line bg-surface text-muted hover:text-ink active:scale-95 transition-colors cursor-pointer">
@@ -719,16 +723,16 @@ export default function App() {
             <div className="flex items-start justify-between mb-3">
               <p className="text-[12px] text-muted">Ages 30–79, no known ASCVD.</p>
               <button onClick={() => setRiskInfo(p => !p)}
-                aria-label="About the PREVENT calculator"
+                aria-label="About the PREVENT calculator" aria-expanded={riskInfo}
                 className="hit w-6 h-6 rounded-full border border-edge text-muted text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
             </div>
             {riskInfo && (
               <div className="panel-in mb-3 p-3 bg-surface border border-line rounded-lg text-[12px] text-ink space-y-2">
                 <div className="font-bold text-ink">About the PREVENT estimates</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
-                  <span className="font-bold text-accent whitespace-nowrap">10-Yr ASCVD</span>
+                  <span className="font-bold text-accent whitespace-nowrap">10-yr ASCVD</span>
                   <span>Probability of MI, stroke, or CHD death within 10 years.</span>
-                  <span className="font-bold text-accent whitespace-nowrap">30-Yr ASCVD</span>
+                  <span className="font-bold text-accent whitespace-nowrap">30-yr ASCVD</span>
                   <span>Same endpoint over 30 years. Validated for ages 30–59 only. Guideline threshold: ≥10%.</span>
                   <span className="font-bold text-accent whitespace-nowrap">Total CVD</span>
                   <span>ASCVD or heart failure. The 2025 AHA/ACC hypertension guideline uses 10-year total CVD ≥{CVD_BP_TX_THRESHOLD}% as the drug-therapy threshold in stage 1 hypertension.</span>
@@ -761,25 +765,26 @@ export default function App() {
               <Num label="BMI" unit="kg/m²" value={bmi} on={setBmi} min={18.5} max={60} step={0.1} ph="Optional" />
             </div>
             <div className="flex gap-2 items-end">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <SINum si={si} factor={TG_F} phSI="Optional" label="Triglycerides" unit="mg/dL" value={tg} on={setTg} min={0} max={2000} ph="Optional" />
               </div>
-              <button onClick={() => setBmiCalc(p => !p)}
+              <button onClick={() => setBmiCalc(p => !p)} aria-expanded={bmiCalc}
                 className="px-3 py-3 rounded-lg text-[12px] font-bold text-accent bg-accent-soft border border-edge hover:opacity-80 active:scale-95 transition-all cursor-pointer whitespace-nowrap h-[50px]">
                 BMI calc
               </button>
             </div>
             {bmiCalc && (
-              <div className="panel-in mt-2 p-3 bg-accent-soft border border-edge rounded-lg">
-                <div className="flex items-center justify-between mb-2">
+              <div className="panel-in mt-2 px-3 pb-3 pt-1 bg-accent-soft border border-edge rounded-lg">
+                <div className="flex items-center justify-between mb-1">
                   <div className="text-[13px] font-bold text-accent">BMI calculator</div>
                   <button onClick={() => setBmiCalc(false)}
-                    aria-label="Close" className="hit w-6 h-6 flex items-center justify-center text-[13px] text-muted hover:text-ink cursor-pointer font-bold">✕</button>
+                    aria-label="Close" className="w-11 h-11 flex items-center justify-center text-[13px] text-muted hover:text-ink cursor-pointer font-bold">✕</button>
                 </div>
                 <div className="flex gap-1 mb-2">
                   {["imperial","metric"].map(u => (
                     <button key={u} onClick={() => { setBmiUnit(u); setBmiWt(""); setBmiHt(""); setBmiHtIn(""); }}
-                      className={`flex-1 py-1.5 rounded text-[12px] font-bold text-center cursor-pointer transition-colors ${
+                      aria-pressed={bmiUnit===u}
+                      className={`flex-1 min-h-[44px] py-1.5 rounded text-[12px] font-bold text-center cursor-pointer transition-colors ${
                         bmiUnit===u ? "bg-accent-soft text-accent border border-edge" : "bg-surface text-muted border border-edge"
                       }`}>{u==="imperial"?"lb / ft-in":"kg / cm"}</button>
                   ))}
@@ -790,7 +795,7 @@ export default function App() {
                     <input type="number" inputMode="decimal" value={bmiWt}
                       onChange={e => setBmiWt(e.target.value==="" ? "" : e.target.value)}
                       placeholder={bmiUnit==="imperial"?"lbs":"kg"}
-                      className="px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow" />
+                      className="min-h-[44px] px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow min-w-0" />
                   </div>
                   {bmiUnit==="imperial" ? (
                     <div className="flex flex-col gap-0.5">
@@ -798,10 +803,10 @@ export default function App() {
                       <div className="flex gap-1">
                         <input type="number" inputMode="numeric" value={bmiHt}
                           onChange={e => setBmiHt(e.target.value==="" ? "" : e.target.value)}
-                          placeholder="ft" className="flex-1 px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow min-w-0" />
+                          placeholder="ft" className="flex-1 min-h-[44px] px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow min-w-0" />
                         <input type="number" inputMode="numeric" value={bmiHtIn}
                           onChange={e => setBmiHtIn(e.target.value==="" ? "" : e.target.value)}
-                          placeholder="in" className="flex-1 px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow min-w-0" />
+                          placeholder="in" className="flex-1 min-h-[44px] px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow min-w-0" />
                       </div>
                     </div>
                   ) : (
@@ -809,7 +814,7 @@ export default function App() {
                       <span className={LABEL}>Height</span>
                       <input type="number" inputMode="decimal" value={bmiHt}
                         onChange={e => setBmiHt(e.target.value==="" ? "" : e.target.value)}
-                        placeholder="cm" className="px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow" />
+                        placeholder="cm" className="min-h-[44px] px-2 py-2 text-[16px] border border-edge rounded bg-surface dark:text-ink outline-none input-glow min-w-0" />
                     </div>
                   )}
                 </div>
@@ -914,7 +919,7 @@ export default function App() {
             <div className="flex items-start justify-between mb-2">
               <p className="text-[12px] text-muted">Men ≥40, women ≥45, at intermediate or select borderline risk when the statin decision is uncertain</p>
               <button onClick={() => setCacInfo(p => !p)}
-                aria-label="About CAC scoring"
+                aria-label="About CAC scoring" aria-expanded={cacInfo}
                 className="hit w-6 h-6 rounded-full border border-edge text-muted text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
             </div>
             {cacInfo && (
@@ -922,7 +927,7 @@ export default function App() {
                 <div className="font-bold text-ink">How CAC reclassifies risk</div>
                 <div>CAC (Agatston units) overrides the PREVENT estimate when obtained:</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">CAC = 0</span><span>Reasonable to defer a statin at borderline or intermediate risk and repeat CAC in 3–7 years. Not with current smoking, diabetes (age &gt;40), strong family history of premature ASCVD, LDL-C ≥190, or FH.</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">CAC = 0</span><span>Reasonable to defer a statin at borderline or intermediate risk and repeat CAC in 3–7 years. Not with current smoking, diabetes (age &gt;40), strong family history of premature ASCVD, LDL-C ≥{chol(190, si)}, or FH.</span>
                   <span className="font-bold text-accent">CAC 1–99</span><span>Moderate-intensity statin. If ≥75th percentile for age and sex, upgrade to high intensity.</span>
                   <span className="font-bold text-amber-700 dark:text-amber-400 whitespace-nowrap">CAC 100–999</span><span>High-intensity statin, LDL-C goal &lt;70. At 300–999, intensifying to &lt;55 is reasonable.</span>
                   <span className="font-bold text-red-700 dark:text-red-400 whitespace-nowrap">CAC ≥1000</span><span>LDL-C goal &lt;55 with at least 50% reduction.</span>
@@ -957,7 +962,7 @@ export default function App() {
         {/* SEVERE */}
         {tab === "severe" && (<>
           <Card title="Severe hypercholesterolemia">
-            <p className="text-[12px] text-muted mb-3">LDL-C ≥190: high-intensity statin, no risk calculation needed. Set the goal, then work through the FH steps.</p>
+            <p className="text-[12px] text-muted mb-3">LDL-C ≥{chol(190, si)}: high-intensity statin, no risk calculation needed. Set the goal, then work through the FH steps.</p>
             <SINum si={si} factor={CHOL_F} phSI="Current" label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
             <SevereGoalTiers si={si} f={sevF} toggle={toggleSevF} hefhAuto={hefhAuto} goal={sevGoal} />
           </Card>
@@ -993,7 +998,7 @@ export default function App() {
                       {s.l}
                       {s.isStatin && (
                         <button onClick={() => setStatinInfo(p => !p)}
-                          aria-label="Statin reference"
+                          aria-label="Statin reference" aria-expanded={statinInfo}
                           className="hit w-5 h-5 rounded-full border border-edge text-muted text-[11px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
                       )}
                     </div>
@@ -1001,7 +1006,7 @@ export default function App() {
                       {s.s === 1 && (
                         <div className="mt-1.5">
                           <Disclosure open={lifeShown} on={() => setLifeOpen(!lifeShown)} label="Expected LDL-C change">
-                            <LifestyleLDL />
+                            <LifestyleLDL si={si} />
                           </Disclosure>
                         </div>
                       )}
@@ -1063,7 +1068,7 @@ export default function App() {
             {tgNote && (
               <div className="mt-2 p-3 bg-surface border border-line rounded-lg">
                 <div className="text-[14px] font-bold text-amber-800 dark:text-amber-300">Hypertriglyceridemia</div>
-                <div className="text-[12px] text-amber-700 dark:text-amber-400 mt-0.5">TG {tg}: {tgNote.txt}</div>
+                <div className="text-[12px] text-amber-700 dark:text-amber-400 mt-0.5">TG {tg}: {ldlInUnit(tgNote.txt, si)}</div>
               </div>
             )}
           </Card>
@@ -1074,7 +1079,7 @@ export default function App() {
           <div className="flex items-start justify-between mb-2">
             <p className="text-[12px] text-muted">Lp(a): once in every adult. ApoB: once LDL-C and non-HDL-C are at goal.</p>
             <button onClick={() => setBioInfo(p => !p)}
-              aria-label="About Lp(a) and apoB"
+              aria-label="About Lp(a) and apoB" aria-expanded={bioInfo}
               className="hit w-6 h-6 rounded-full border border-edge text-muted text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
           </div>
           {bioInfo && (
@@ -1110,7 +1115,7 @@ export default function App() {
             <div className="flex items-start gap-2 p-2 rounded-lg border border-line bg-paper mb-1.5"><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[12px] text-ink">{lpaNote.n}</span></div>
           )}
           {apoBNote && (
-            <div className="flex items-start gap-2 p-2 rounded-lg border border-line bg-paper"><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[12px] text-ink">{apoBNote.n}</span></div>
+            <div className="flex items-start gap-2 p-2 rounded-lg border border-line bg-paper"><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[12px] text-ink">{ldlInUnit(apoBNote.n, si)}</span></div>
           )}
         </Card>
 
@@ -1149,7 +1154,7 @@ export default function App() {
             <div className="border-t border-line pt-3 first:border-t-0 first:pt-0">
               <div className="font-bold text-ink mb-1.5">Screening</div>
               <div className="space-y-1 text-body">
-                <MonRow k="From age 2">If a 1st- or 2nd-degree relative has premature ASCVD, LDL-C ≥190, or FH</MonRow>
+                <MonRow k="From age 2">If a 1st- or 2nd-degree relative has premature ASCVD, LDL-C ≥{chol(190, si)}, or FH</MonRow>
                 <MonRow k="Ages 9–11">First <b>lipid profile</b></MonRow>
                 <MonRow k="From age 19"><b>Lipid profile</b> at least every 5 years, more often with risk factors</MonRow>
                 <MonRow k="Lp(a)">Once in every adult</MonRow>

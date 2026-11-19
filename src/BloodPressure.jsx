@@ -84,7 +84,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
           </div>
 
           <div>
-            <Eyebrow>Start drug therapy at ≥130/80 if any apply</Eyebrow>
+            <Eyebrow>Start drug therapy at ≥130/80 without a lifestyle trial if any apply</Eyebrow>
             <div className="space-y-1">
               {/* A condition set elsewhere in the app is shown read-only. Otherwise it can be checked here. */}
               {auto.clinicalCvd

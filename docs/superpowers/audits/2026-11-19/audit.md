@@ -50,8 +50,8 @@ Screenshots and raw JSON were kept in the session scratchpad and are not in the 
 
 | Measure | Base 9474118 | After |
 |---|---|---|
-| Plan position at 390 px, default state | Primary 3004, ASCVD 1534, Diabetes 1399, LDL ≥190 3169 px | 1079, 1368, 1235, 872 px |
-| Page height at 390 px, default state | 4871, 4157, 3485, 5862 px | 5133, 3904, 3153, 5826 px |
+| Plan position at 390 px, default state | Primary 3004, ASCVD 1534, Diabetes 1399, LDL ≥190 3169 px | 851, 1368, 1235, 872 px |
+| Page height at 390 px, default state | 4871, 4157, 3485, 5862 px | 5164, 3904, 3153, 5829 px |
 | axe violations, 16 variants (390 and 1440, both themes, 4 tabs) | color-contrast 59 to 89 per tab by day, plus label, meta-viewport, landmark-one-main, region, heading-order | 0 |
 | Lowest text contrast | 2.35:1 (light faint on a selected row) | 4.72:1 light, 4.73:1 dark |
 | Controls under 44 px at 390 px (hit area counted) | 9 to 18 per tab | 0 |
@@ -62,4 +62,12 @@ Screenshots and raw JSON were kept in the session scratchpad and are not in the 
 | Copy button reachable at 1440 x 800 | no | yes |
 | Horizontal overflow, console errors | 0, 0 | 0, 0 |
 
-Checks: `scripts/layout.cjs` 65 assertions, `scripts/flows.cjs` 30 clinical-flow assertions, `scripts/clip.cjs 320` and `390`, `scripts/audit.cjs`, `node test-copy.mjs` 23 assertions.
+| Plan fully visible in the desktop rail at 1280 x 720 and 1366 x 768 | not applicable (no plan in the rail) | yes |
+| mmol/L: sideways scroll inside the page at 320 to 390 px | 389 px of content in a 310 to 380 px area | none |
+| Keyboard: focus stops hidden under a bar or with a clipped ring | not measured | 0 on 4 walked variants |
+
+Checks: `scripts/layout.cjs` 93 assertions, `scripts/flows.cjs` 30 clinical-flow assertions, `scripts/clip.cjs 320` and `390`, `scripts/audit.cjs`, `node test-copy.mjs` 23 assertions.
+
+## Independent review of 7d989cd and the fix pass
+
+A fresh reviewer (15 findings, most measured in a browser on its own port) and a second Codex review (1 finding, the same as reviewer finding 3). Each fix has a check that failed first. The ledger lists every one.

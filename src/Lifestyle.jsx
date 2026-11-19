@@ -19,11 +19,11 @@ const ROWS = [
   { k: "Exercise ≥150 min/week", d: "Aerobic plus resistance 2 days/week", v: "≈7 mg/dL" },
 ];
 
-import { LeaderRow } from "./ui.jsx";
+import { LeaderRow, chol } from "./ui.jsx";
 
 const Row = ({ k, d, v, strong }) => <LeaderRow label={k} value={v} sub={d} strong={strong} />;
 
-export function LifestyleLDL() {
+export function LifestyleLDL({ si }) {
   return (
     <div>
       <div className="space-y-1.5">
@@ -33,7 +33,7 @@ export function LifestyleLDL() {
         </div>
       </div>
       <div className="mt-1.5 text-[12px] text-muted leading-snug">
-        <b className="text-red-700 dark:text-red-400">Raises LDL-C:</b> ketogenic or high-saturated-fat low-carb diets (can reach ≥190), trans fat, unfiltered coffee.{" "}
+        <b className="text-red-700 dark:text-red-400">Raises LDL-C:</b> ketogenic or high-saturated-fat low-carb diets (can reach ≥{chol(190, si)}), trans fat, unfiltered coffee.{" "}
         <b>No LDL-C effect:</b> smoking cessation, alcohol reduction. Still do both.{" "}
         <b>Skip:</b> supplements, including red yeast rice, fish oil, garlic (COR 3: No Benefit).
       </div>

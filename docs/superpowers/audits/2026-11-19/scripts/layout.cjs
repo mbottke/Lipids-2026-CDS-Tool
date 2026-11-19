@@ -200,6 +200,112 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
     await p.done();
   });
 
+  // ── Review findings (independent reviewer and Codex, on 7d989cd) ──────────────
+  await section('review: the plan is fully in view in the rail at laptop heights', async () => {
+    for (const [w, h, full] of [[1280, 720, true], [1366, 768, true], [1024, 600, false]]) {
+      const p = await open(w, h); await p.patient();
+      const m = await p.evaluate(() => { const pl = document.querySelector('aside [data-plan="rail"]'); const r = pl.getBoundingClientRect(); const cells = pl.querySelector('.grid').getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), cellsBottom: Math.round(cells.bottom), vh: innerHeight }; });
+      ok(full ? m.bottom <= m.vh : m.cellsBottom <= m.vh, `${w} x ${h}: ${full ? 'whole plan' : 'sentence and goals'} visible without scrolling the rail`, m);
+      await p.done();
+    }
+  });
+
+  await section('review: the plan bar hands focus to the plan', async () => {
+    const p = await open(390, 844, { hasTouch: false }); await p.tab('ASCVD'); await p.fill2('Current LDL-C', 152);
+    await p.sc().evaluate(el => el.scrollTo(0, el.scrollHeight)); await p.waitForTimeout(350);
+    await p.locator('[data-planbar]').focus(); await p.keyboard.press('Enter'); await p.waitForTimeout(1200);
+    const where = await p.evaluate(() => { const a = document.activeElement; return { tag: a.tagName, inPlan: !!a.closest('[data-plan="inline"]') }; });
+    ok(where.inPlan, 'after Enter on the bar, focus is on the plan', where);
+    await p.done();
+  });
+
+  await section('review: a focused control is never under the plan bar and its focus ring is never clipped', async () => {
+    for (const [tab, w] of [['Primary', 390], ['ASCVD', 390], ['LDL ≥190', 390], ['ASCVD', 1024]]) {
+      const p = await open(w, w < 700 ? 844 : 700, { hasTouch: false }); if (tab === 'Primary') await p.patient(); else await p.tab(tab);
+      if (tab === 'LDL ≥190') await p.fill2('Current LDL-C', 212);
+      const bad = [];
+      for (let i = 0; i < 70; i++) {
+        await p.keyboard.press('Tab'); await p.waitForTimeout(40);
+        const r = await p.evaluate(() => {
+          const e = document.activeElement; if (!e || e === document.body) return null;
+          const name = (e.getAttribute('aria-label') || e.innerText || e.tagName).replace(/\s+/g, ' ').trim().slice(0, 28);
+          const box = e.getBoundingClientRect(); const out = [];
+          const bar = document.querySelector('[data-planbar]');
+          if (bar && e !== bar && getComputedStyle(bar).display !== 'none') { const bt = bar.getBoundingClientRect().top; if (box.bottom > bt + 1) out.push(`under bar by ${Math.round(box.bottom - bt)}px`); }
+          const cs = getComputedStyle(e); const ring = cs.outlineStyle === 'none' ? null : parseFloat(cs.outlineOffset) + parseFloat(cs.outlineWidth);
+          if (ring !== null) for (let a = e.parentElement; a && a.tagName !== 'BODY'; a = a.parentElement) { const s = getComputedStyle(a); if (s.overflowX === 'visible' && s.overflowY === 'visible') continue; if (a.hasAttribute('data-scroll') || a.tagName === 'ASIDE' || a.tagName === 'NAV' || a.classList.contains('overflow-x-auto')) continue; const c = a.getBoundingClientRect(); if (box.left - ring < c.left - 0.5 || box.right + ring > c.right + 0.5 || box.top - ring < c.top - 0.5 || box.bottom + ring > c.bottom + 0.5) { out.push('ring clipped'); break; } }
+          return out.length ? `"${name}": ${out.join(', ')}` : null;
+        });
+        if (r) bad.push(r);
+      }
+      ok(bad.length === 0, `${tab} at ${w}: ${bad.length} focus stops hidden or clipped`, [...new Set(bad)].slice(0, 6).join(' | '));
+      await p.done();
+    }
+  });
+
+  await section('review: mmol/L does not scroll sideways and its status is self-consistent', async () => {
+    for (const w of [320, 390]) {
+      const p = await open(w, 844); await p.patient(); await p.getByRole('button', { name: /^Units: mg/ }).click(); await p.waitForTimeout(200);
+      const m = await p.sc().evaluate(el => ({ sw: el.scrollWidth, cw: el.clientWidth }));
+      ok(m.sw <= m.cw, `${w}: content is no wider than the scroll area`, m); await p.done();
+    }
+    const p = await open(390, 844); await p.tab('ASCVD');
+    await row(p, /^(✓\s*)?Prior MI/).click(); await row(p, /^(✓\s*)?Repeat event/).click();
+    await p.getByRole('button', { name: /^Units: mg/ }).click();
+    await p.fill2('Current LDL-C', 1.4); let t = await p.txt('[data-plan="inline"]');
+    ok(/Not at goal\. LDL-C 1\.4 mmol\/L, goal <1\.4\./.test(t) && !/0\.0 above/.test(t), '1.4 with goal <1.4 reads not at goal, with no "0.0 above"', t.slice(-120));
+    await p.fill2('Current LDL-C', 1.3); t = await p.txt('[data-plan="inline"]');
+    ok(/At goal\. LDL-C 1\.3 mmol\/L, goal <1\.4\./.test(t), '1.3 with goal <1.4 reads at goal', t.slice(-90));
+    await p.done();
+  });
+
+  await section('review: mmol/L leaves no mg/dL LDL-C threshold on the LDL ≥190 tab', async () => {
+    const p = await open(390, 844); await p.tab('LDL ≥190'); await p.fill2('Current LDL-C', 212);
+    await p.getByRole('button', { name: /^Units: mg/ }).click(); await p.expandAll();
+    const t = await p.txt('main');
+    const left = (t.match(/LDL-C[^.]{0,24}(≥190|≥ ?160\b|160–189|≥100\b)|≤130 mg\/dL/g) || []);
+    ok(left.length === 0, `${left.length} LDL-C thresholds still in mg/dL`, left.slice(0, 6).join(' | '));
+    ok(/LDL-C ≥4\.9/.test(t) && /4\.1–4\.8/.test(t), 'thresholds read ≥4.9 and 4.1–4.8');
+    await p.done();
+  });
+
+  await section('review: sections and rows do not change under the user', async () => {
+    let p = await open(390, 844, { hasTouch: false }); await p.patient();
+    const e = p.getByRole('button', { name: /^Risk enhancers/ });
+    await row(p, /^(✓\s*)?Elevated Lp\(a\)/).click(); await p.fill2('Age', 70); await p.waitForTimeout(200);
+    await row(p, /^(✓\s*)?Elevated Lp\(a\)/).click(); await p.waitForTimeout(200);
+    ok(await e.getAttribute('aria-expanded') === 'true', 'risk enhancers stay open after the last one is unchecked at high risk');
+    await p.done();
+    p = await open(390, 844); await p.patient({ ...PATIENT, 'eGFR': 45 }); await p.tab('ASCVD');
+    const ckd = await p.locator('main').evaluate(el => { const n = [...el.querySelectorAll('*')].find(x => x.childElementCount === 0 && x.textContent.trim() === 'CKD stage ≥3'); return { found: !!n, isButton: !!n?.closest('button') }; });
+    ok(ckd.found && !ckd.isButton, 'ASCVD tab: CKD set by eGFR is a read-only row', ckd);
+    ok(/ASCVD with CKD stage ≥3/.test(await p.txt('[data-plan="inline"]')), 'and the plan uses it');
+    await p.tab('Primary'); await p.fill2('eGFR', 82); await p.tab('ASCVD');
+    ok(!/CKD stage ≥3\./.test(await p.txt('[data-plan="inline"]')), 'correcting eGFR to 82 removes CKD from the plan');
+    await p.tab('LDL ≥190'); await p.fill2('Current LDL-C', 212); await row(p, /^(✓\s*)?Tendon xanthoma/).click(); await row(p, /^(✓\s*)?Arcus cornealis/).click().catch(() => {});
+    const he = await p.locator('main').evaluate(el => { const n = [...el.querySelectorAll('*')].find(x => x.childElementCount === 0 && x.textContent.trim() === 'HeFH, clinical or genetic'); return { found: !!n, isButton: !!n?.closest('button') }; });
+    ok(he.found && !he.isButton, 'LDL ≥190 tab: HeFH set by the score is a read-only row', he);
+    await p.done();
+  });
+
+  await section('review: small panels meet the same floor', async () => {
+    let p = await open(390, 844); await p.getByRole('button', { name: 'BMI calc' }).click(); await p.waitForTimeout(200);
+    const small = await p.evaluate(() => { const out = []; const panel = [...document.querySelectorAll('div')].find(d => d.childElementCount && /^BMI calculator/.test(d.innerText || '') && d.innerText.length < 400); (panel || document).querySelectorAll('button, input').forEach(el => { const r = el.getBoundingClientRect(); if (!r.width) return; const a = getComputedStyle(el, '::after'); let w = r.width, h = r.height; if (a.content !== 'none' && a.position === 'absolute') { w += -parseFloat(a.left) - parseFloat(a.right); h += -parseFloat(a.top) - parseFloat(a.bottom); } if (w < 43.5 || h < 43.5) out.push(`${Math.round(w)}x${Math.round(h)} "${(el.getAttribute('aria-label') || el.innerText || el.placeholder || '').trim().slice(0, 16)}"`); }); return { found: !!panel, out }; });
+    ok(small.found && small.out.length === 0, `BMI calculator: ${small.out.length} controls under 44 px`, small.out.join(' | '));
+    const hit = await p.evaluate(() => { const x = [...document.querySelectorAll('button[aria-label="Close"]')].find(b => b.getBoundingClientRect().width); const r = x.getBoundingClientRect(); const below = document.elementFromPoint(r.left + r.width / 2, r.bottom + 14); return { below: (below?.innerText || below?.tagName || '').slice(0, 12), isClose: below === x }; });
+    ok(!hit.isClose, 'the close button does not take taps meant for the control below it', hit);
+    for (const name of ['BMI calc', 'About the PREVENT calculator', 'About CAC scoring', 'About Lp(a) and apoB']) { const bt = p.getByRole('button', { name, exact: true }).first(); ok((await bt.getAttribute('aria-expanded')) !== null, `"${name}" states whether it is open`); }
+    await p.done();
+    p = await open(320, 700); await p.tab('LDL ≥190'); await p.fill2('Current LDL-C', 212); await row(p, /^Atorva$/).click(); await p.waitForTimeout(150);
+    const chips = await p.evaluate(() => [...document.querySelectorAll('main button')].filter(b => /^\d+ mg$/.test(b.innerText.trim())).map(b => Math.round(b.getBoundingClientRect().width)));
+    ok(chips.length === 4 && chips.every(x => x >= 44), '320 px: dose chips are at least 44 px wide', chips);
+    ok((await p.getByRole('button', { name: /Point bands/ }).getAttribute('aria-expanded')) !== null, '"Point bands" states whether it is open');
+    await p.sc().evaluate(el => el.scrollTo(0, el.scrollHeight)); await p.waitForTimeout(350);
+    const tr = await p.evaluate(() => [...document.querySelectorAll('[data-planbar] span')].filter(sp => sp.getBoundingClientRect().width && sp.scrollWidth > sp.clientWidth + 1).map(sp => sp.innerText));
+    ok(tr.length === 0, '320 px: nothing in the plan bar is truncated', tr);
+    await p.done();
+  });
+
   console.log(`\n${pass} pass, ${fail} fail`);
   await b.close(); process.exit(fail ? 1 : 0);
 })();

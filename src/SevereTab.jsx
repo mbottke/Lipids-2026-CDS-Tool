@@ -8,7 +8,7 @@
 //    Khera AV et al. JACC 2016;67:2578-89
 //  · Homozygous FH: Cuchel M et al. Eur Heart J 2023;44:2277-91
 import { useState } from "react";
-import { Card, SINum, CheckRow, Badge, GoalTier, Step, Cor, Eyebrow, CHOL_F, chol, cholUnit } from "./ui.jsx";
+import { Card, SINum, CheckRow, AutoRow, Badge, GoalTier, Step, Cor, Eyebrow, CHOL_F, chol, cholUnit } from "./ui.jsx";
 import { DLCN_GROUPS, DLCN_LDL_BANDS, DLCN_CLINICAL_FH_MIN, LDL_CORRECTION, HOFH_UNTREATED_LDL } from "./fh.js";
 
 // ── Goal tiers ───────────────────────────────────────────────────────────────
@@ -19,16 +19,17 @@ export function SevereGoalTiers({ si, f, toggle, hefhAuto, goal }) {
       <Eyebrow>LDL-C goal: what lowers it</Eyebrow>
       <div className="space-y-2">
         <GoalTier active={goal.tier === "base"} ldl={chol(100, si)} nh={chol(130, si)}>
-          <div className="text-[14px] font-bold text-ink leading-tight">LDL-C ≥190 alone</div>
+          <div className="text-[14px] font-bold text-ink leading-tight">LDL-C ≥{chol(190, si)} alone</div>
           <div className="text-[12px] text-muted mt-0.5">No HeFH, no additional ASCVD risk factor, no coronary calcification.</div>
         </GoalTier>
 
         <GoalTier active={goal.tier === "enhanced"} ldl={chol(70, si)} nh={chol(100, si)}>
           <div className="text-[14px] font-bold text-ink leading-tight">With any one of these</div>
           <div className="space-y-1 mt-1.5">
-            <CheckRow compact checked={f.hefh || hefhAuto} on={() => toggle("hefh")}
-              label="HeFH, clinical or genetic"
-              sub={hefhAuto ? `Set by the score below: DLCN ≥${DLCN_CLINICAL_FH_MIN} or a pathogenic variant` : `DLCN ≥${DLCN_CLINICAL_FH_MIN} (probable or definite) or a pathogenic variant`} />
+            {hefhAuto
+              ? <AutoRow compact checked label="HeFH, clinical or genetic" sub={`Set by the score below: DLCN ≥${DLCN_CLINICAL_FH_MIN} or a pathogenic variant`} />
+              : <CheckRow compact checked={!!f.hefh} on={() => toggle("hefh")} label="HeFH, clinical or genetic"
+                  sub={`DLCN ≥${DLCN_CLINICAL_FH_MIN} (probable or definite) or a pathogenic variant`} />}
             <CheckRow compact checked={f.rf} on={() => toggle("rf")}
               label="Additional ASCVD risk factors"
               sub="Not enumerated by the guideline. Its cited source (SAFEHEART): hypertension, smoking, higher BMI, elevated Lp(a), male sex, older age" />
@@ -86,14 +87,14 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
         <Do><b>A1c</b> for uncontrolled hyperglycemia</Do>
         <Do><b>Diet history:</b> ketogenic or high saturated fat, rapid weight change</Do>
         <Do><b>Drugs:</b> glucocorticoids, cyclosporine, atypical antipsychotics, estrogens, androgens, high-dose thiazides. Also pregnancy, menopausal transition, Cushing syndrome, anorexia nervosa</Do>
-        <Expect>Treat any cause found and repeat the lipid profile. If LDL-C is still ≥190, continue below.</Expect>
+        <Expect>Treat any cause found and repeat the lipid profile. If LDL-C is still ≥{chol(190, si)}, continue below.</Expect>
       </Step>
 
       <Step n={2} title="Score the phenotype" tag={<Badge color="slate">Dutch Lipid Clinic Network, adults</Badge>}>
         <div className="rounded-lg border border-line bg-surface p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-[13px] font-bold text-ink">Untreated LDL-C</div>
-            <button type="button" onClick={() => setShowBands(p => !p)}
+            <button type="button" onClick={() => setShowBands(p => !p)} aria-expanded={showBands}
               className="hit py-1 text-[12px] font-semibold text-muted hover:text-ink cursor-pointer underline decoration-dotted underline-offset-2">{showBands ? "Hide point bands" : "Point bands"}</button>
           </div>
           <div className="text-[12px] text-faint mt-0.5 leading-snug">The score uses the untreated value. On therapy with no baseline on record: pick the regimen to estimate it. A documented baseline overrides the estimate.</div>
@@ -106,7 +107,7 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
                   className={`flex-1 py-1.5 px-0.5 rounded text-[12px] font-semibold text-center cursor-pointer transition-colors min-h-[44px] ${rx.statin === id ? pick : unpick}`}>{r.l}</button>
               ))}
             </div>
-            <div className="flex flex-wrap gap-1 mt-1 items-stretch">
+            <div className="flex flex-wrap gap-1 mt-1 items-stretch [&>button]:min-w-[44px]">
               {rx.statin !== "none" && doses.map(d => (
                 <button key={d} type="button" aria-pressed={rx.dose === d} onClick={() => setRx({ ...rx, dose: d })}
                   className={`flex-1 py-1.5 rounded text-[12px] font-semibold font-mono text-center cursor-pointer transition-colors min-h-[44px] ${rx.dose === d ? pick : unpick}`}>{d} mg</button>
@@ -189,22 +190,22 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
       <Step n={3} title="Genetic testing"
         tag={cat.id === "unlikely" ? <Cor>COR 2a</Cor> : <Cor>COR 1</Cor>}>
         <Do>Order a <b>panel</b> for pathogenic or likely pathogenic variants: <b>LDLR, APOB, PCSK9</b> (<b>LDLRAP1</b> with a recessive pattern or HoFH phenotype).</Do>
-        <div className="text-muted">COR 1 for possible, probable, or definite FH. COR 2a for any LDL-C ≥190 without a secondary cause. COR 2b for LDL-C 160–189.</div>
+        <div className="text-muted">COR 1 for possible, probable, or definite FH. COR 2a for any LDL-C ≥{chol(190, si)} without a secondary cause. COR 2b for LDL-C {si ? "4.1–4.8" : "160–189"}.</div>
         <Expect>
-          A variant is found in ≈2.5% of all adults with LDL-C ≥190, 21–44% with possible FH, 60–80% with definite FH. <b>Positive:</b> HeFH confirmed (goal &lt;{chol(70, si)}), CAD odds ≈22× versus ≈6× for the same LDL-C without a variant, and relatives can be tested for the exact variant. <b>Negative:</b> does not exclude FH. Treat the phenotype the same.
+          A variant is found in ≈2.5% of all adults with LDL-C ≥{chol(190, si)}, 21–44% with possible FH, 60–80% with definite FH. <b>Positive:</b> HeFH confirmed (goal &lt;{chol(70, si)}), CAD odds ≈22× versus ≈6× for the same LDL-C without a variant, and relatives can be tested for the exact variant. <b>Negative:</b> does not exclude FH. Treat the phenotype the same.
         </Expect>
         {variant && <div className="font-semibold text-ink">Variant recorded: genetically confirmed FH.</div>}
       </Step>
 
-      <Step n={4} title="Cascade screening" tag={<span className="text-[12px] text-muted">{clinicalFH || variant ? "Start now" : "Once FH is confirmed or LDL-C stays ≥190"}</span>}>
+      <Step n={4} title="Cascade screening" tag={<span className="text-[12px] text-muted">{clinicalFH || variant ? "Start now" : `Once FH is confirmed or LDL-C stays ≥${chol(190, si)}`}</span>}>
         <Do><b>Who:</b> every 1st-degree relative (parents, siblings, children; 50% chance each). Then 2nd-degree relatives, and outward from each new case.</Do>
         <Do><b>How:</b> if the family variant is known, test for that variant plus a lipid profile. Without a variant or access to testing, a lipid profile alone (misses relatives with milder LDL-C).</Do>
         <Do><b>When:</b> children from age <b>2</b>. Add <b>Lp(a)</b> for 1st-degree relatives (COR 1).</Do>
-        <Expect>Variant-based cascades find more affected relatives than LDL-C alone (1.77 vs 1.18 per family). Affected children: statin from age 8 if LDL-C stays ≥160 after 3–6 months of lifestyle, with a goal of ≥50% reduction and ≤130 mg/dL.</Expect>
+        <Expect>Variant-based cascades find more affected relatives than LDL-C alone (1.77 vs 1.18 per family). Affected children: statin from age 8 if LDL-C stays ≥{chol(160, si)} after 3–6 months of lifestyle, with a goal of ≥50% reduction and ≤{chol(130, si)} {cholUnit(si)}.</Expect>
       </Step>
 
       <Step n={5} title="Treat to goal and refer" last>
-        <Do>Maximally tolerated statin, then add <b>ezetimibe, a PCSK9 mAb, and/or bempedoic acid</b> to the goal above. Inclisiran if LDL-C stays ≥100 despite statin with or without ezetimibe (COR 2a).</Do>
+        <Do>Maximally tolerated statin, then add <b>ezetimibe, a PCSK9 mAb, and/or bempedoic acid</b> to the goal above. Inclisiran if LDL-C stays ≥{chol(100, si)} despite statin with or without ezetimibe (COR 2a).</Do>
         <Do>Recheck lipids 4–12 weeks after each change.</Do>
         <Do><b>Refer to a lipid specialist:</b> suspected or diagnosed FH, genetic testing needed, HeFH not at goal on maximal statin plus nonstatin, side effects on ≥2 statins, any suspicion of homozygous FH (evinacumab, lomitapide, apheresis).</Do>
       </Step>

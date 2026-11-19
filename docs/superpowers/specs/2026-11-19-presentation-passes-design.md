@@ -144,3 +144,12 @@ Rewrites that a clinician reads on every use are listed in the plan, task 9. Lay
 - `node test-copy.mjs`: style-sheet rules, token contrast computed from `src/index.css`, no type class below 11 px, viewport meta.
 - `docs/superpowers/audits/2026-11-19/scripts/` (Playwright, run against the dev server): `audit.cjs` (axe, zero violations), `clip.cjs 320` (zero spills), `layout.cjs` (Plan position per tab, header fit at 320, 44 px targets, rail reachability at 1440 × 800, scroll reset, Plan bar, read-only blood pressure rows, mmol/L thresholds in the statin-intolerance panel, strict at-goal boundary).
 - Existing suites: `test-prevent-cvd`, `test-recommend`, `test-clinical`, `test-bp`, `test-fh`, `test-prevent-30yr`, `test-crossvalidate`, and `vite build`.
+
+## Amendments after review (2026-11-19)
+
+- The Plan sits directly after the 10-year risk block, in the rail and inline. After the 30-year block it fell below the fold of the rail at 1280 x 720, 1366 x 768 and 1024 x 600.
+- The plan bar is pinned at the bottom of the scroll area, not the top. It shows whenever the inline Plan is out of view. Pressing it moves focus to the Plan. The scroll area keeps a focused control clear of the bar.
+- In mmol/L, "at goal" compares the two values as shown, to one decimal. 55 mg/dL is 1.42 mmol/L, but the goal reads "<1.4", so a value shown as 1.4 is not at goal. In mg/dL the comparison is on the integers, strictly below.
+- The plan sentence, the LDL ≥190 thresholds in the FH workup, and the LDL-C goal mentioned in the apoB and triglyceride notes follow the selected unit. A closed range ends one step below the next threshold (160–189 reads 4.1–4.8).
+- A condition another part of the app sets is a read-only row on every tab: blood pressure conditions, CKD on the ASCVD tab, HeFH on the LDL ≥190 tab.
+- Buttons inside a clipping container draw their focus ring inside the control (`.focus-inset`).

@@ -35,13 +35,22 @@ eq(goalStatus(100, 100), { atGoal: false, above: 0, needed: 0 }, "100 with goal 
 eq(goalStatus(152, 100), { atGoal: false, above: 52, needed: 34 }, "152 with goal <100 → 52 above, 34% reduction needed");
 eq(goalStatus(152, 70), { atGoal: false, above: 82, needed: 54 }, "152 with goal <70 → 82 above, 54% reduction needed");
 
+console.log("\n═══ Goal status in mmol/L is judged on the values as shown (one decimal) ═══");
+eq(goalStatus(54, 55, true), { atGoal: false, above: 0, needed: 0 }, "1.4 shown with goal <1.4 → not at goal, no gap to state");
+eq(goalStatus(50, 55, true), { atGoal: true, above: -0.1, needed: 0 }, "1.3 shown with goal <1.4 → at goal");
+eq(goalStatus(101, 100, true), { atGoal: false, above: 0, needed: 0 }, "2.6 shown with goal <2.6 → not at goal, no 0.0 gap and no 1%");
+eq(goalStatus(69, 70, true), { atGoal: false, above: 0, needed: 0 }, "1.8 shown with goal <1.8 → not at goal");
+eq(goalStatus(66, 70, true), { atGoal: true, above: -0.1, needed: 0 }, "1.7 shown with goal <1.8 → at goal");
+eq(goalStatus(152, 70, true), { atGoal: false, above: 2.1, needed: 54 }, "3.9 shown with goal <1.8 → 2.1 above, 54% reduction needed");
+eq(goalStatus(69, 70, false), { atGoal: true, above: -1, needed: 0 }, "mg/dL is unchanged: 69 with goal <70 → at goal");
+
 console.log("\n═══ Plan sentence in mmol/L ═══");
+eq(inUnit("Low 10-year risk (<3%) with LDL-C 160–189.", true), "Low 10-year risk (<3%) with LDL-C 4.1–4.8.", "a range ends below the next threshold: 160–189 → 4.1–4.8, not 4.9");
 eq(inUnit("Very high-risk ASCVD. High-intensity statin, then ezetimibe and/or a PCSK9 mAb to LDL below 55 mg/dL.", true),
    "Very high-risk ASCVD. High-intensity statin, then ezetimibe and/or a PCSK9 mAb to LDL below 1.4 mmol/L.", "goal phrase converts: 55 mg/dL → 1.4 mmol/L");
 eq(inUnit("High-intensity statin to LDL below 70 mg/dL. Lowering further to below 55 is reasonable.", true),
    "High-intensity statin to LDL below 1.8 mmol/L. Lowering further to below 1.4 is reasonable.", "the second, unit-less goal converts too");
 eq(inUnit("LDL-C ≥190 with clinical ASCVD.", true), "LDL-C ≥4.9 with clinical ASCVD.", "LDL-C threshold converts: 190 → 4.9");
-eq(inUnit("Low 10-year risk (<3%) with LDL-C 160–189.", true), "Low 10-year risk (<3%) with LDL-C 4.1–4.9.", "LDL-C range converts");
 eq(inUnit("CAC 300–999. High-intensity statin to LDL below 70 mg/dL.", true), "CAC 300–999. High-intensity statin to LDL below 1.8 mmol/L.", "CAC scores are left alone");
 eq(inUnit("Diabetes with PREVENT-ASCVD ≥10%.", true), "Diabetes with PREVENT-ASCVD ≥10%.", "percentages are left alone");
 eq(inUnit("to LDL below 55 mg/dL.", false), "to LDL below 55 mg/dL.", "mg/dL mode leaves the sentence as written");

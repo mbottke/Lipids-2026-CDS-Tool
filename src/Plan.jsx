@@ -7,14 +7,12 @@ import { goalStatus, inUnit } from "./recommend.js";
 const INTENSITY = { high: "High-intensity statin", moderate: "Moderate-intensity statin", lifestyle: "Lifestyle first", none: "No statin now" };
 const TONE = { ok: "text-emerald-700 dark:text-emerald-400", alert: "text-red-700 dark:text-red-400" };
 
-// Difference between two mg/dL values, in the active unit.
-const gap = (mgdl, si) => (si ? (mgdl / 38.67).toFixed(1) : Math.round(mgdl));
 
 function statusText(st, ldl, goal, si) {
   const now = `LDL-C ${chol(ldl, si)} ${cholUnit(si)}`;
   if (st.atGoal) return `At goal. ${now}, goal <${chol(goal, si)}.`;
   if (st.above <= 0) return `Not at goal. ${now}, goal <${chol(goal, si)}.`;
-  return `Not at goal. ${now}, ${gap(st.above, si)} above goal. ${st.needed}% reduction needed.`;
+  return `Not at goal. ${now}, ${si ? st.above.toFixed(1) : Math.round(st.above)} above goal. ${st.needed}% reduction needed.`;
 }
 
 function Cell({ v, k }) {
@@ -28,9 +26,9 @@ function Cell({ v, k }) {
 
 // where: "inline" (main column) | "rail" (desktop right rail)
 export function Plan({ rec, ldl, si, where }) {
-  const st = rec.g ? goalStatus(ldl, rec.g.ldl) : null;
+  const st = rec.g ? goalStatus(ldl, rec.g.ldl, si) : null;
   return (
-    <section data-plan={where} aria-label="Plan" className="rounded-lg border border-edge bg-surface p-4">
+    <section data-plan={where} aria-label="Plan" tabIndex={-1} className="rounded-lg border border-edge bg-surface p-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
       <SectionHead className="mb-1.5">Plan</SectionHead>
       <p data-plan-text className="text-[15px] font-bold leading-snug text-ink">{inUnit(rec.txt, si)}</p>
       {rec.note && <p className="text-[12px] text-muted mt-1">{inUnit(rec.note, si)}</p>}
@@ -53,18 +51,18 @@ export function Plan({ rec, ldl, si, where }) {
 
 // Pinned bar shown on small screens while the plan is out of view. Pressing it goes to the plan.
 export function PlanBar({ rec, ldl, si, onGo }) {
-  const st = rec.g ? goalStatus(ldl, rec.g.ldl) : null;
+  const st = rec.g ? goalStatus(ldl, rec.g.ldl, si) : null;
   const goal = rec.g ? `LDL-C goal <${chol(rec.g.ldl, si)}` : null;
   const now = st ? `Now ${chol(ldl, si)}` : null;
   const how = INTENSITY[rec.int] || "";
   return (
     <button type="button" data-planbar onClick={onGo}
       aria-label={["Go to plan", goal, now, how].filter(Boolean).join(". ")}
-      className="lg:hidden absolute bottom-0 inset-x-0 z-10 min-h-[44px] px-4 sm:px-5 flex items-center gap-3 bg-surface border-t border-edge text-left cursor-pointer active:opacity-80"
-      style={{ paddingBottom: "var(--sab)" }}>
+      className="focus-inset lg:hidden absolute bottom-0 inset-x-0 z-10 px-4 sm:px-5 flex items-center gap-3 bg-surface border-t border-edge text-left cursor-pointer active:opacity-80"
+      style={{ minHeight: "calc(44px + var(--sab))", paddingBottom: "var(--sab)" }}>
       {goal && <span className="font-mono text-[13px] font-semibold text-ink tabular-nums whitespace-nowrap">{goal}</span>}
       {now && <span className={`font-mono text-[13px] font-semibold tabular-nums whitespace-nowrap ${st.atGoal ? TONE.ok : TONE.alert}`}>{now}</span>}
-      <span className="flex-1 min-w-0 truncate text-[12px] text-muted">{how}</span>
+      <span className="flex-1 min-w-0 text-[12px] text-muted"><span className="max-[359px]:hidden">{how}</span></span>
       <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted"><path d="m6 15 6-6 6 6"/></svg>
     </button>
   );

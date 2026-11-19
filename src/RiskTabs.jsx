@@ -13,7 +13,7 @@ export function AscvdTab({ si, ldl, setLdl, major, toggleMajor, feat, toggleFeat
     : status.majors === 0
       ? "No major event checked"
       : `1 major event + ${status.features} high-risk feature${status.features === 1 ? "" : "s"} (needs 2)`;
-  const why55 = status.vhr ? why : (other.ckd || ckdAuto) ? "ASCVD with CKD stage ≥3" : "ASCVD with LDL-C ≥190 or HeFH";
+  const why55 = status.vhr ? why : (other.ckd || ckdAuto) ? "ASCVD with CKD stage ≥3" : `ASCVD with LDL-C ≥${chol(190, si)} or HeFH`;
   return (
     <Card title="Clinical ASCVD risk level">
       <p className="text-[12px] text-muted mb-3">All clinical ASCVD: high-intensity statin. The risk level sets the LDL-C goal.</p>
@@ -22,7 +22,7 @@ export function AscvdTab({ si, ldl, setLdl, major, toggleMajor, feat, toggleFeat
       <div className="mt-3 space-y-2">
         <GoalTier active={goal55} ldl={chol(55, si)} nh={chol(85, si)}>
           <div className={`text-[14px] font-bold leading-tight ${goal55 ? "text-red-800 dark:text-red-300" : "text-ink"}`}>Very high risk</div>
-          <div className="text-[12px] text-muted mt-0.5">Two or more major events, or one major event plus two or more high-risk features. Also ASCVD with CKD stage ≥3, LDL-C ≥190, or HeFH.</div>
+          <div className="text-[12px] text-muted mt-0.5">Two or more major events, or one major event plus two or more high-risk features. Also ASCVD with CKD stage ≥3, LDL-C ≥{chol(190, si)}, or HeFH.</div>
           {goal55 && <div className="text-[12px] font-semibold text-ink mt-1">{why55}</div>}
         </GoalTier>
         <GoalTier active={!goal55} ldl={chol(70, si)} nh={chol(100, si)}>
@@ -44,10 +44,11 @@ export function AscvdTab({ si, ldl, setLdl, major, toggleMajor, feat, toggleFeat
 
       <div className="mt-4 space-y-1.5">
         <Eyebrow>Other conditions with a &lt;{chol(55, si)} goal</Eyebrow>
-        <CheckRow checked={!!other.ckd || !!ckdAuto} on={() => toggleOther("ckd")}
-          label="CKD stage ≥3" sub={ckdAuto ? `From the Primary tab: ${ckdAuto}` : "eGFR <60 mL/min/1.73 m²"} />
+        {ckdAuto
+          ? <AutoRow checked label="CKD stage ≥3" sub={`Set by: ${ckdAuto} on the Primary tab`} />
+          : <CheckRow checked={!!other.ckd} on={() => toggleOther("ckd")} label="CKD stage ≥3" sub="eGFR <60 mL/min/1.73 m²" />}
         <CheckRow checked={!!other.severe} on={() => toggleOther("severe")}
-          label="LDL-C ≥190 or HeFH" sub="Severe hypercholesterolemia with clinical ASCVD" />
+          label={`LDL-C ≥${chol(190, si)} or HeFH`} sub="Severe hypercholesterolemia with clinical ASCVD" />
       </div>
     </Card>
   );
