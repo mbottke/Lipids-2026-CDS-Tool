@@ -169,7 +169,8 @@ input:focus-visible {
 }
 
 /* First section in a column sits directly under the tab bar: no doubled rule */
-.col-main > section:first-child {
+.col-main > section:first-child,
+.col-main > div:first-child + section {
   border-top: none;
   padding-top: 0.25rem;
 }
@@ -249,4 +250,59 @@ input:focus-visible {
   [data-scroll] {
     scroll-padding-bottom: 12px;
   }
+}
+
+/* Info sheet: a native modal dialog. Bottom sheet on small screens, right panel from 1024 px. */
+dialog.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: calc(100dvh - 56px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--edge);
+  border-radius: 12px 12px 0 0;
+  background: var(--paper);
+  color: var(--ink);
+  overflow: hidden;
+}
+dialog.sheet[open] {
+  display: flex;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+@starting-style {
+  dialog.sheet[open] {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+dialog.sheet::backdrop {
+  background: rgb(21 24 28 / 0.3);
+}
+.dark dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+@media (min-width: 1024px) {
+  dialog.sheet {
+    inset: 0 0 0 auto;
+    width: 480px;
+    height: 100dvh;
+    max-height: none;
+    border-top: 0;
+    border-left: 1px solid var(--edge);
+    border-radius: 0;
+  }
+  @starting-style {
+    dialog.sheet[open] {
+      transform: translateX(16px);
+      opacity: 0;
+    }
+  }
+}
+
+/* A section reached from the route line stops just below the top of the scroll area */
+[data-scroll] section[id] {
+  scroll-margin-top: 4px;
 }

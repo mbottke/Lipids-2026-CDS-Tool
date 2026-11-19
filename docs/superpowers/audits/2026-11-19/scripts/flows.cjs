@@ -18,12 +18,12 @@ const { chromium } = require('playwright');
   for (const [k,v] of Object.entries({ 'Age':50, 'Total cholesterol':200, 'HDL-C':45, 'Systolic BP':160, 'eGFR':90 })) await fill(k, v);
   await tog('On BP medication').click(); await tog('Diabetes').click();
   t = await body();
-  ok(/10-YEAR ASCVD RISK 9\.2 ?%/i.test(t) && /30-YEAR ASCVD RISK ages 30–59 35\.4 ?%/i.test(t), 'BMI blank: ASCVD 9.2% and 35.4%');
-  ok(/Total CVD 14\.7% 53%/.test(t), 'total CVD 14.7% / 53% in the risk readout');
-  ok(/Heart failure enter BMI – –/.test(t), 'heart failure row asks for BMI');
+  ok(/ASCVD For statins 9\.2% Intermediate .*35\.4% Elevated/.test(t), 'BMI blank: ASCVD 9.2% and 35.4%');
+  ok(/Total CVD For BP drugs 14\.7% 53\.0%/.test(t), 'total CVD 14.7% / 53% in the risk readout');
+  ok(/Heart failure Enter BMI/.test(t), 'heart failure row asks for BMI');
   await fill('BMI', 35); t = await body();
-  ok(/Heart failure 8\.1% 39%/.test(t), 'BMI 35: heart failure 8.1% / 39%');
-  ok(/Elevated \(≥10%\)/.test(t), '30-year readout uses the ≥10% threshold');
+  ok(/Heart failure 8\.1% 39\.0%/.test(t), 'BMI 35: heart failure 8.1% / 39%');
+  ok(/Elevated ≥10%/.test(t), '30-year readout uses the ≥10% threshold');
   ok(/Blood pressure .* 160\/– Stage 2 on therapy Above goal on therapy\. Intensify/i.test(t), 'BP summary: 160 on therapy → intensify');
 
   // 2. low 10-yr + 30-yr ≥10%; diabetes floor; CAC rule
@@ -77,7 +77,7 @@ const { chromium } = require('playwright');
   await p.getByRole('button', { name: 'Male', exact: true }).click();
   for (const [k,v] of Object.entries({ 'Age':50, 'Total cholesterol':200, 'HDL-C':45, 'Systolic BP':160, 'eGFR':90 })) await fill(k, v);
   await tog('On BP medication').click(); t = await body();
-  ok(/Total CVD 7\.5%/.test(t), '50M reference, no diabetes: total CVD 7.5%');
+  ok(/Total CVD For BP drugs 7\.5%/.test(t), '50M reference, no diabetes: total CVD 7.5%');
   await tabTo('Diabetes');
   await p.locator('button[aria-expanded]').filter({ hasText: /Stage 2/ }).first().click(); t = await body();
   ok(/16\.3% 10-year total CVD, with diabetes/i.test(t) && /Calculated with diabetes: 16\.3%/.test(t), 'Diabetes tab: blood pressure section shows total CVD 16.3% with diabetes');

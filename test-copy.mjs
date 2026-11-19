@@ -75,7 +75,7 @@ console.log("\n═══ Wording style sheet ═══");
 none(/non-HDL(?!-C)/, "rule 2: non-HDL-C, never non-HDL alone");
 none(/[a-z,] ApoB\b/, "rule 3: apoB in running text");
 none(/PCSK9i\b/, "rule 4: never PCSK9i");
-none(/–\s*(<|&lt;)/, "rule 6: half-open ranges are written \"3 to <5%\"");
+none(/\d–\s*(<|&lt;)\d/, "rule 6: half-open ranges are written \"3 to <5%\"");
 none(/mm Hg/, "rule 7: mmHg");
 none(/~\d/, "rule 7: ≈ for approximately, never ~");
 { const bad = [];

@@ -3,8 +3,8 @@
 // Circulation 2025;152:e114-e218 / JACC 2025;86:1567-1678): Table 4, Table 12,
 // Table 13, §3.1.2, §3.1.4, §3.2.3, §5.2.2–5.2.9, §5.3, §5.5, §5.6, Figures 6–8.
 // Baxdrostat: FDA label (2026); positioning from the 2026 ACC resistant-hypertension pathway.
-import { useState } from "react";
-import { Card, Num, Toggle, Badge, CheckRow, AutoRow, Disclosure, Step, Cor, Eyebrow, LeaderRow } from "./ui.jsx";
+import { useState, useRef } from "react";
+import { Card, Num, Toggle, Badge, CheckRow, AutoRow, Disclosure, Step, Cor, Eyebrow, LeaderRow, ROWS } from "./ui.jsx";
 import { bpPlan } from "./bp.js";
 import { CVD_BP_TX_THRESHOLD } from "./prevent.js";
 
@@ -26,8 +26,15 @@ const Line = ({ k, children }) => (
 // cvdWithDm: cvd10 was calculated with diabetes although the PREVENT diabetes toggle is off
 export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, cvdWithDm, auto, flags, toggleFlag }) {
   const [open, setOpen] = useState(false);
-  const [sec, setSec] = useState(null);
-  const tog = (id) => setSec(p => (p === id ? null : id));
+  const [sec, setSec] = useState({});   // open sub-sections. Each opens on its own: opening one never closes another.
+  const tog = (id) => setSec(p => ({ ...p, [id]: !p[id] }));
+  const sumRef = useRef(null);
+  // Closing from the end of the open section: the summary comes back into view and takes focus.
+  const closeFromEnd = () => {
+    setOpen(false);
+    sumRef.current?.focus({ preventScroll: true });
+    requestAnimationFrame(() => sumRef.current?.scrollIntoView({ block: "start" }));
+  };
 
   const eff = {
     clinicalCvd: !!(flags.cvd || auto.clinicalCvd),
@@ -43,8 +50,9 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
       <p className="text-[12px] text-muted mb-2">2025 AHA/ACC hypertension guideline. Goal &lt;130/80 for all adults.</p>
 
       {/* Summary: always visible */}
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
-        className="w-full text-left rounded-lg border border-line bg-surface p-3 cursor-pointer active:opacity-70 transition-colors min-h-[48px]">
+      <div className="border-y border-line">
+      <button ref={sumRef} type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
+        className="w-full text-left py-3 cursor-pointer active:opacity-70 min-h-[48px] rounded-lg">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             {plan ? (<>
@@ -59,10 +67,11 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
             )}
           </div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-            className={`shrink-0 text-faint transition-transform duration-150 ${open ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
+            className={`shrink-0 text-muted transition-transform duration-150 ${open ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
         </div>
         {plan && open && <div className="text-[12px] mt-1.5 leading-snug text-body">{plan.action.detail}</div>}
       </button>
+      </div>
 
       {open && (
         <div className="panel-in mt-3 space-y-4">
@@ -85,7 +94,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
 
           <div>
             <Eyebrow>Start drug therapy at ≥130/80 without a lifestyle trial if any apply</Eyebrow>
-            <div className="space-y-1">
+            <div className={ROWS}>
               {/* A condition set elsewhere in the app is shown read-only. Otherwise it can be checked here. */}
               {auto.clinicalCvd
                 ? <AutoRow compact checked label="Clinical CVD" sub={`Set by: ${auto.clinicalCvd}`} />
@@ -103,7 +112,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
             </div>
           </div>
 
-          <div className="rounded-lg border border-line bg-surface p-3">
+          <div>
             <div className="flex items-baseline gap-2.5 flex-wrap">
               <span className="text-[22px] font-medium font-mono tabular-nums text-ink leading-none tracking-[-0.03em]">&lt;130/80</span>
               <span className="text-[12px] font-semibold text-muted">Goal. Systolic &lt;120 is encouraged.</span>
@@ -113,12 +122,12 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Disclosure open={sec === "rx"} on={() => tog("rx")} label="Drug therapy: initial to subsequent">
+          <div className="border-b border-line">
+            <Disclosure open={!!sec.rx} on={() => tog("rx")} label="Drug therapy: initial to subsequent">
               <Step small n={1} title="Initial therapy">
                 <Row k="Stage 1">One first-line agent. Titrate, then add<Cor>COR 2a</Cor>.</Row>
                 <Row k="Stage 2">Two first-line agents from different classes, ideally one single-pill combination<Cor>COR 1</Cor>: ACEi or ARB with a CCB or thiazide-type diuretic. Best suited to nonfrail adults ≥20/10 mmHg above goal.</Row>
-                <div className="rounded-lg border border-line bg-paper p-2 space-y-1 mt-1">
+                <div className="pl-3 border-l-2 border-line space-y-1 mt-1">
                   <div className="text-[12px] font-bold text-ink">First-line classes, usual mg/day</div>
                   <Row k="Thiazide-type">chlorthalidone 12.5–25, HCTZ 25–50, indapamide 1.25–2.5</Row>
                   <Row k="ACE inhibitor">lisinopril 10–40, benazepril 10–40, ramipril 2.5–20</Row>
@@ -148,7 +157,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
               <div className="mt-2 text-[12px] font-semibold text-red-800 dark:text-red-300">Never combine an ACEi with an ARB, or either with a renin inhibitor (COR 3: Harm).</div>
             </Disclosure>
 
-            <Disclosure open={sec === "ci"} on={() => tog("ci")} label="Choose by comorbidity">
+            <Disclosure open={!!sec.ci} on={() => tog("ci")} label="Choose by comorbidity">
               <div className="text-[12px] text-body space-y-1.5">
                 <Row k="CKD">ACEi or ARB when eGFR &lt;60 with albuminuria ≥30 mg/g<Cor>COR 1</Cor>. With eGFR &lt;30, a loop diuretic over a thiazide-type.</Row>
                 <Row k="Diabetes">Any first-line class. ACEi or ARB with CKD or albuminuria ≥30 mg/g<Cor>COR 1</Cor>.</Row>
@@ -159,7 +168,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
               </div>
             </Disclosure>
 
-            <Disclosure open={sec === "ls"} on={() => tog("ls")} label="Lifestyle: expected systolic change" hint="mmHg">
+            <Disclosure open={!!sec.ls} on={() => tog("ls")} label="Lifestyle: expected systolic change" hint="mmHg">
               <div className="space-y-1.5">
                 <Fx k="Sodium <2,300 mg/day" v="−6 to −8">Ideal is below 1,500</Fx>
                 <Fx k="Weight loss ≥5%" v="−6 to −8">About 1 mmHg per kg</Fx>
@@ -172,7 +181,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
               </div>
             </Disclosure>
 
-            <Disclosure open={sec === "mon"} on={() => tog("mon")} label="Follow-up and labs">
+            <Disclosure open={!!sec.mon} on={() => tog("mon")} label="Follow-up and labs">
               <div className="text-[12px] text-body space-y-1">
                 <Line k="Monthly">Visits until at goal, then every 3–6 months.</Line>
                 <Line k="Home BP">Use it to confirm the diagnosis and to titrate<Cor>COR 1</Cor>.</Line>
@@ -182,6 +191,11 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
               </div>
             </Disclosure>
           </div>
+          <button type="button" onClick={closeFromEnd} aria-label="Close blood pressure"
+            className="w-full min-h-[44px] flex items-center justify-center gap-2 text-[12px] font-semibold text-muted hover:text-ink cursor-pointer rounded-lg">
+            Close
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+          </button>
         </div>
       )}
     </Card></div>

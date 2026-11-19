@@ -7,24 +7,17 @@
 // Evidence: CTT Lancet 2022;400:832-45 · SAMSON JACC 2021;78:1210-22 ·
 // CLEAR Outcomes NEJM 2023;388:1353-64 · GAUSS-3 JAMA 2016;315:1580-90 ·
 // ODYSSEY ALTERNATIVE J Clin Lipidol 2015;9:758-69 · VITAL JAMA Cardiol 2023;8:74-80.
-import { useState } from "react";
 import { Route, Cor, Step, LeaderRow, chol, cholUnit } from "./ui.jsx";
 
 // group: "ascvd" | "high" | "mid" | "severe" | null — marks the matching nonstatin row
-export function StatinIntolerance({ onClose, group, si }) {
+export function StatinIntolerance({ group, si }) {
   // LDL-C threshold in the active unit, e.g. "70" or "1.8 mmol/L"
   const L = (v) => (si ? `${chol(v, si)} ${cholUnit(si)}` : v);
-  const [aace, setAace] = useState(false);
-  const row = (id) => `rounded-lg border p-2 ${group === id ? "border-edge bg-accent-soft" : "border-line bg-surface"}`;
+  const row = (id) => `rounded-lg border p-2 ${group === id ? "border-accent bg-accent-soft" : "border-transparent"}`;
   const Fx = ({ r, k, v }) => <LeaderRow lead={<><Route r={r} />{" "}</>} label={k} value={v} />;
 
   return (
-    <div data-si-panel className="panel-in p-3 bg-paper border border-edge rounded-lg text-[12px] text-ink space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="font-bold text-ink text-[13px]">Statin intolerance pathway</div>
-        <button onClick={onClose} aria-label="Close" className="hit w-6 h-6 flex items-center justify-center text-[13px] text-muted hover:text-ink cursor-pointer font-bold">✕</button>
-      </div>
-
+    <div data-si-panel className="text-[12px] text-ink space-y-3 [&>div:first-child]:border-t-0 [&>div:first-child]:pt-0">
       <div className="border-t border-line pt-2.5">
         <div><b>Definition:</b> side effects on at least 2 statins, one at the lowest approved daily dose.</div>
         <div className="text-muted mt-0.5">Complete intolerance is uncommon (&lt;5%). In blinded trials over 90% of muscle symptoms on a statin were not caused by it: an excess of 11 per 1,000 in year one and none after.</div>
@@ -92,14 +85,8 @@ export function StatinIntolerance({ onClose, group, si }) {
       </div>
 
       <div className="border-t border-line pt-2">
-        <button type="button" onClick={() => setAace(p => !p)} aria-expanded={aace}
-          className="flex items-center gap-1.5 min-h-[44px] text-[12px] font-semibold text-muted hover:text-ink cursor-pointer">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-            className={`transition-transform duration-150 ${aace ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
-          Where AACE 2025 differs
-        </button>
-        {aace && (
-          <div className="panel-in mt-1.5 space-y-1 text-[12px] text-body leading-snug">
+        <div className="font-bold text-ink mb-1.5">Where AACE 2025 differs</div>
+        <div className="space-y-1 text-[12px] text-body leading-snug">
             <div><b>CK cut-off:</b> AACE stops the statin at CK &gt;5× ULN (managed as mild if &lt;3×). ACC/AHA: ≥10× with severe symptoms. ESC/EAS: 4× and 10×.</div>
             <div><b>Bempedoic acid:</b> AACE suggests it for statin-intolerant patients with ASCVD or at increased risk (conditional, moderate certainty). ACC/AHA: COR 1. ESC/EAS: Class I.</div>
             <div><b>PCSK9 mAb without ASCVD:</b> AACE suggests against when other agents are tolerated. ACC/AHA: COR 1 for high-risk primary prevention not at goal.</div>
@@ -107,7 +94,6 @@ export function StatinIntolerance({ onClose, group, si }) {
             <div><b>Vitamin D and CoQ10:</b> AACE 2025 advises correcting vitamin D deficiency. Its 2020 algorithm allowed a CoQ10 trial and the 2025 update is silent. ACC/AHA: CoQ10 COR 3.</div>
             <div className="text-faint">Shared across AACE, NLA, ACC/AHA, and ESC/EAS: rechallenge, lower dose, hydrophilic or alternate statin, 1–3 times weekly dosing, then a nonstatin.</div>
           </div>
-        )}
       </div>
     </div>
   );

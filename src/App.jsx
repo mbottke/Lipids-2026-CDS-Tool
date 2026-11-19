@@ -7,7 +7,7 @@ import {
   discordance, optimizedInputs, driverDeltas,
   CVD_BP_TX_THRESHOLD,
 } from "./prevent.js";
-import { Toggle, Num, SINum, Card, Badge, Route, SectionHead, Disclosure, LeaderRow, LABEL, CHOL_F, TG_F, chol } from "./ui.jsx";
+import { Toggle, Num, SINum, Card, Badge, Route, SectionHead, Disclosure, LeaderRow, CheckRow, InfoSheet, InfoButton, LABEL, ROWS, CHOL_F, TG_F, chol } from "./ui.jsx";
 import { dlcnScore, estimateUntreatedLdl, ldlCorrectionFactor, severeGoal, DLCN_CLINICAL_FH_MIN } from "./fh.js";
 import {
   vhrStatus, recPrimary, recSecondary, recDiabetes, recSevere,
@@ -57,7 +57,7 @@ function MyoDots({ level }) {
   );
 }
 
-function StatinInfo({ onClose }) {
+function StatinInfo() {
   const intensities = [
     { level:"High intensity", ldl:"≥50%", drugs:[
       { name:"Rosuvastatin", dose:"20–40 mg", myo:2, notes:"Most potent per mg. Renally cleared: dose-adjust if eGFR <30. Start 5 mg in East Asian patients (higher exposure)." },
@@ -91,11 +91,7 @@ function StatinInfo({ onClose }) {
   ];
 
   return (
-    <div className="panel-in p-3 bg-paper border border-edge rounded-lg text-[12px] text-ink space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="font-bold text-ink text-[13px]">Statin reference</div>
-        <button onClick={onClose} aria-label="Close" className="hit w-6 h-6 flex items-center justify-center text-[13px] text-muted hover:text-ink cursor-pointer font-bold">✕</button>
-      </div>
+    <div className="text-[12px] text-ink space-y-3 [&>div:first-child]:border-t-0 [&>div:first-child]:pt-0">
 
       {intensities.map(tier => (
         <div key={tier.level} className="border-t border-line pt-2.5">
@@ -157,7 +153,7 @@ function StatinInfo({ onClose }) {
 function Scale({ cuts, max, value, color }) {
   const pos = v => `${Math.min(v / max, 1) * 100}%`;
   return (
-    <div className="relative h-[30px] mt-1" aria-hidden="true">
+    <div data-scale className="relative h-[30px] mt-1.5" aria-hidden="true">
       <div className="absolute left-0 right-0 top-[8px] h-px" style={{ background: "var(--ruler)" }} />
       <div className="absolute top-[4px] w-px h-[9px] left-0" style={{ background: "var(--ruler)" }} />
       <div className="absolute top-[4px] w-px h-[9px] right-0" style={{ background: "var(--ruler)" }} />
@@ -172,29 +168,6 @@ function Scale({ cuts, max, value, color }) {
       <div className="absolute top-[17px] left-0 font-mono text-[11px] text-faint">0</div>
       {cuts.map(c => <div key={c} className="absolute top-[17px] -translate-x-1/2 font-mono text-[11px] text-muted" style={{ left: pos(c) }}>{c}</div>)}
       <div className="absolute top-[17px] right-0 font-mono text-[11px] text-faint">{max}+</div>
-    </div>
-  );
-}
-
-// ── Risk readout (desktop rail + mobile inline) ──────────────────────────────
-function RiskBlock({ eyebrow, note, value, rc, dark, cuts, max }) {
-  const color = dark ? rc.darkColor : rc.color;
-  return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex items-baseline justify-between">
-        <SectionHead>{eyebrow}</SectionHead>
-        {note && <div className="text-[11px] text-faint">{note}</div>}
-      </div>
-      <div className="flex items-baseline gap-3.5 flex-wrap">
-        <div className="font-mono font-medium leading-none tabular-nums text-[44px] lg:text-[54px] tracking-[-0.035em]" style={{ color }}>
-          {value}<span className="text-[0.44em]">%</span>
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-[16px] font-bold" style={{ color }}>{rc.label}</span>
-          <span className="text-[13px] text-faint">({rc.range})</span>
-        </div>
-      </div>
-      <Scale cuts={cuts} max={max} value={value} color={color} />
     </div>
   );
 }
@@ -239,18 +212,35 @@ function CopyButton({ note }) {
   );
 }
 
-function OutcomeRow({ label, sub, v10, v30, flag }) {
-  const cell = "w-12 text-right font-mono text-[13px] font-semibold tabular-nums shrink-0";
+// A percentage with one decimal, or a dash when it cannot be computed.
+const pct = (v) => (v === null || v === undefined ? "–" : `${Number(v).toFixed(1)}%`);
+
+// One horizon of the ASCVD row: number, category, range and ruler.
+function AscvdCell({ value, rc, dark, cuts, max, empty }) {
+  if (value === null || value === undefined || !rc) {
+    return (
+      <div className="min-w-0">
+        <div className="font-mono text-[15px] font-semibold text-muted">–</div>
+        {empty && <div className="mt-1 text-[12px] text-muted leading-snug">{empty}</div>}
+      </div>
+    );
+  }
+  const color = dark ? rc.darkColor : rc.color;
   return (
-    <div className="flex items-baseline gap-2">
-      <span className="min-w-0 text-[13px] font-medium text-ink">{label}{sub && <span className="font-normal text-muted text-[12px]"> {sub}</span>}</span>
-      <div className="flex-1 border-b border-dotted mb-[3px]" style={{ borderColor: "var(--ruler)" }} />
-      <span className={`${cell} ${flag ? "text-amber-700 dark:text-amber-400" : "text-ink"}`}>{v10 !== null ? `${v10}%` : "–"}</span>
-      <span className={`${cell} text-ink`}>{v30 !== null ? `${v30}%` : "–"}</span>
+    <div className="min-w-0">
+      <div className="font-mono font-medium leading-none tabular-nums tracking-[-0.035em] text-[clamp(30px,9.5vw,36px)]" style={{ color }}>
+        {Number(value).toFixed(1)}<span className="text-[0.44em]">%</span>
+      </div>
+      <div className="mt-1.5 text-[14px] font-bold leading-tight" style={{ color }}>{rc.label}</div>
+      <div className="text-[12px] text-muted">{rc.range}</div>
+      <Scale cuts={cuts} max={max} value={value} color={color} />
     </div>
   );
 }
 
+// ── Risk readout (desktop rail + mobile inline) ──────────────────────────────
+// All six PREVENT numbers in one grid: three outcomes by two horizons. ASCVD drives statins.
+// Total CVD at 10 years sets the blood pressure drug threshold. `children` is the plan.
 function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dark, variant, note, cvd10, cvd30, hf10, hf30, children }) {
   const delta = (risk30 !== null && optRisk30 !== null) ? Math.round((risk30 - optRisk30) * 10) / 10 : null;
   // Guideline threshold: 30-yr risk ≥10% at low (<3%) 10-yr risk, ages 30–59.
@@ -259,74 +249,194 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
         ? "The 10-year estimate is low while the 30-year estimate is at or above 10%. At ages 30 to 59 a moderate-intensity statin is then reasonable, after a trial of lifestyle change and a benefit-risk discussion."
         : `The 30-year estimate is elevated while the 10-year estimate is ${rc10.label.toLowerCase()}. This favors addressing risk factors now.`)
     : null;
+  const cvdHigh = cvd10 !== null && cvd10 >= CVD_BP_TX_THRESHOLD;
+  const num = "font-mono text-[15px] font-semibold tabular-nums";
+  const rowName = "text-[13px] font-semibold text-ink leading-tight";
   return (
     <div className={variant === "rail" ? "lg:border-l lg:border-line lg:pl-10 flex flex-col gap-5" : "border-t border-line pt-5 flex flex-col gap-5"}>
-      <RiskBlock eyebrow="10-year ASCVD risk" value={risk10} rc={rc10} dark={dark} cuts={[3, 5, 10]} max={15} />
-      {children}
-      <div className="h-px bg-line" />
-      {risk30 !== null && rc30 ? (
-        <div className="flex flex-col gap-2.5">
-          <RiskBlock eyebrow="30-year ASCVD risk" note="ages 30–59" value={risk30} rc={rc30} dark={dark} cuts={[10]} max={40} />
-          {horizonNote && <div className="text-[13px] text-body leading-relaxed">{horizonNote}</div>}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1">
-          <SectionHead>30-year ASCVD risk</SectionHead>
-          <div className="text-[13px] text-muted">Not validated for ages 60 and above.</div>
-        </div>
-      )}
-      {cvd10 !== null && (
-        <>
-          <div className="h-px bg-line" />
-          <div className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between gap-2">
-              <SectionHead>Other PREVENT outcomes</SectionHead>
-              <div className="flex gap-2 text-[11px] text-faint shrink-0"><span className="w-12 text-right">10-yr</span><span className="w-12 text-right">30-yr</span></div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <OutcomeRow label="Total CVD" v10={cvd10} v30={cvd30} flag={cvd10 >= CVD_BP_TX_THRESHOLD} />
-              <OutcomeRow label="Heart failure" sub={hf10 === null ? "enter BMI" : null} v10={hf10} v30={hf30} />
-            </div>
-            <div className="text-[12px] text-muted leading-snug">Total CVD is ASCVD plus heart failure. It sets the blood pressure drug-therapy threshold (≥{CVD_BP_TX_THRESHOLD}% at 10 years). Statin decisions use ASCVD risk.</div>
+      <div data-risk-grid>
+        <SectionHead className="mb-2.5">PREVENT risk</SectionHead>
+        <div className="grid grid-cols-[84px_1fr_1fr] gap-x-4 gap-y-2 items-start">
+          <div />
+          <div className={LABEL}>10 years</div>
+          <div className={LABEL}>30 years</div>
+
+          <div>
+            <div className={rowName}>ASCVD</div>
+            <div className="text-[12px] text-muted">For statins</div>
           </div>
-        </>
-      )}
-      {delta !== null && (
+          <AscvdCell value={risk10} rc={rc10} dark={dark} cuts={[3, 5, 10]} max={15} />
+          <AscvdCell value={risk30} rc={rc30} dark={dark} cuts={[10]} max={40} empty="Not validated for ages 60 and above." />
+
+          <div className="col-span-3 h-px bg-line" />
+
+          <div>
+            <div className={rowName}>Total CVD</div>
+            <div className="text-[12px] text-muted">For BP drugs</div>
+          </div>
+          <div data-risk="cvd10" data-flag={cvdHigh ? "true" : "false"} className={`${num} ${cvdHigh ? "text-amber-700 dark:text-amber-400" : "text-ink"}`}>
+            {cvdHigh && <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rounded-full bg-current mr-1.5 align-middle" />}{pct(cvd10)}
+          </div>
+          <div className={`${num} text-ink`}>{pct(cvd30)}</div>
+
+          <div className={rowName}>Heart failure</div>
+          {hf10 === null
+            ? <div className="col-span-2 text-[12px] text-muted">Enter BMI</div>
+            : <><div className={`${num} text-ink`}>{pct(hf10)}</div><div className={`${num} text-ink`}>{pct(hf30)}</div></>}
+        </div>
+      </div>
+      {children}
+      <p className="text-[12px] text-muted leading-snug -mt-1">Total CVD is ASCVD plus heart failure. It sets the blood pressure drug-therapy threshold (≥{CVD_BP_TX_THRESHOLD}% at 10 years).</p>
+      {(horizonNote || delta !== null || drivers.length > 0) && (
         <>
           <div className="h-px bg-line" />
-          <div className="flex flex-col gap-1.5">
-            <SectionHead>If optimized</SectionHead>
-            {delta <= 0 ? (
-              <div className="text-[13px] text-body leading-relaxed">Modifiable risk factors are already near optimal.</div>
-            ) : (
-              <>
-                <div className="text-[13px] text-body leading-relaxed">
-                  With optimized risk factors the 30-year estimate falls to{" "}
-                  <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">{optRisk30}%</span>
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400"> (−{delta} points)</span>.
-                  {drivers.length > 0 && ` The largest single contributor is ${/^[A-Z]{2,}$/.test(drivers[0].label) ? drivers[0].label : drivers[0].label.toLowerCase()}.`}
+          <div className="flex flex-col gap-3">
+            <SectionHead>30-year outlook</SectionHead>
+            {horizonNote && <p className="text-[13px] text-body leading-relaxed">{horizonNote}</p>}
+            {delta !== null && (
+              <div>
+                <div className="text-[12px] font-bold text-ink mb-1">If optimized</div>
+                {delta <= 0 ? (
+                  <div className="text-[13px] text-body leading-relaxed">Modifiable risk factors are already near optimal.</div>
+                ) : (
+                  <>
+                    <div className="text-[13px] text-body leading-relaxed">
+                      With optimized risk factors the 30-year estimate falls to{" "}
+                      <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">{optRisk30}%</span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400"> (−{delta} points)</span>.
+                      {drivers.length > 0 && ` The largest single contributor is ${/^[A-Z]{2,}$/.test(drivers[0].label) ? drivers[0].label : drivers[0].label.toLowerCase()}.`}
+                    </div>
+                    <div className="text-[12px] text-muted mt-1">Optimized profile: BP 110, no smoking, non-HDL-C ≤120, HDL-C ≥50</div>
+                  </>
+                )}
+              </div>
+            )}
+            {drivers.length > 0 && (
+              <div>
+                <div className="text-[12px] font-bold text-ink mb-1.5">Drivers of 30-year risk</div>
+                <div className="flex flex-col gap-1.5">
+                  {drivers.map(d => <LeaderRow key={d.factor} label={d.label} value={`−${d.delta}`} />)}
                 </div>
-                <div className="text-[12px] text-faint">Optimized profile: BP 110, no smoking, non-HDL-C ≤120, HDL-C ≥50</div>
-              </>
+                <div className="text-[12px] text-muted leading-snug mt-1.5">Single-factor projections. Values may not sum.</div>
+              </div>
             )}
           </div>
         </>
       )}
-      {drivers.length > 0 && (
-        <>
-          <div className="h-px bg-line" />
-          <div className="flex flex-col gap-2">
-            <SectionHead>30-year risk drivers</SectionHead>
-            <div className="flex flex-col gap-1.5">
-              {drivers.map(d => (
-                <LeaderRow key={d.factor} label={d.label} value={`−${d.delta}`} />
-              ))}
-            </div>
-            <div className="text-[12px] text-muted leading-snug">Single-factor projections. Values may not sum.</div>
-          </div>
-        </>
-      )}
       <CopyButton note={note} />
+    </div>
+  );
+}
+
+// ── Reference content shown in the info sheet ────────────────────────────────
+const SHEET_TITLE = {
+  prevent: "About the PREVENT calculator", cac: "About CAC scoring", bio: "About Lp(a) and apoB",
+  statin: "Statin reference", intolerance: "Statin intolerance pathway",
+};
+function PreventInfo() {
+  return (
+    <div className="space-y-3">
+                <div className="font-bold text-ink">About the PREVENT estimates</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+                  <span className="font-bold text-accent whitespace-nowrap">10-yr ASCVD</span>
+                  <span>Probability of MI, stroke, or CHD death within 10 years.</span>
+                  <span className="font-bold text-accent whitespace-nowrap">30-yr ASCVD</span>
+                  <span>Same endpoint over 30 years. Validated for ages 30–59 only. Guideline threshold: ≥10%.</span>
+                  <span className="font-bold text-accent whitespace-nowrap">Total CVD</span>
+                  <span>ASCVD or heart failure. The 2025 AHA/ACC hypertension guideline uses 10-year total CVD ≥{CVD_BP_TX_THRESHOLD}% as the drug-therapy threshold in stage 1 hypertension.</span>
+                  <span className="font-bold text-accent whitespace-nowrap">Heart failure</span>
+                  <span>The only PREVENT outcome that uses BMI. BMI is optional: it does not change the ASCVD or total CVD estimates.</span>
+                </div>
+                <div className="text-muted border-t border-edge pt-2">
+                  PREVENT (2023) replaces the Pooled Cohort Equations: adds eGFR and statin use, drops race as an input. Lipid-lowering thresholds in the 2026 guideline are defined on PREVENT-ASCVD, so statin recommendations here never use the total CVD estimate.
+                </div>
+              </div>
+  );
+}
+function CacInfo({ si }) {
+  return (
+    <div className="space-y-3">
+                <div className="font-bold text-ink">How CAC reclassifies risk</div>
+                <div>CAC (Agatston units) overrides the PREVENT estimate when obtained:</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">CAC = 0</span><span>Reasonable to defer a statin at borderline or intermediate risk and repeat CAC in 3–7 years. Not with current smoking, diabetes (age &gt;40), strong family history of premature ASCVD, LDL-C ≥{chol(190, si)}, or FH.</span>
+                  <span className="font-bold text-accent">CAC 1–99</span><span>Moderate-intensity statin. If ≥75th percentile for age and sex, upgrade to high intensity.</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400 whitespace-nowrap">CAC 100–999</span><span>High-intensity statin, LDL-C goal &lt;70. At 300–999, intensifying to &lt;55 is reasonable.</span>
+                  <span className="font-bold text-red-700 dark:text-red-400 whitespace-nowrap">CAC ≥1000</span><span>LDL-C goal &lt;55 with at least 50% reduction.</span>
+                </div>
+                <div className="text-muted border-t border-line pt-2">Percentile matters only for scores 1–99. It indexes plaque burden to age and sex: CAC 50 at age 45 carries different weight than CAC 50 at 75.</div>
+              </div>
+  );
+}
+function BioInfo() {
+  return (
+    <div className="space-y-3">
+              <div>
+                <div className="font-bold text-ink mb-1">Lp(a)</div>
+                <div>Genetically determined, largely fixed from birth, not statin-responsive. Causal and continuous for ASCVD and aortic stenosis: risk rises with level and has no true threshold (EAS consensus, Eur Heart J 2022). Elevated Lp(a) carries risk even at low LDL-C.</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">&lt;125 nmol/L</span><span>Not a risk enhancer</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400">≥125 nmol/L</span><span>≈1.4× ASCVD risk. Counts as a risk enhancer</span>
+                  <span className="font-bold text-red-700 dark:text-red-400">≥250 nmol/L</span><span>≈2× ASCVD risk. With ASCVD above goal, add a PCSK9 mAb</span>
+                </div>
+                <div className="text-muted mt-1.5">Measure once in every adult, with cascade testing of first-degree relatives when Lp(a) is high or in FH or premature-ASCVD families. mg/dL ≈ nmol/L ÷ 2.5 (elevated ≥50 mg/dL). Refer at ≥200 nmol/L. No approved Lp(a)-specific therapy: intensify LDL-C lowering and global risk factor control. Apheresis is an option for very high Lp(a) with progressive ASCVD.</div>
+              </div>
+              <div className="border-t border-edge pt-2">
+                <div className="font-bold text-ink mb-1">ApoB</div>
+                <div>One molecule per atherogenic particle (LDL, VLDL, IDL, Lp(a)), so it counts particle number directly. Most useful when TG is elevated or LDL-C and non-HDL-C are discordant.</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
+                  <span className="font-bold text-accent">&lt;90 mg/dL</span><span>ApoB goal when the LDL-C goal is &lt;100</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400">&lt;70 mg/dL</span><span>ApoB goal when the LDL-C goal is &lt;70</span>
+                  <span className="font-bold text-red-700 dark:text-red-400">&lt;55 mg/dL</span><span>ApoB goal when the LDL-C goal is &lt;55</span>
+                  <span className="font-bold text-ink">≥120 mg/dL</span><span>Risk enhancer in an untreated adult</span>
+                </div>
+                <div className="text-muted mt-1.5">Measure once LDL-C and non-HDL-C are at goal, particularly with ASCVD, CKM syndrome, type 2 diabetes, or elevated TG. An apoB still above goal supports further intensification. With TG ≥150, non-HDL-C or apoB is preferred over LDL-C. Standardized immunoassays make apoB more reliable than calculated LDL-C at low levels.</div>
+              </div>
+            </div>
+  );
+}
+
+// ── What each tab is for, and the route through it ───────────────────────────
+const TAB_INTRO = {
+  primary: (si) => `Ages 30 to 79, no known ASCVD, LDL-C below ${chol(190, si)}. Risk guides the statin.`,
+  secondary: () => "Any clinical ASCVD: ACS, prior MI, ischemic stroke, symptomatic PAD, CABG or PCI.",
+  diabetes: () => "Adults with diabetes and no ASCVD. Age and added risk set the statin.",
+  severe: (si) => `Adults with LDL-C ≥${chol(190, si)} or suspected FH. Set the goal, then work up FH.`,
+};
+// [stage word, section id]. "sec-plan" is the inline plan, which the desktop rail replaces.
+const TAB_ROUTE = {
+  primary: [["Assess", "sec-assess"], ["Plan", "sec-plan"], ["Refine", "sec-refine"], ["Treat", "sec-treat"], ["Also check", "sec-also"]],
+  secondary: [["Assess", "sec-assess"], ["Plan", "sec-plan"], ["Treat", "sec-treat"], ["Also check", "sec-also"]],
+  diabetes: [["Assess", "sec-assess"], ["Plan", "sec-plan"], ["Treat", "sec-treat"], ["Also check", "sec-also"]],
+  severe: [["Assess", "sec-assess"], ["Plan", "sec-plan"], ["Work up", "sec-workup"], ["Treat", "sec-treat"], ["Also check", "sec-also"]],
+};
+function TabIntro({ tab, si, ready }) {
+  const go = (e, id) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({
+      block: "start",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  };
+  // Before the plan exists (Primary tab, inputs incomplete) its stops are named but not yet links.
+  const pending = (id) => !ready && (id === "sec-plan" || id === "sec-treat");
+  const stops = TAB_ROUTE[tab];
+  return (
+    <div>
+      <p data-tab-intro className="text-[14px] font-medium text-ink leading-snug">{TAB_INTRO[tab](si)}</p>
+      <nav aria-label="On this tab" className="-ml-1.5 flex flex-wrap items-center text-[12px] font-medium text-muted">
+        {stops.map(([name, id], i) => {
+          const hide = id === "sec-plan" ? "lg:hidden" : "";
+          return (
+            <span key={id} className={`inline-flex items-center ${hide}`}>
+              {pending(id)
+                ? <span className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-1.5 text-faint">{name}</span>
+                : <a href={`#${id}`} onClick={e => go(e, id)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-1.5 rounded-lg hover:text-ink">{name}</a>}
+              {i < stops.length - 1 && <span aria-hidden="true" className="px-0.5 text-faint">→</span>}
+            </span>
+          );
+        })}
+      </nav>
     </div>
   );
 }
@@ -406,12 +516,7 @@ export default function App() {
   const [cacPct, setCacPct] = useState("");
   const [lpa, setLpa] = useState("");
   const [apoB, setApoB] = useState("");
-  const [cacInfo, setCacInfo] = useState(false);
-  const [bioInfo, setBioInfo] = useState(false);
-  const [riskInfo, setRiskInfo] = useState(false);
   const [bmiCalc, setBmiCalc] = useState(false);
-  const [statinInfo, setStatinInfo] = useState(false);
-  const [statinInfoMon, setStatinInfoMon] = useState(false);
   const [bmiUnit, setBmiUnit] = useState("imperial");
   const [bmiWt, setBmiWt] = useState("");
   const [bmiHt, setBmiHt] = useState("");
@@ -429,7 +534,7 @@ export default function App() {
   const [dlcnChecked, setDlcnChecked] = useState({});
   const [sevRx, setSevRx] = useState({ statin: "none", dose: 0, eze: false });  // current therapy (untreated-LDL estimate)
   const [knownLdl, setKnownLdl] = useState("");    // documented untreated LDL-C
-  const [siOpen, setSiOpen] = useState(false);     // statin intolerance pathway
+  const [info, setInfo] = useState(null);         // open sheet: "prevent" | "cac" | "bio" | "statin" | "intolerance"
   // Blood pressure section
   const [dbp, setDbp] = useState("");
   const [bpF, setBpF] = useState({});              // manual: clinical CVD / diabetes / CKD
@@ -440,12 +545,11 @@ export default function App() {
     setDm(false); setSmoking(false); setEgfr(""); setBmi("");
     setTg(""); setEnhs({}); setCac(""); setCacPct("");
     setLpa(""); setApoB("");
-    setCacInfo(false); setBioInfo(false); setRiskInfo(false); setBmiCalc(false);
-    setStatinInfo(false); setStatinInfoMon(false);
+    setInfo(null); setBmiCalc(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhrMajor({}); setVhrFeat({}); setSecF({}); setDmEnhs({}); setDmF({}); setMetSyn({});
     setSevF({}); setDlcnChecked({}); setSevRx({ statin: "none", dose: 0, eze: false }); setKnownLdl("");
-    setSiOpen(false); setDbp(""); setBpF({});
+    setDbp(""); setBpF({});
     setEnhOpen(null); setLifeOpen(null);
   }, []);
 
@@ -717,34 +821,15 @@ export default function App() {
       <div key={tab} className="tab-content max-w-[1200px] mx-auto px-4 sm:px-5 lg:px-8 py-6 pb-16">
       <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_400px] lg:gap-12 lg:items-start lg:justify-center">
       <div className={`col-main space-y-5 min-w-0 ${tab === "primary" ? "" : "max-w-2xl mx-auto lg:max-w-none lg:mx-0"}`}>
+        <TabIntro tab={tab} si={si} ready={showPlan} />
 
         {/* PRIMARY */}
         {tab === "primary" && (<>
-          <Card title="PREVENT-ASCVD risk calculator">
+          <Card id="sec-assess" stage="Assess" title="PREVENT inputs">
             <div className="flex items-start justify-between mb-3">
-              <p className="text-[12px] text-muted">Ages 30–79, no known ASCVD.</p>
-              <button onClick={() => setRiskInfo(p => !p)}
-                aria-label="About the PREVENT calculator" aria-expanded={riskInfo}
-                className="hit w-6 h-6 rounded-full border border-edge text-muted text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
+              <p className="text-[12px] text-muted">BMI is optional. It adds the heart failure estimate.</p>
+              <span className="ml-2 shrink-0"><InfoButton label="About the PREVENT calculator" on={() => setInfo("prevent")} /></span>
             </div>
-            {riskInfo && (
-              <div className="panel-in mb-3 p-3 bg-surface border border-line rounded-lg text-[12px] text-ink space-y-2">
-                <div className="font-bold text-ink">About the PREVENT estimates</div>
-                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
-                  <span className="font-bold text-accent whitespace-nowrap">10-yr ASCVD</span>
-                  <span>Probability of MI, stroke, or CHD death within 10 years.</span>
-                  <span className="font-bold text-accent whitespace-nowrap">30-yr ASCVD</span>
-                  <span>Same endpoint over 30 years. Validated for ages 30–59 only. Guideline threshold: ≥10%.</span>
-                  <span className="font-bold text-accent whitespace-nowrap">Total CVD</span>
-                  <span>ASCVD or heart failure. The 2025 AHA/ACC hypertension guideline uses 10-year total CVD ≥{CVD_BP_TX_THRESHOLD}% as the drug-therapy threshold in stage 1 hypertension.</span>
-                  <span className="font-bold text-accent whitespace-nowrap">Heart failure</span>
-                  <span>The only PREVENT outcome that uses BMI. BMI is optional: it does not change the ASCVD or total CVD estimates.</span>
-                </div>
-                <div className="text-muted border-t border-edge pt-2">
-                  PREVENT (2023) replaces the Pooled Cohort Equations: adds eGFR and statin use, drops race as an input. Lipid-lowering thresholds in the 2026 guideline are defined on PREVENT-ASCVD, so statin recommendations here never use the total CVD estimate.
-                </div>
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Num label="Age" unit="yr" value={age} on={setAge} min={30} max={79} ph="30–79" />
               <div className="flex flex-col gap-1">
@@ -835,9 +920,8 @@ export default function App() {
               </div>
             )}
             {nonHdlC !== null && (
-              <div className="flex items-center justify-between mt-2 px-3 py-2 rounded-lg border border-dashed border-edge bg-paper">
-                <span className={LABEL}>Non-HDL-C (calculated)</span>
-                <span className="text-[14px] font-bold text-ink font-mono">{si ? siChol(nonHdlC) : nonHdlC} <span className="text-[12px] font-normal text-faint font-sans">{si ? "mmol/L" : "mg/dL"}</span></span>
+              <div className="mt-3">
+                <LeaderRow label="Non-HDL-C (calculated)" value={`${si ? siChol(nonHdlC) : nonHdlC} ${si ? "mmol/L" : "mg/dL"}`} />
               </div>
             )}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:flex sm:flex-wrap sm:gap-x-8 mt-3">
@@ -854,88 +938,48 @@ export default function App() {
               <RiskRail risk10={risk10} rc10={rc10} risk30={risk30} rc30={rc30} discord={discord}
                 optRisk30={optRisk30} drivers={drivers} dark={darkMode} variant="inline" note={summaryNote}
                 cvd10={cvd10} cvd30={cvd30} hf10={hf10} hf30={hf30}>
-                {showPlan && <div ref={setPlanEl}><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
+                {showPlan && <div ref={setPlanEl} id="sec-plan"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
               </RiskRail>
             </div>
           )}
 
           {/* Risk enhancers */}
-          <Card title="Risk enhancers" open={enhShown} onToggle={() => setEnhOpen(!enhShown)} hint={`${enhCount} checked`}>
+          <Card id="sec-refine" stage="Refine" endClose title="Risk enhancers" open={enhShown} onToggle={() => setEnhOpen(!enhShown)} hint={`${enhCount} checked`}>
             <p className="text-[12px] text-muted mb-2">Personalize the decision at borderline (3 to &lt;5%) risk. Each favors starting a statin.</p>
-            <div className="space-y-1.5">
-              {ENHANCERS.map(e => (
-                <div key={e.id}>
-                  <button onClick={() => {
-                    if (e.id === "metabolic") {
-                      // Auto-managed by metSynCount — toggle manually only to override
-                      toggleEnh(e.id);
-                    } else {
-                      toggleEnh(e.id);
-                    }
-                  }}
-                    className={`w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 min-h-[48px] ${
-                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-accent-soft border-edge" : "bg-surface border-line"
-                    }`}>
-                    <div className={`mt-0.5 w-5 h-5 rounded border shrink-0 flex items-center justify-center ${
-                      (e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) ? "bg-accent border-accent" : "border-edge"
-                    }`}>{(e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id]) && <span className="text-paper text-[13px] font-bold">✓</span>}</div>
-                    <div className="flex-1">
-                      <div className="text-[14px] font-bold text-ink leading-tight">{e.l}</div>
-                      <div className="text-[12px] text-muted">{e.d}{e.id === "metabolic" && metSynCount > 0 ? ` (${metSynCount}/5 met)` : ""}</div>
-                    </div>
-                  </button>
-                  {e.id === "metabolic" && (
-                    <div className="ml-7 mt-1 mb-1 space-y-1">
-                      {METSYN_CRITERIA.map(m => (
-                        <button key={m.id} onClick={() => toggleMetSyn(m.id)}
-                          className={`w-full flex items-start gap-2 p-2 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 ${
-                            metSyn[m.id] ? "bg-accent-soft border-edge" : "bg-paper border-line"
-                          }`}>
-                          <div className={`mt-0.5 w-4 h-4 rounded border shrink-0 flex items-center justify-center ${
-                            metSyn[m.id] ? "bg-accent border-accent" : "border-edge"
-                          }`}>{metSyn[m.id] && <span className="text-paper text-[11px] font-bold">✓</span>}</div>
-                          <div><div className="text-[13px] font-bold text-ink leading-tight">{m.l}</div>
-                          <div className="text-[12px] text-muted">{m.d}</div></div>
-                        </button>
-                      ))}
-                      {metSynCount >= 3 && (
-                        <div className="text-[12px] font-bold text-amber-700 dark:text-amber-400 bg-paper rounded-lg px-2.5 py-1.5 border border-line">
-                          {metSynCount}/5 criteria met: metabolic syndrome (CKM syndrome)
+            <div className={ROWS}>
+              {ENHANCERS.map(e => {
+                const on = e.id === "metabolic" ? (enhs[e.id] || metSynCount >= 3) : enhs[e.id];
+                return (
+                  <div key={e.id}>
+                    <CheckRow checked={!!on} on={() => toggleEnh(e.id)} label={e.l}
+                      sub={`${e.d}${e.id === "metabolic" && metSynCount > 0 ? ` (${metSynCount}/5 met)` : ""}`} />
+                    {e.id === "metabolic" && (
+                      <div className="ml-8 mb-2 pl-3 border-l border-line">
+                        <div className="divide-y divide-line">
+                          {METSYN_CRITERIA.map(m => <CheckRow key={m.id} compact checked={!!metSyn[m.id]} on={() => toggleMetSyn(m.id)} label={m.l} sub={m.d} />)}
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                        {metSynCount >= 3 && (
+                          <div className="py-2 text-[12px] font-bold text-amber-700 dark:text-amber-400">{metSynCount}/5 criteria met: metabolic syndrome (CKM syndrome)</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             {enhCount > 0 && (
-              <div className="mt-2 text-[14px] font-bold text-amber-700 dark:text-amber-400 bg-paper rounded-lg px-3 py-2 border border-line">
+              <div className="mt-3 text-[14px] font-bold text-amber-700 dark:text-amber-400">
                 {enhCount} enhancer{enhCount>1?"s":""}: favors statin at borderline risk
               </div>
             )}
           </Card>
 
           {/* CAC */}
-          <Card title="CAC reclassification (optional)">
+          <Card title="CAC score (optional)">
             <div className="flex items-start justify-between mb-2">
               <p className="text-[12px] text-muted">Men ≥40, women ≥45, at intermediate or select borderline risk when the statin decision is uncertain</p>
-              <button onClick={() => setCacInfo(p => !p)}
-                aria-label="About CAC scoring" aria-expanded={cacInfo}
-                className="hit w-6 h-6 rounded-full border border-edge text-muted text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
+              <span className="ml-2 shrink-0"><InfoButton label="About CAC scoring" on={() => setInfo("cac")} /></span>
             </div>
-            {cacInfo && (
-              <div className="panel-in mb-3 p-3 bg-surface border border-line rounded-lg text-[12px] text-ink space-y-2">
-                <div className="font-bold text-ink">How CAC reclassifies risk</div>
-                <div>CAC (Agatston units) overrides the PREVENT estimate when obtained:</div>
-                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">CAC = 0</span><span>Reasonable to defer a statin at borderline or intermediate risk and repeat CAC in 3–7 years. Not with current smoking, diabetes (age &gt;40), strong family history of premature ASCVD, LDL-C ≥{chol(190, si)}, or FH.</span>
-                  <span className="font-bold text-accent">CAC 1–99</span><span>Moderate-intensity statin. If ≥75th percentile for age and sex, upgrade to high intensity.</span>
-                  <span className="font-bold text-amber-700 dark:text-amber-400 whitespace-nowrap">CAC 100–999</span><span>High-intensity statin, LDL-C goal &lt;70. At 300–999, intensifying to &lt;55 is reasonable.</span>
-                  <span className="font-bold text-red-700 dark:text-red-400 whitespace-nowrap">CAC ≥1000</span><span>LDL-C goal &lt;55 with at least 50% reduction.</span>
-                </div>
-                <div className="text-muted border-t border-line pt-2">Percentile matters only for scores 1–99. It indexes plaque burden to age and sex: CAC 50 at age 45 carries different weight than CAC 50 at 75.</div>
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-3">
               <Num label="CAC score" unit="AU" value={cac} on={setCac} min={0} max={10000} ph="Agatston" />
               <Num label="CAC percentile" unit="%" value={cacPct} on={setCacPct} min={0} max={100} ph="Percentile" />
@@ -957,17 +1001,17 @@ export default function App() {
             f={dmF} toggleF={toggleDmF} risk10={dmRisk10} rec={rec} />
         )}
         {(tab === "secondary" || tab === "diabetes") && showPlan && (
-          <div ref={setPlanEl} className="lg:hidden"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>
+          <div ref={setPlanEl} id="sec-plan" className="lg:hidden"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>
         )}
 
         {/* SEVERE */}
         {tab === "severe" && (<>
-          <Card title="Severe hypercholesterolemia">
-            <p className="text-[12px] text-muted mb-3">LDL-C ≥{chol(190, si)}: high-intensity statin, no risk calculation needed. Set the goal, then work through the FH steps.</p>
+          <Card id="sec-assess" stage="Assess" title="LDL-C goal tier">
+            <p className="text-[12px] text-muted mb-3">LDL-C ≥{chol(190, si)}: high-intensity statin, no risk calculation needed.</p>
             <SINum si={si} factor={CHOL_F} phSI="Current" label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
             <SevereGoalTiers si={si} f={sevF} toggle={toggleSevF} hefhAuto={hefhAuto} goal={sevGoal} />
           </Card>
-          {showPlan && <div ref={setPlanEl} className="lg:hidden"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
+          {showPlan && <div ref={setPlanEl} id="sec-plan" className="lg:hidden"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
           <FHWorkup si={si} ldl={ldlC} rx={sevRx} setRx={setSevRx} factor={sevFactor}
             knownLdl={knownLdl} setKnownLdl={setKnownLdl} untreated={untreatedLdl}
             checked={dlcnChecked} toggle={toggleDlcn} dlcn={dlcn} />
@@ -975,7 +1019,7 @@ export default function App() {
 
         {/* TREATMENT LADDER */}
         {showPlan && (<>
-          <Card title="Treatment ladder">
+          <Card id="sec-treat" title="Treatment ladder">
             {tab === "secondary" && (
               <p className="mb-3 text-[12px] text-body leading-snug">
                 The order is not fixed. Ezetimibe is no longer required before a PCSK9 mAb. Choose by the LDL-C lowering still needed.
@@ -998,9 +1042,7 @@ export default function App() {
                     <div className="text-[14px] font-bold text-ink flex items-center gap-1.5">
                       {s.l}
                       {s.isStatin && (
-                        <button onClick={() => setStatinInfo(p => !p)}
-                          aria-label="Statin reference" aria-expanded={statinInfo}
-                          className="hit w-5 h-5 rounded-full border border-edge text-muted text-[11px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
+                        <InfoButton small label="Statin reference" on={() => setInfo("statin")} />
                       )}
                     </div>
                     <div className="text-[12px] text-muted mt-0.5">
@@ -1023,12 +1065,11 @@ export default function App() {
                             <div>Simvastatin 20–40 mg</div>
                           </>)}
                         </div>
-                        {statinInfo && <div className="mt-2"><StatinInfo onClose={() => setStatinInfo(false)} /></div>}
-                        <button type="button" onClick={() => setSiOpen(p => !p)} aria-expanded={siOpen}
-                          className={`mt-2 h-11 px-3 rounded-lg border text-[12px] font-semibold cursor-pointer transition-colors active:scale-[0.99] ${siOpen ? "border-edge bg-accent-soft text-accent" : "border-line bg-surface text-muted hover:text-ink"}`}>
+                        <button type="button" onClick={() => setInfo("intolerance")} aria-haspopup="dialog"
+                          className="mt-2 h-11 px-3 inline-flex items-center gap-2 rounded-lg border border-line bg-surface text-[12px] font-semibold text-muted hover:text-ink cursor-pointer transition-colors active:scale-[0.99]">
                           Statin not tolerated?
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                         </button>
-                        {siOpen && <div className="mt-2"><StatinIntolerance onClose={() => setSiOpen(false)} group={siGroup} si={si} /></div>}
                       </>)}
                       {s.s === 3 && (
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-line">
@@ -1067,7 +1108,7 @@ export default function App() {
               </div>
             )}
             {tgNote && (
-              <div className="mt-2 p-3 bg-surface border border-line rounded-lg">
+              <div className="mt-3 pt-3 border-t border-line">
                 <div className="text-[14px] font-bold text-amber-800 dark:text-amber-300">Hypertriglyceridemia</div>
                 <div className="text-[12px] text-amber-700 dark:text-amber-400 mt-0.5">TG {tg}: {ldlInUnit(tgNote.txt, si)}</div>
               </div>
@@ -1076,47 +1117,20 @@ export default function App() {
         </>)}
 
         {/* BIOMARKERS */}
-        <Card title="Advanced biomarkers">
+        <Card id="sec-also" stage="Also check" title="Lp(a) and apoB">
           <div className="flex items-start justify-between mb-2">
             <p className="text-[12px] text-muted">Lp(a): once in every adult. ApoB: once LDL-C and non-HDL-C are at goal.</p>
-            <button onClick={() => setBioInfo(p => !p)}
-              aria-label="About Lp(a) and apoB" aria-expanded={bioInfo}
-              className="hit w-6 h-6 rounded-full border border-edge text-muted text-[13px] font-bold flex items-center justify-center shrink-0 ml-2 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
+            <span className="ml-2 shrink-0"><InfoButton label="About Lp(a) and apoB" on={() => setInfo("bio")} /></span>
           </div>
-          {bioInfo && (
-            <div className="panel-in mb-3 p-3 bg-surface border border-line rounded-lg text-[12px] text-ink space-y-3">
-              <div>
-                <div className="font-bold text-ink mb-1">Lp(a)</div>
-                <div>Genetically determined, largely fixed from birth, not statin-responsive. Causal and continuous for ASCVD and aortic stenosis: risk rises with level and has no true threshold (EAS consensus, Eur Heart J 2022). Elevated Lp(a) carries risk even at low LDL-C.</div>
-                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400">&lt;125 nmol/L</span><span>Not a risk enhancer</span>
-                  <span className="font-bold text-amber-700 dark:text-amber-400">≥125 nmol/L</span><span>≈1.4× ASCVD risk. Counts as a risk enhancer</span>
-                  <span className="font-bold text-red-700 dark:text-red-400">≥250 nmol/L</span><span>≈2× ASCVD risk. With ASCVD above goal, add a PCSK9 mAb</span>
-                </div>
-                <div className="text-muted mt-1.5">Measure once in every adult, with cascade testing of first-degree relatives when Lp(a) is high or in FH or premature-ASCVD families. mg/dL ≈ nmol/L ÷ 2.5 (elevated ≥50 mg/dL). Refer at ≥200 nmol/L. No approved Lp(a)-specific therapy: intensify LDL-C lowering and global risk factor control. Apheresis is an option for very high Lp(a) with progressive ASCVD.</div>
-              </div>
-              <div className="border-t border-edge pt-2">
-                <div className="font-bold text-ink mb-1">ApoB</div>
-                <div>One molecule per atherogenic particle (LDL, VLDL, IDL, Lp(a)), so it counts particle number directly. Most useful when TG is elevated or LDL-C and non-HDL-C are discordant.</div>
-                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1.5">
-                  <span className="font-bold text-accent">&lt;90 mg/dL</span><span>ApoB goal when the LDL-C goal is &lt;100</span>
-                  <span className="font-bold text-amber-700 dark:text-amber-400">&lt;70 mg/dL</span><span>ApoB goal when the LDL-C goal is &lt;70</span>
-                  <span className="font-bold text-red-700 dark:text-red-400">&lt;55 mg/dL</span><span>ApoB goal when the LDL-C goal is &lt;55</span>
-                  <span className="font-bold text-ink">≥120 mg/dL</span><span>Risk enhancer in an untreated adult</span>
-                </div>
-                <div className="text-muted mt-1.5">Measure once LDL-C and non-HDL-C are at goal, particularly with ASCVD, CKM syndrome, type 2 diabetes, or elevated TG. An apoB still above goal supports further intensification. With TG ≥150, non-HDL-C or apoB is preferred over LDL-C. Standardized immunoassays make apoB more reliable than calculated LDL-C at low levels.</div>
-              </div>
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-3 mb-2">
             <Num label="Lp(a)" unit="nmol/L" value={lpa} on={setLpa} min={0} max={500} />
             <Num label="ApoB" unit="mg/dL" value={apoB} on={setApoB} min={0} max={300} />
           </div>
           {lpaNote && (
-            <div className="flex items-start gap-2 p-2 rounded-lg border border-line bg-paper mb-1.5"><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[12px] text-ink">{lpaNote.n}</span></div>
+            <div className="flex items-start gap-2 py-2 border-t border-line"><Badge color={lpaNote.c}>Lp(a) {lpaNote.lv}</Badge><span className="text-[12px] text-ink">{lpaNote.n}</span></div>
           )}
           {apoBNote && (
-            <div className="flex items-start gap-2 p-2 rounded-lg border border-line bg-paper"><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[12px] text-ink">{ldlInUnit(apoBNote.n, si)}</span></div>
+            <div className="flex items-start gap-2 py-2 border-t border-line"><Badge color={apoBNote.c}>ApoB {apoBNote.lv}</Badge><span className="text-[12px] text-ink">{ldlInUnit(apoBNote.n, si)}</span></div>
           )}
         </Card>
 
@@ -1125,7 +1139,7 @@ export default function App() {
           cvd10={cvd10Bp} cvdWithDm={bpDm && !dm} auto={bpAuto} flags={bpF} toggleFlag={toggleBpF} />
 
         {/* MONITORING */}
-        <Card title="Monitoring">
+        <Card title="Monitoring and referral">
           <div className="space-y-2.5 text-[12px]">
 
             <div className="border-t border-line pt-3 first:border-t-0 first:pt-0">
@@ -1144,12 +1158,10 @@ export default function App() {
                 <li>
                   <span className="inline-flex items-center gap-2">
                     <span>New-onset diabetes: continue the <b>statin</b></span>
-                    <button onClick={() => setStatinInfoMon(p => !p)} aria-label="Statin reference" aria-expanded={statinInfoMon}
-                      className="hit w-5 h-5 rounded-full border border-edge text-muted text-[11px] font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-accent hover:text-accent active:scale-95 transition-colors">?</button>
+                    <InfoButton small label="Statin reference" on={() => setInfo("statin")} />
                   </span>
                 </li>
               </ul>
-              {statinInfoMon && <div className="mt-2"><StatinInfo onClose={() => setStatinInfoMon(false)} /></div>}
             </div>
 
             <div className="border-t border-line pt-3 first:border-t-0 first:pt-0">
@@ -1218,6 +1230,13 @@ export default function App() {
       </div>
       </main>
       {showPlan && planEl && !planSeen && <PlanBar rec={rec} ldl={ldlC} si={si} onGo={goToPlan} />}
+      <InfoSheet open={info !== null} title={SHEET_TITLE[info] || ""} onClose={() => setInfo(null)}>
+        {info === "prevent" && <PreventInfo />}
+        {info === "cac" && <CacInfo si={si} />}
+        {info === "bio" && <BioInfo />}
+        {info === "statin" && <StatinInfo />}
+        {info === "intolerance" && <StatinIntolerance group={siGroup} si={si} />}
+      </InfoSheet>
       </div>
     </div>
   );

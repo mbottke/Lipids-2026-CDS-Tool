@@ -7,8 +7,7 @@
 //  · Genetic testing / cascade: Sturm AC et al. JACC 2018;72:662-80;
 //    Khera AV et al. JACC 2016;67:2578-89
 //  · Homozygous FH: Cuchel M et al. Eur Heart J 2023;44:2277-91
-import { useState } from "react";
-import { Card, SINum, CheckRow, AutoRow, Badge, GoalTier, Step, Cor, Eyebrow, CHOL_F, chol, cholUnit } from "./ui.jsx";
+import { Card, SINum, CheckRow, AutoRow, Badge, GoalTier, Step, Cor, Eyebrow, ROWS, CHOL_F, chol, cholUnit } from "./ui.jsx";
 import { DLCN_GROUPS, DLCN_LDL_BANDS, DLCN_CLINICAL_FH_MIN, LDL_CORRECTION, HOFH_UNTREATED_LDL } from "./fh.js";
 
 // ── Goal tiers ───────────────────────────────────────────────────────────────
@@ -17,7 +16,7 @@ export function SevereGoalTiers({ si, f, toggle, hefhAuto, goal }) {
   return (
     <div className="mt-4">
       <Eyebrow>LDL-C goal: what lowers it</Eyebrow>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <GoalTier active={goal.tier === "base"} ldl={chol(100, si)} nh={chol(130, si)}>
           <div className="text-[14px] font-bold text-ink leading-tight">LDL-C ≥{chol(190, si)} alone</div>
           <div className="text-[12px] text-muted mt-0.5">No HeFH, no additional ASCVD risk factor, no coronary calcification.</div>
@@ -25,7 +24,7 @@ export function SevereGoalTiers({ si, f, toggle, hefhAuto, goal }) {
 
         <GoalTier active={goal.tier === "enhanced"} ldl={chol(70, si)} nh={chol(100, si)}>
           <div className="text-[14px] font-bold text-ink leading-tight">With any one of these</div>
-          <div className="space-y-1 mt-1.5">
+          <div className="divide-y divide-line mt-1">
             {hefhAuto
               ? <AutoRow compact checked label="HeFH, clinical or genetic" sub={`Set by the score below: DLCN ≥${DLCN_CLINICAL_FH_MIN} or a pathogenic variant`} />
               : <CheckRow compact checked={!!f.hefh} on={() => toggle("hefh")} label="HeFH, clinical or genetic"
@@ -62,7 +61,6 @@ const Expect = ({ children }) => (
 );
 
 export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, untreated, checked, toggle, dlcn }) {
-  const [showBands, setShowBands] = useState(false);
   const cat = dlcn.cat;
   const hasLdl = ldl !== "" && ldl !== null;
   const known = knownLdl !== "" && knownLdl !== null;
@@ -77,7 +75,7 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
   const u = cholUnit(si);
 
   return (
-    <Card title="FH workup, step by step">
+    <Card id="sec-workup" title="FH workup">
       <p className="text-[12px] text-muted mb-4">Start the statin now and run the workup in parallel.</p>
 
       <Step n={1} title="Exclude secondary causes" tag={<Cor>COR 1</Cor>}>
@@ -91,11 +89,9 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
       </Step>
 
       <Step n={2} title="Score the phenotype" tag={<Badge color="slate">Dutch Lipid Clinic Network, adults</Badge>}>
-        <div className="rounded-lg border border-line bg-surface p-3">
+        <div>
           <div className="flex items-center justify-between gap-2">
             <div className="text-[13px] font-bold text-ink">Untreated LDL-C</div>
-            <button type="button" onClick={() => setShowBands(p => !p)} aria-expanded={showBands}
-              className="hit py-1 text-[12px] font-semibold text-muted hover:text-ink cursor-pointer underline decoration-dotted underline-offset-2">{showBands ? "Hide point bands" : "Point bands"}</button>
           </div>
           <div className="text-[12px] text-faint mt-0.5 leading-snug">The score uses the untreated value. On therapy with no baseline on record: pick the regimen to estimate it. A documented baseline overrides the estimate.</div>
 
@@ -104,16 +100,16 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
               {Object.entries(LDL_CORRECTION).map(([id, r]) => (
                 <button key={id} type="button" aria-pressed={rx.statin === id}
                   onClick={() => setRx({ statin: id, dose: id === "none" ? 0 : Number(Object.keys(r.doses)[0]), eze: rx.eze })}
-                  className={`flex-1 py-1.5 px-0.5 rounded text-[12px] font-semibold text-center cursor-pointer transition-colors min-h-[44px] ${rx.statin === id ? pick : unpick}`}>{r.l}</button>
+                  className={`flex-1 py-1.5 px-0.5 rounded-lg text-[12px] font-semibold text-center cursor-pointer transition-colors min-h-[44px] ${rx.statin === id ? pick : unpick}`}>{r.l}</button>
               ))}
             </div>
             <div className="flex flex-wrap gap-1 mt-1 items-stretch [&>button]:min-w-[44px]">
               {rx.statin !== "none" && doses.map(d => (
                 <button key={d} type="button" aria-pressed={rx.dose === d} onClick={() => setRx({ ...rx, dose: d })}
-                  className={`flex-1 py-1.5 rounded text-[12px] font-semibold font-mono text-center cursor-pointer transition-colors min-h-[44px] ${rx.dose === d ? pick : unpick}`}>{d} mg</button>
+                  className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold font-mono text-center cursor-pointer transition-colors min-h-[44px] ${rx.dose === d ? pick : unpick}`}>{d} mg</button>
               ))}
               <button type="button" aria-pressed={rx.eze} onClick={() => setRx({ ...rx, eze: !rx.eze })} title="Ezetimibe 10 mg"
-                className={`flex-1 py-1.5 px-1 rounded text-[12px] font-semibold text-center whitespace-nowrap cursor-pointer transition-colors min-h-[44px] ${rx.eze ? pick : unpick}`}>+ EZE 10</button>
+                className={`flex-1 py-1.5 px-1 rounded-lg text-[12px] font-semibold text-center whitespace-nowrap cursor-pointer transition-colors min-h-[44px] ${rx.eze ? pick : unpick}`}>+ EZE 10</button>
             </div>
           </>)}
 
@@ -132,20 +128,18 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
             )}
             <span className="shrink-0 font-mono text-[12px] font-semibold text-muted tabular-nums">+{dlcn.byGroup.ldl}</span>
           </div>
-          {showBands && (
-            <div className="panel-in mt-2 grid grid-cols-4 gap-1 text-center text-[11px] text-muted">
+          <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[11px] text-muted">
               {[...DLCN_LDL_BANDS].reverse().map(b => (
-                <div key={b.min} className={`rounded border px-1 py-1 ${dlcn.byGroup.ldl === b.pts ? "border-accent bg-accent-soft text-ink font-semibold" : "border-line"}`}>
+                <div key={b.min} className={`rounded-lg border px-1 py-1 ${dlcn.byGroup.ldl === b.pts ? "border-accent bg-accent-soft text-ink font-semibold" : "border-transparent"}`}>
                   <div className="font-mono tabular-nums">{si ? b.rangeSI : b.range}</div><div>+{b.pts}</div>
                 </div>
               ))}
             </div>
-          )}
           <div className="mt-3">
             <SINum si={si} factor={CHOL_F} phSI="Optional" label="Documented untreated LDL-C" unit="mg/dL" value={knownLdl} on={setKnownLdl} min={0} max={1000} ph="Optional" />
           </div>
           {hofh && (
-            <div className="panel-in mt-2 rounded-lg border border-line bg-paper p-2.5 text-[12px] leading-snug">
+            <div className="panel-in mt-2 text-[12px] leading-snug">
               <span className="font-bold text-red-800 dark:text-red-300">Untreated LDL-C &gt;{chol(HOFH_UNTREATED_LDL, si)} {u} suggests homozygous FH.</span>{" "}
               <span className="text-body">Also look for xanthomas before age 10 and HeFH-range LDL-C in both parents. Refer to a lipid specialist now.</span>
             </div>
@@ -158,7 +152,7 @@ export function FHWorkup({ si, ldl, rx, setRx, factor, knownLdl, setKnownLdl, un
               <span className="text-[12px] font-bold text-ink">{g.l}</span>
               {g.items.length > 1 && <span className="text-[11px] text-faint">highest item counts</span>}
             </div>
-            <div className="space-y-1">
+            <div className={ROWS}>
               {g.items.map(it => (
                 <CheckRow key={it.id} compact checked={!!checked[it.id]} on={() => toggle(it.id)} label={it.l} sub={it.d} pts={it.pts} />
               ))}

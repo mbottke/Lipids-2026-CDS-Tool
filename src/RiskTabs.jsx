@@ -2,7 +2,7 @@
 // 2026 ACC/AHA Dyslipidemia Guideline: §2.1 (very-high-risk definition), §4.2.6
 // (secondary prevention), §4.2.8.8 (CKD), §4.2.4.3 (LDL ≥190 with ASCVD),
 // §4.2.5 + Table 17 + Figures 1 and 9 (diabetes).
-import { Card, Num, SINum, CheckRow, AutoRow, GoalTier, Eyebrow, CHOL_F, chol } from "./ui.jsx";
+import { Card, Num, SINum, CheckRow, AutoRow, GoalTier, Eyebrow, ROWS, CHOL_F, chol } from "./ui.jsx";
 import { VHR_MAJOR, VHR_FEATURES, DM_ENHANCERS } from "./recommend.js";
 
 // ── ASCVD tab ────────────────────────────────────────────────────────────────
@@ -15,11 +15,11 @@ export function AscvdTab({ si, ldl, setLdl, major, toggleMajor, feat, toggleFeat
       : `1 major event + ${status.features} high-risk feature${status.features === 1 ? "" : "s"} (needs 2)`;
   const why55 = status.vhr ? why : (other.ckd || ckdAuto) ? "ASCVD with CKD stage ≥3" : `ASCVD with LDL-C ≥${chol(190, si)} or HeFH`;
   return (
-    <Card title="Clinical ASCVD risk level">
+    <Card id="sec-assess" stage="Assess" title="Clinical ASCVD risk level">
       <p className="text-[12px] text-muted mb-3">All clinical ASCVD: high-intensity statin. The risk level sets the LDL-C goal.</p>
       <SINum si={si} factor={CHOL_F} phSI="Current" label="Current LDL-C" unit="mg/dL" value={ldl} on={setLdl} min={0} max={400} ph="Current" />
 
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 space-y-1">
         <GoalTier active={goal55} ldl={chol(55, si)} nh={chol(85, si)}>
           <div className={`text-[14px] font-bold leading-tight ${goal55 ? "text-red-800 dark:text-red-300" : "text-ink"}`}>Very high risk</div>
           <div className="text-[12px] text-muted mt-0.5">Two or more major events, or one major event plus two or more high-risk features. Also ASCVD with CKD stage ≥3, LDL-C ≥{chol(190, si)}, or HeFH.</div>
@@ -32,23 +32,29 @@ export function AscvdTab({ si, ldl, setLdl, major, toggleMajor, feat, toggleFeat
         </GoalTier>
       </div>
 
-      <div className="mt-4 space-y-1.5">
+      <div className="mt-5">
         <Eyebrow right={status.majors}>Major ASCVD events</Eyebrow>
-        {VHR_MAJOR.map(e => <CheckRow key={e.id} checked={!!major[e.id]} on={() => toggleMajor(e.id)} label={e.l} sub={e.d} />)}
+        <div className={ROWS}>
+          {VHR_MAJOR.map(e => <CheckRow key={e.id} checked={!!major[e.id]} on={() => toggleMajor(e.id)} label={e.l} sub={e.d} />)}
+        </div>
       </div>
 
-      <div className="mt-4 space-y-1.5">
+      <div className="mt-5">
         <Eyebrow right={status.features}>High-risk features</Eyebrow>
-        {VHR_FEATURES.map(e => <CheckRow key={e.id} checked={!!feat[e.id]} on={() => toggleFeat(e.id)} label={e.l} sub={e.d} />)}
+        <div className={ROWS}>
+          {VHR_FEATURES.map(e => <CheckRow key={e.id} checked={!!feat[e.id]} on={() => toggleFeat(e.id)} label={e.l} sub={e.d} />)}
+        </div>
       </div>
 
-      <div className="mt-4 space-y-1.5">
+      <div className="mt-5">
         <Eyebrow>Other conditions with a &lt;{chol(55, si)} goal</Eyebrow>
+        <div className={ROWS}>
         {ckdAuto
           ? <AutoRow checked label="CKD stage ≥3" sub={`Set by: ${ckdAuto} on the Primary tab`} />
           : <CheckRow checked={!!other.ckd} on={() => toggleOther("ckd")} label="CKD stage ≥3" sub="eGFR <60 mL/min/1.73 m²" />}
         <CheckRow checked={!!other.severe} on={() => toggleOther("severe")}
           label={`LDL-C ≥${chol(190, si)} or HeFH`} sub="Severe hypercholesterolemia with clinical ASCVD" />
+        </div>
       </div>
     </Card>
   );
@@ -61,7 +67,7 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
   const riskKnown = risk10 !== null;
   const riskHigh = riskKnown ? risk10 >= 10 : !!f.prevent;
   return (
-    <Card title="Diabetes pathway">
+    <Card id="sec-assess" stage="Assess" title="Diabetes risk tier">
       <p className="text-[12px] text-muted mb-3">Statin at age 40–75, whatever the risk estimate. Moderate intensity for everyone, high intensity when a factor below applies. The same floor applies to CKD stage ≥3 and to HIV on stable antiretroviral therapy.</p>
       <div className="grid grid-cols-2 gap-3">
         <Num label="Age" unit="yr" value={age} on={setAge} min={20} max={100} ph="40–75" />
@@ -69,7 +75,7 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
       </div>
 
       {(tier === "young" || tier === "older") && (
-        <div className="panel-in mt-3 rounded-lg border border-line bg-surface p-3 text-[12px] text-body leading-snug">
+        <div className="panel-in mt-3 text-[12px] text-body leading-snug">
           {tier === "young"
             ? <>Age {a}: the 40–75 tiers below do not apply. A moderate-intensity statin may be reasonable with a diabetes-specific risk enhancer. From age 30, use PREVENT-ASCVD on the Primary tab.</>
             : <>Age {a}: the 40–75 tiers below do not apply. Starting a moderate-intensity statin may be reasonable after a benefit-risk discussion when life expectancy is at least 2.5 years. Continue a statin that is already tolerated.</>}
@@ -78,7 +84,7 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
 
       <div className="mt-4">
         <Eyebrow>LDL-C goal, age 40–75</Eyebrow>
-        <div className="space-y-2">
+        <div className="space-y-1">
           <GoalTier active={tier === "base"} ldl={chol(100, si)} nh={chol(130, si)}>
             <div className="text-[14px] font-bold text-ink leading-tight">Diabetes alone</div>
             <div className="text-[12px] text-muted mt-0.5">Moderate-intensity statin, 30–49% LDL-C reduction.</div>
@@ -86,7 +92,7 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
           <GoalTier active={tier === "high"} ldl={chol(70, si)} nh={chol(100, si)}>
             <div className="text-[14px] font-bold text-ink leading-tight">With added risk</div>
             <div className="text-[12px] text-muted mt-0.5 mb-1.5">High-intensity statin, ≥50% reduction, with any one of:</div>
-            <div className="space-y-1">
+            <div className="divide-y divide-line">
               <CheckRow compact checked={!!f.rf} on={() => toggleF("rf")}
                 label="Multiple ASCVD risk factors"
                 sub="Not enumerated by the guideline. Examples: hypertension, smoking, low HDL-C, older age" />
@@ -105,9 +111,11 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
         </div>
       </div>
 
-      <div className="mt-4 space-y-1.5">
+      <div className="mt-5">
         <Eyebrow right={enhCount}>Diabetes-specific risk enhancers</Eyebrow>
-        {DM_ENHANCERS.map(e => <CheckRow key={e.id} checked={!!enhs[e.id]} on={() => toggleEnh(e.id)} label={e.l} sub={e.d} />)}
+        <div className={ROWS}>
+          {DM_ENHANCERS.map(e => <CheckRow key={e.id} checked={!!enhs[e.id]} on={() => toggleEnh(e.id)} label={e.l} sub={e.d} />)}
+        </div>
       </div>
     </Card>
   );

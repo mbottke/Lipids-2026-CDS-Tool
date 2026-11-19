@@ -1,5 +1,5 @@
 // src/ui.jsx — shared UI primitives (Clinical Instrument tokens: see index.css)
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 
 export const CHOL_F = 38.67;  // mg/dL per mmol/L, cholesterol
 export const TG_F = 88.57;    // mg/dL per mmol/L, triglycerides
@@ -69,12 +69,16 @@ export function SINum({ si, factor, phSI, ...rest }) {
 }
 
 // Section head: the one level that uses tracked capitals.
+// `stage` is the route word this section starts ("Assess", "Refine", "Also check"), shown in ink before the name.
 export const HEAD = "text-[11px] font-semibold text-muted uppercase tracking-[0.12em]";
-export function SectionHead({ children, className = "" }) {
-  return <h2 className={`${HEAD} ${className}`}>{children}</h2>;
+const Stage = ({ name }) => (<><span className="text-ink">{name}</span>{" "}<span aria-hidden="true" className="text-faint">/</span>{" "}</>);
+export function SectionHead({ children, className = "", stage }) {
+  return <h2 className={`${HEAD} ${className}`}>{stage && <Stage name={stage} />}{children}</h2>;
 }
 // Field label, sentence case.
 export const LABEL = "text-[12px] font-medium text-muted";
+// A list of check rows: hairlines between rows, no box per row.
+export const ROWS = "divide-y divide-line border-y border-line";
 
 const Chevron = ({ open }) => (
   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
@@ -82,25 +86,43 @@ const Chevron = ({ open }) => (
 );
 
 // A page section. With onToggle the head is a button that opens and closes it.
-export function Card({ title, children, open, onToggle, hint }) {
+// `id` is the anchor the route line scrolls to. `endClose` adds a closing row after a long panel.
+export function Card({ title, children, open, onToggle, hint, id, stage, endClose }) {
+  const headRef = useRef(null);
   if (typeof onToggle !== "function") {
     return (
-      <section className="border-t border-line pt-5">
-        {title && <SectionHead className="mb-3">{title}</SectionHead>}
+      <section id={id} className="border-t border-line pt-5">
+        {title && <SectionHead className="mb-3" stage={stage}>{title}</SectionHead>}
         <div>{children}</div>
       </section>
     );
   }
+  // Closing from the end of a long panel: the head comes back into view and takes focus.
+  const closeFromEnd = () => {
+    onToggle();
+    headRef.current?.focus({ preventScroll: true });
+    requestAnimationFrame(() => headRef.current?.scrollIntoView({ block: "start" }));
+  };
   return (
-    <section className="border-t border-line pt-5">
+    <section id={id} className="border-t border-line pt-5">
       <h2 className="-mt-3.5">
-        <button type="button" onClick={onToggle} aria-expanded={!!open}
-          className="w-full min-h-[44px] flex items-center justify-between gap-3 text-left cursor-pointer active:opacity-70">
-          <span className={HEAD}>{title}</span>
+        <button ref={headRef} type="button" onClick={onToggle} aria-expanded={!!open}
+          className="w-full min-h-[44px] flex items-center justify-between gap-3 text-left cursor-pointer active:opacity-70 rounded-lg">
+          <span className={HEAD}>{stage && <Stage name={stage} />}{title}</span>
           <span className="flex items-center gap-2 shrink-0 text-[12px] text-muted">{hint}<Chevron open={open} /></span>
         </button>
       </h2>
-      {open && <div className="panel-in pt-1">{children}</div>}
+      {open && (
+        <div className="panel-in pt-1">
+          {children}
+          {endClose && (
+            <button type="button" onClick={closeFromEnd} aria-label={`Close ${String(title).toLowerCase()}`}
+              className="mt-1 w-full min-h-[44px] flex items-center justify-center gap-2 text-[12px] font-semibold text-muted hover:text-ink cursor-pointer rounded-lg">
+              Close<Chevron open />
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -125,29 +147,27 @@ export function Badge({ children, color="blue" }) {
   return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border border-edge bg-surface whitespace-nowrap ${s[color]}`}>{children}</span>;
 }
 
-// Small eyebrow heading used inside a section.
+// Small heading used inside a section.
 export function Eyebrow({ children, right }) {
   return (
     <div className="flex items-baseline justify-between gap-2 mb-1.5">
       <div className="text-[12px] font-bold text-ink">{children}</div>
-      {right !== undefined && <div className="text-[12px] text-faint font-mono tabular-nums">{right}</div>}
+      {right !== undefined && <div className="text-[12px] text-muted font-mono tabular-nums">{right}</div>}
     </div>
   );
 }
 
-// Checkbox row (same look as the risk-enhancer rows). `pts` shows a points value.
+// Checkbox row. No box of its own: the checkbox carries the state. `pts` shows a points value.
 export function CheckRow({ checked, on, label, sub, pts, compact }) {
   return (
     <button type="button" onClick={on} aria-pressed={!!checked}
-      className={`w-full flex items-start gap-2.5 rounded-lg border text-left transition-colors cursor-pointer active:opacity-70 ${compact ? "p-2 min-h-[44px]" : "p-2.5 min-h-[44px]"} ${
-        checked ? "bg-accent-soft border-edge" : "bg-surface border-line"
-      }`}>
-      <div className={`mt-0.5 rounded border shrink-0 flex items-center justify-center ${compact ? "w-4 h-4" : "w-5 h-5"} ${
-        checked ? "bg-accent border-accent" : "border-edge"
-      }`}>{checked && <span className={`text-paper font-bold ${compact ? "text-[11px]" : "text-[13px]"}`}>✓</span>}</div>
+      className={`group w-full flex items-start gap-3 text-left cursor-pointer active:opacity-70 rounded-lg ${compact ? "py-2.5 min-h-[44px]" : "py-3 min-h-[48px]"}`}>
+      <div className={`mt-0.5 w-5 h-5 rounded-[4px] border-[1.5px] shrink-0 flex items-center justify-center ${
+        checked ? "bg-accent border-accent" : "border-faint group-hover:border-ink"
+      }`}>{checked && <span className="text-paper font-bold text-[13px] leading-none">✓</span>}</div>
       <div className="flex-1 min-w-0">
-        <div className={`font-bold text-ink leading-tight ${compact ? "text-[13px]" : "text-[14px]"}`}>{label}</div>
-        {sub && <div className="text-[12px] text-muted">{sub}</div>}
+        <div className={`text-ink leading-tight ${checked ? "font-bold" : "font-semibold"} ${compact ? "text-[13px]" : "text-[14px]"}`}>{label}</div>
+        {sub && <div className="text-[12px] text-muted mt-0.5">{sub}</div>}
       </div>
       {pts !== undefined && <span className="shrink-0 mt-0.5 font-mono text-[12px] font-semibold text-muted tabular-nums">+{pts}</span>}
     </button>
@@ -157,32 +177,76 @@ export function CheckRow({ checked, on, label, sub, pts, compact }) {
 // Read-only row with the same shape as CheckRow, for conditions computed elsewhere.
 export function AutoRow({ checked, label, sub, compact }) {
   return (
-    <div className={`w-full flex items-start gap-2.5 rounded-lg border ${compact ? "p-2" : "p-2.5"} ${checked ? "bg-accent-soft border-edge" : "bg-surface border-line"}`}>
-      <div className={`mt-0.5 rounded border shrink-0 flex items-center justify-center ${compact ? "w-4 h-4" : "w-5 h-5"} ${
-        checked ? "bg-accent border-accent" : "border-edge border-dashed"
-      }`}>{checked && <span className={`text-paper font-bold ${compact ? "text-[11px]" : "text-[13px]"}`}>✓</span>}</div>
+    <div className={`w-full flex items-start gap-3 ${compact ? "py-2.5 min-h-[44px]" : "py-3 min-h-[48px]"}`}>
+      <div className={`mt-0.5 w-5 h-5 rounded-[4px] shrink-0 flex items-center justify-center ${
+        checked ? "bg-muted" : "border-[1.5px] border-dashed border-faint"
+      }`}>{checked && <span className="text-paper font-bold text-[13px] leading-none">✓</span>}</div>
       <div className="flex-1 min-w-0">
-        <div className={`font-bold text-ink leading-tight ${compact ? "text-[13px]" : "text-[14px]"}`}>{label}</div>
-        {sub && <div className="text-[12px] text-muted">{sub}</div>}
+        <div className={`text-ink leading-tight ${checked ? "font-bold" : "font-semibold"} ${compact ? "text-[13px]" : "text-[14px]"}`}>{label}</div>
+        {sub && <div className="text-[12px] text-muted mt-0.5">{sub}</div>}
       </div>
     </div>
   );
 }
 
-// Collapsible panel.
+// Collapsible row. Flat: a hairline above and no box. Opening one never closes another.
 export function Disclosure({ open, on, label, hint, children }) {
+  const ref = useRef(null);
+  const toggle = () => {
+    const wasOpen = open;
+    on();
+    // Closing a panel whose row has scrolled above the view brings the row back at once.
+    if (wasOpen) requestAnimationFrame(() => {
+      const el = ref.current; if (!el) return;
+      const sc = el.closest("[data-scroll], dialog");
+      if (el.getBoundingClientRect().top < (sc ? sc.getBoundingClientRect().top : 0)) el.scrollIntoView({ block: "start" });
+    });
+  };
   return (
-    <div className="rounded-lg border border-line bg-surface overflow-hidden">
-      <button type="button" onClick={on} aria-expanded={!!open}
-        className="focus-inset w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left active:opacity-70 cursor-pointer min-h-[44px]">
+    <div className="border-t border-line">
+      <button ref={ref} type="button" onClick={toggle} aria-expanded={!!open}
+        className="w-full min-h-[44px] flex items-center justify-between gap-3 py-2 text-left active:opacity-70 cursor-pointer rounded-lg">
         <span className="text-[13px] font-semibold text-ink">{label}</span>
-        <span className="flex items-center gap-2 shrink-0 text-[12px] text-muted">
-          {hint}
-          <Chevron open={open} />
-        </span>
+        <span className="flex items-center gap-2 shrink-0 text-[12px] text-muted">{hint}<Chevron open={open} /></span>
       </button>
-      {open && <div className="panel-in px-3 pb-3 pt-2.5 border-t border-line">{children}</div>}
+      {open && <div className="panel-in pb-4 pt-1">{children}</div>}
     </div>
+  );
+}
+
+// Reference content in a sheet: the bottom of the screen on phones, the right edge on desktop.
+// A native modal dialog: the page behind does not move, Escape closes it, focus returns to the trigger.
+export function InfoSheet({ open, title, onClose, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const d = ref.current; if (!d) return;
+    if (open && !d.open) { d.showModal(); d.querySelector("[data-sheet-body]")?.scrollTo(0, 0); }
+    if (!open && d.open) d.close();
+  }, [open]);
+  return (
+    <dialog ref={ref} data-sheet className="sheet" aria-labelledby="sheet-title" onClose={onClose} onCancel={onClose}
+      onClick={e => { if (e.target === ref.current) onClose(); }}>
+      <div className="flex flex-col min-h-0 w-full">
+        <div className="shrink-0 min-h-[52px] flex items-center justify-between gap-3 pl-4 sm:pl-5 pr-1 border-b border-line">
+          <h2 id="sheet-title" className="text-[14px] font-bold text-ink">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="focus-inset w-11 h-11 flex items-center justify-center text-[14px] font-bold text-muted hover:text-ink cursor-pointer rounded-lg">✕</button>
+        </div>
+        {/* Focusable so it can be scrolled from the keyboard in browsers that do not do this on their own. */}
+        <div data-sheet-body tabIndex={0} className="focus-inset flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 pt-4 text-[13px] text-ink leading-snug focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          style={{ paddingBottom: "calc(1.25rem + var(--sab))" }}>
+          {open ? children : null}
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
+// Opens a sheet. The "?" mark is the shared trigger for reference content.
+export function InfoButton({ label, on, small }) {
+  return (
+    <button type="button" onClick={on} aria-label={label} aria-haspopup="dialog"
+      className={`hit rounded-full border border-faint text-muted font-bold flex items-center justify-center shrink-0 cursor-pointer hover:border-ink hover:text-ink active:scale-95 transition-colors ${small ? "w-5 h-5 text-[11px]" : "w-6 h-6 text-[13px]"}`}>?</button>
   );
 }
 
@@ -198,9 +262,10 @@ export function Cor({ children }) {
 }
 
 // One LDL-C goal tier. `ldl` and `nh` are display strings in the active unit.
+// Only the active tier is drawn as a box. The others keep the same geometry with a clear border.
 export function GoalTier({ active, ldl, nh, children }) {
   return (
-    <div className={`rounded-lg border p-3 transition-colors ${active ? "border-accent bg-accent-soft" : "border-line bg-surface"}`}>
+    <div className={`rounded-lg border p-3 transition-colors ${active ? "border-accent bg-accent-soft" : "border-transparent"}`}>
       <div className="flex items-start gap-3">
         <div className="w-[92px] shrink-0">
           <div className={`font-mono font-semibold tabular-nums leading-none text-[20px] tracking-[-0.02em] ${active ? "text-ink" : "text-faint"}`}>&lt;{ldl}</div>

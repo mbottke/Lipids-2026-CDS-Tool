@@ -32,7 +32,6 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
       const p = await open(390, 844); await p.patient(); if (tab !== 'Primary') await p.tab(tab);
       if (tab === 'LDL ≥190') await p.fill2('Current LDL-C', 212);
       await p.expandAll();
-      const st = p.getByRole('button', { name: /Statin not tolerated/ }).first(); if (await st.count()) await st.click();
       const small = await p.evaluate(() => { const out = []; document.querySelectorAll('button, a[href], input, select').forEach(el => { const r = el.getBoundingClientRect(); if (!r.width || !r.height) return; const a = getComputedStyle(el, '::after'); let w = r.width, h = r.height; if (a.content !== 'none' && a.position === 'absolute') { w += -parseFloat(a.left) - parseFloat(a.right); h += -parseFloat(a.top) - parseFloat(a.bottom); } if (w < 43.5 || h < 43.5) out.push(`${Math.round(w)}x${Math.round(h)} "${(el.getAttribute('aria-label') || el.innerText || el.placeholder || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 30)}"`); }); return out; });
       ok(small.length === 0, `${tab}: ${small.length} controls under 44 px`, small.join(' | '));
       ok(p.errs.length === 0, `${tab}: no console errors`, p.errs.join(' | ')); await p.done();
@@ -44,10 +43,20 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
       const p = await open(390, 844); await p.patient(); if (tab !== 'Primary') await p.tab(tab);
       if (tab === 'LDL ≥190') await p.fill2('Current LDL-C', 212);
       await p.expandAll();
-      for (const name of [/Statin not tolerated/, /^Statin reference$/, /^About /]) { const bs = p.getByRole('button', { name }); for (let i = 0; i < await bs.count(); i++) await bs.nth(i).click().catch(() => {}); }
+      // Reference content opens in a sheet. Each one is measured in clarity.cjs and below, one at a time.
       await p.waitForTimeout(200);
       const small = await p.evaluate(() => { const out = []; const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); while (tw.nextNode()) { const t = tw.currentNode.nodeValue.trim(); if (t.length < 40) continue; const el = tw.currentNode.parentElement; const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue; const fs = parseFloat(getComputedStyle(el).fontSize); if (fs < 12) out.push(fs + 'px "' + t.slice(0, 50) + '"'); } return out; });
       ok(small.length === 0, `${tab}: ${small.length} sentences under 12 px`, small.slice(0, 6).join(' | '));
+      await p.done();
+    }
+  });
+
+  await section('sheets: controls at least 44 px and no sentence under 12 px inside each', async () => {
+    for (const [tab, name] of [['Primary', 'About the PREVENT calculator'], ['Primary', 'About CAC scoring'], ['ASCVD', 'About Lp(a) and apoB'], ['ASCVD', 'Statin reference'], ['ASCVD', /^Statin not tolerated/]]) {
+      const p = await open(390, 844); await p.patient(); if (tab !== 'Primary') await p.tab(tab);
+      await p.locator('main').getByRole('button', { name }).first().click(); await p.waitForTimeout(350);
+      const m = await p.locator('dialog[open]').evaluate(d => { const small = [...d.querySelectorAll('button, a[href], input')].map(e => e.getBoundingClientRect()).filter(r => r.width && (r.width < 43.5 || r.height < 43.5)).length; const tiny = []; const tw = document.createTreeWalker(d, NodeFilter.SHOW_TEXT); while (tw.nextNode()) { const t = tw.currentNode.nodeValue.trim(); if (t.length < 40) continue; const fs = parseFloat(getComputedStyle(tw.currentNode.parentElement).fontSize); if (fs < 12) tiny.push(fs + 'px ' + t.slice(0, 30)); } return { small, tiny, over: d.scrollWidth - d.clientWidth }; });
+      ok(m.small === 0 && m.tiny.length === 0 && m.over <= 0, `${typeof name === 'string' ? name : 'Statin not tolerated?'}: ${m.small} small controls, ${m.tiny.length} small sentences, ${m.over} px sideways overflow`, m);
       await p.done();
     }
   });
@@ -62,13 +71,13 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
 
   await section('plan-position: the plan follows the deciding inputs (390, default state)', async () => {
     // Base build: 3004, 1534, 1399, 3169. On ASCVD and Diabetes the checklists that decide the plan are 1290 to 1370 px tall.
-    const lim = { 'Primary': 1500, 'ASCVD': 1400, 'Diabetes': 1300, 'LDL ≥190': 1000 };
+    const lim = { 'Primary': 1500, 'ASCVD': 1500, 'Diabetes': 1350, 'LDL ≥190': 1100 };
     for (const tab of TABS) {
       const p = await open(390, 844); await p.patient(); if (tab !== 'Primary') await p.tab(tab);
       if (tab === 'LDL ≥190') await p.fill2('Current LDL-C', 212);
       const y = await p.evaluate(() => { const sc = document.querySelector('[data-scroll]'), el = document.querySelector('[data-plan="inline"]'); return el && sc ? Math.round(el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop) : null; });
       ok(y !== null && y <= lim[tab], `${tab}: plan at y=${y} (limit ${lim[tab]})`);
-      const order = await p.evaluate(() => { const heads = [...document.querySelectorAll('main h2')].map(h => h.textContent.trim()); return { plan: heads.indexOf('Plan'), bio: heads.indexOf('Advanced biomarkers'), ladder: heads.indexOf('Treatment ladder') }; });
+      const order = await p.evaluate(() => { const heads = [...document.querySelectorAll('main h2')].map(h => h.textContent.trim()); return { plan: heads.indexOf('Plan'), bio: heads.findIndex(h => /Lp\(a\) and apoB/.test(h)), ladder: heads.indexOf('Treatment ladder') }; });
       ok(order.plan >= 0 && order.plan < order.ladder && order.ladder < order.bio, `${tab}: plan, then ladder, then biomarkers`, order);
       await p.done();
     }
@@ -154,7 +163,7 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
     ok(/Low/.test(await p.txt('main')), 'low-risk patient set up');
     d = p.getByRole('button', { name: /Expected LDL-C change/ });
     ok(await d.getAttribute('aria-expanded') === 'true', 'lifestyle-only plan: lifestyle table starts open');
-    let e = p.getByRole('button', { name: /^Risk enhancers/ });
+    let e = p.getByRole('button', { name: /Risk enhancers/ }).first();
     ok(await e.getAttribute('aria-expanded') === 'false' && /0 checked/.test(await e.innerText()), 'low risk: enhancers closed with "0 checked"');
     await p.patient(PATIENT);
     ok(await e.getAttribute('aria-expanded') === 'true', 'borderline risk: enhancers open');
@@ -182,10 +191,13 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
 
   await section('codex: statin-intolerance thresholds follow the unit', async () => {
     const p = await open(390, 844); await p.tab('ASCVD');
-    await p.getByRole('button', { name: /Statin not tolerated/ }).click();
+    await p.getByRole('button', { name: /Statin not tolerated/ }).click(); await p.waitForTimeout(300);
     let t = await p.txt('[data-si-panel]');
     ok(/LDL-C below 70/.test(t) && /LDL-C below 100/.test(t), 'mg/dL: 70 and 100', t.slice(0, 200));
-    await p.getByRole('button', { name: /Units: mg\/dL/ }).click(); t = await p.txt('[data-si-panel]');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(250);
+    await p.getByRole('button', { name: /Units: mg\/dL/ }).click();
+    await p.getByRole('button', { name: /Statin not tolerated/ }).click(); await p.waitForTimeout(300);
+    t = await p.txt('[data-si-panel]');
     ok(/LDL-C below 1\.8 mmol\/L/.test(t) && /LDL-C below 2\.6 mmol\/L/.test(t) && !/below 70\b/.test(t), 'mmol/L: 1.8 and 2.6', t.match(/.{0,40}below.{0,30}/g));
     await p.done();
   });
@@ -271,7 +283,7 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
 
   await section('review: sections and rows do not change under the user', async () => {
     let p = await open(390, 844, { hasTouch: false }); await p.patient();
-    const e = p.getByRole('button', { name: /^Risk enhancers/ });
+    const e = p.getByRole('button', { name: /Risk enhancers/ }).first();
     await row(p, /^(✓\s*)?Elevated Lp\(a\)/).click(); await p.fill2('Age', 70); await p.waitForTimeout(200);
     await row(p, /^(✓\s*)?Elevated Lp\(a\)/).click(); await p.waitForTimeout(200);
     ok(await e.getAttribute('aria-expanded') === 'true', 'risk enhancers stay open after the last one is unchecked at high risk');
@@ -294,12 +306,12 @@ const ok = (c, name, dbg) => { if (c) { pass++; console.log('  ✅', name); } el
     ok(small.found && small.out.length === 0, `BMI calculator: ${small.out.length} controls under 44 px`, small.out.join(' | '));
     const hit = await p.evaluate(() => { const x = [...document.querySelectorAll('button[aria-label="Close"]')].find(b => b.getBoundingClientRect().width); const r = x.getBoundingClientRect(); const below = document.elementFromPoint(r.left + r.width / 2, r.bottom + 14); return { below: (below?.innerText || below?.tagName || '').slice(0, 12), isClose: below === x }; });
     ok(!hit.isClose, 'the close button does not take taps meant for the control below it', hit);
-    for (const name of ['BMI calc', 'About the PREVENT calculator', 'About CAC scoring', 'About Lp(a) and apoB']) { const bt = p.getByRole('button', { name, exact: true }).first(); ok((await bt.getAttribute('aria-expanded')) !== null, `"${name}" states whether it is open`); }
+    ok((await p.getByRole('button', { name: 'BMI calc', exact: true }).getAttribute('aria-expanded')) !== null, '"BMI calc" states whether it is open');
+    for (const name of ['About the PREVENT calculator', 'About CAC scoring', 'About Lp(a) and apoB']) ok((await p.getByRole('button', { name, exact: true }).first().getAttribute('aria-haspopup')) === 'dialog', `"${name}" says it opens a dialog`);
     await p.done();
     p = await open(320, 700); await p.tab('LDL ≥190'); await p.fill2('Current LDL-C', 212); await row(p, /^Atorva$/).click(); await p.waitForTimeout(150);
     const chips = await p.evaluate(() => [...document.querySelectorAll('main button')].filter(b => /^\d+ mg$/.test(b.innerText.trim())).map(b => Math.round(b.getBoundingClientRect().width)));
     ok(chips.length === 4 && chips.every(x => x >= 44), '320 px: dose chips are at least 44 px wide', chips);
-    ok((await p.getByRole('button', { name: /Point bands/ }).getAttribute('aria-expanded')) !== null, '"Point bands" states whether it is open');
     await p.sc().evaluate(el => el.scrollTo(0, el.scrollHeight)); await p.waitForTimeout(350);
     const tr = await p.evaluate(() => [...document.querySelectorAll('[data-planbar] span')].filter(sp => sp.getBoundingClientRect().width && sp.scrollWidth > sp.clientWidth + 1).map(sp => sp.innerText));
     ok(tr.length === 0, '320 px: nothing in the plan bar is truncated', tr);

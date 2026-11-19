@@ -53,3 +53,23 @@ Nearly all are 8 px radius. Check rows are individual bordered boxes stacked wit
 ## Already true (previous pass, keep)
 - 0 axe violations, text contrast ≥4.72:1, no sentence under 12 px, every control ≥44 px, no spill at 320 px.
 - One Plan block per tab, in a sticky right rail on desktop, with a bottom plan bar on phones.
+
+## After the pass (same scripts, same patient)
+
+| Measure | Base dede156 | After |
+|---|---|---|
+| 10-year total CVD at 1243 x 700 | y=841, below the rail fold | y=312, visible |
+| 10-year total CVD on a 390 px phone | 1410 px down | 987 px down, in the same block as ASCVD |
+| Page growth when reference content opens | +423 to +1782 px | 0 px (sheet) |
+| Closing the statin-intolerance content from its end | trigger left at y=-705 | page and focus exactly where they were |
+| Blood pressure sub-section pressed under an open one | row moved -920 px | 0 px |
+| Boxes per tab at 390 px | 35, 23, 20, 27 | 17, 6, 7, 12 |
+| Unchecked checkbox border contrast | 1.35:1 | 5.20:1 |
+| Looks for things that expand | 7 | 2 (flat row, sheet trigger) |
+| Tab purpose | 12 px muted line under the first head | 14 px sentence at the top, plus a route line |
+| Plan position at 390 px (Primary, ASCVD, Diabetes, LDL ≥190) | 851, 1368, 1235, 872 px | 1071, 1480, 1308, 956 px |
+| axe violations, 16 variants | 0 | 0 |
+
+The plan sits 84 to 220 px lower on a phone than before this pass. That is the cost of the purpose sentence and route line on every tab, and of the full risk grid above the plan on the Primary tab.
+
+Checks: `clarity.cjs` 74, `../2026-11-19/scripts/layout.cjs` 97, `flows.cjs` 30, `scrollbars.cjs` 18, `clip.cjs` 0 spills at 320 and 390.
