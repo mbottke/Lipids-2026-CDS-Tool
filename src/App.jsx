@@ -698,10 +698,11 @@ export default function App() {
 
       {/* ── Tabs ── */}
       <nav aria-label="Patient group" className="shrink-0 bg-paper border-b border-line">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-5 lg:px-8 flex justify-between sm:justify-start sm:gap-8 overflow-x-auto">
+        {/* The strip, not each tab, carries the 1 px overlap onto the hairline: a tab that overflowed the strip made it scroll vertically. */}
+        <div className="no-scrollbar max-w-[1200px] mx-auto px-4 sm:px-5 lg:px-8 flex justify-between sm:justify-start sm:gap-8 overflow-x-auto overflow-y-hidden -mb-px">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab===t.id ? "page" : undefined}
-              className={`min-h-[44px] flex items-end pb-2 pt-3 text-[13px] whitespace-nowrap cursor-pointer transition-colors border-b-2 -mb-px ${
+              className={`min-h-[44px] flex items-end pb-2 pt-3 text-[13px] whitespace-nowrap cursor-pointer transition-colors border-b-2 ${
                 tab===t.id ? "font-semibold text-ink border-accent" : "font-medium text-muted border-transparent hover:text-ink"
               }`}>
               {t.l}

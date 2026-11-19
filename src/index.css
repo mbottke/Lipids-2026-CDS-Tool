@@ -199,15 +199,41 @@ input:focus-visible {
   inset: -12px;
 }
 
-/* Desktop right rail: stays in view and scrolls on its own when taller than the window */
+/* Desktop right rail: stays in view and scrolls on its own when taller than the window.
+   Its scrollbar is drawn only while the pointer or keyboard focus is in the rail, so a
+   system set to always show scroll bars does not leave a bar beside the plan. */
 @media (min-width: 1024px) {
   .rail {
     max-height: calc(100dvh - 9rem);
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .rail:hover,
+  .rail:focus-within {
     scrollbar-color: var(--edge) transparent;
   }
+  /* Safari before 18.2 has no scrollbar-color */
+  .rail::-webkit-scrollbar {
+    width: 8px;
+  }
+  .rail::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 4px;
+  }
+  .rail:hover::-webkit-scrollbar-thumb,
+  .rail:focus-within::-webkit-scrollbar-thumb {
+    background: var(--edge);
+  }
+}
+
+/* A strip that scrolls sideways by touch without drawing a scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Focus ring drawn inside the control, for buttons whose container clips */
