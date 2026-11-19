@@ -30,7 +30,7 @@ eq(cat("", 85), null,        "SBP blank → null");
 
 console.log("\n═══ Risk reasons ═══");
 eq(bpRiskReasons({ cvd10: 7.4 }), [], "PREVENT-CVD 7.4% → not high risk");
-eq(bpRiskReasons({ cvd10: 7.5 }), ["PREVENT-CVD 7.5%"], "PREVENT-CVD 7.5% → high risk");
+eq(bpRiskReasons({ cvd10: 7.5 }), ["total CVD risk 7.5%"], "total CVD 7.5% → high risk");
 eq(bpRiskReasons({ dm: true, ckd: true, cvd10: 3 }), ["diabetes", "CKD"], "DM + CKD listed");
 
 console.log("\n═══ Untreated: drug-therapy thresholds (§5.2.2) ═══");

@@ -11,29 +11,29 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 export const DLCN_GROUPS = [
-  { id: "family", l: "Family History", items: [
-    { id: "fam_xanth", pts: 2, l: "1st-degree relative with tendon xanthoma / arcus cornealis", d: "or child <18 y with LDL-C >95th percentile" },
-    { id: "fam_cad",   pts: 1, l: "1st-degree relative with premature CAD / vascular disease", d: "Male <55 y, female <60 y — or relative with LDL-C >95th percentile" },
+  { id: "family", l: "Family history", items: [
+    { id: "fam_xanth", pts: 2, l: "1st-degree relative with tendon xanthoma / arcus cornealis", d: "Or a child <18 y with LDL-C >95th percentile" },
+    { id: "fam_cad",   pts: 1, l: "1st-degree relative with premature CAD / vascular disease", d: "Male <55 y, female <60 y, or a relative with LDL-C >95th percentile" },
   ]},
-  { id: "clinical", l: "Patient History", items: [
+  { id: "clinical", l: "Patient history", items: [
     { id: "pt_cad", pts: 2, l: "Premature coronary artery disease", d: "Male <55 y, female <60 y" },
     { id: "pt_vasc", pts: 1, l: "Premature cerebral or peripheral vascular disease", d: "Male <55 y, female <60 y" },
   ]},
-  { id: "exam", l: "Physical Exam", items: [
+  { id: "exam", l: "Physical exam", items: [
     { id: "ex_xanth", pts: 6, l: "Tendon xanthoma", d: "Achilles, extensor tendons of hands" },
     { id: "ex_arcus", pts: 4, l: "Arcus cornealis before age 45", d: null },
   ]},
-  { id: "dna", l: "Genetic Test", items: [
+  { id: "dna", l: "Genetic test", items: [
     { id: "dna_pos", pts: 8, l: "Pathogenic variant: LDLR, APOB, or PCSK9", d: null },
   ]},
 ];
 
 // Untreated LDL-C bands (mg/dL)
 export const DLCN_LDL_BANDS = [
-  { min: 330, pts: 8, range: "≥330" },
-  { min: 250, pts: 5, range: "250–329" },
-  { min: 190, pts: 3, range: "190–249" },
-  { min: 155, pts: 1, range: "155–189" },
+  { min: 330, pts: 8, range: "≥330",    rangeSI: "≥8.5" },
+  { min: 250, pts: 5, range: "250–329", rangeSI: "6.5–8.4" },
+  { min: 190, pts: 3, range: "190–249", rangeSI: "5.0–6.4" },
+  { min: 155, pts: 1, range: "155–189", rangeSI: "4.0–4.9" },
 ];
 
 export function dlcnLdlPoints(ldl) {

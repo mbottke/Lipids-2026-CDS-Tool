@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: '2026 Lipid Management Calculator',
+        name: 'Lipid 2026',
         short_name: 'Lipid 2026',
-        description: '2026 ACC/AHA Dyslipidemia Guideline CDS with embedded PREVENT-ASCVD risk estimator',
+        description: 'Lipid management per the 2026 ACC/AHA guideline, with PREVENT risk estimation',
         theme_color: '#0f172a',
         background_color: '#f8fafc',
         display: 'standalone',

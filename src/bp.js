@@ -30,7 +30,7 @@ export function bpRiskReasons({ clinicalCvd, dm, ckd, cvd10 }) {
   if (clinicalCvd) out.push("clinical CVD");
   if (dm) out.push("diabetes");
   if (ckd) out.push("CKD");
-  if (cvd10 !== null && cvd10 !== undefined && cvd10 >= CVD_BP_TX_THRESHOLD) out.push(`PREVENT-CVD ${cvd10}%`);
+  if (cvd10 !== null && cvd10 !== undefined && cvd10 >= CVD_BP_TX_THRESHOLD) out.push(`total CVD risk ${cvd10}%`);
   return out;
 }
 
@@ -46,37 +46,37 @@ export function bpPlan({ sbp, dbp, onTx, cvd10 = null, clinicalCvd = false, dm =
   if (cat.id === "severe") {
     action = { id: "severe", tone: "red",
       title: "Check for acute target-organ damage",
-      detail: "None → start, restart, or intensify oral therapy promptly as an outpatient. Present → hypertensive emergency (ICU)." };
+      detail: "If none, start, restart, or intensify oral therapy promptly as an outpatient. If present, this is a hypertensive emergency (ICU)." };
   } else if (onTx) {
     action = (cat.id === "normal" || cat.id === "elevated")
       ? { id: "at_goal", tone: "emerald",
           title: "At goal on therapy",
-          detail: cat.id === "elevated" ? "SBP <120 is encouraged if tolerated. Reassess in 3–6 mo." : "Reassess in 3–6 mo." }
+          detail: cat.id === "elevated" ? "Systolic <120 is encouraged if tolerated. Reassess in 3–6 months." : "Reassess in 3–6 months." }
       : { id: "intensify", tone: "amber",
-          title: "Above goal on therapy — intensify",
+          title: "Above goal on therapy: intensify",
           detail: "Confirm adherence and home BP, then titrate or add the next class. Reassess monthly until controlled." };
   } else if (cat.id === "stage2") {
     action = { id: "start_two", tone: "red",
-      title: "Start drug therapy now — 2 agents",
-      detail: "Two first-line agents from different classes, ideally one single-pill combination, plus lifestyle. Reassess in 1 mo." };
+      title: "Start drug therapy now with 2 agents",
+      detail: "Two first-line agents from different classes, ideally one single-pill combination, plus lifestyle. Reassess in 1 month." };
   } else if (cat.id === "stage1") {
     if (highRisk) {
       action = { id: "start_one", tone: "amber",
         title: "Start drug therapy now",
-        detail: `Threshold ≥130/80 applies (${reasons.join(", ")}). One first-line agent is reasonable; titrate, then add. Reassess in 1 mo.` };
+        detail: `The ≥130/80 threshold applies (${reasons.join(", ")}). One first-line agent is reasonable: titrate, then add. Reassess in 1 month.` };
     } else if (riskKnown) {
       action = { id: "lifestyle_first", tone: "blue",
         title: "Lifestyle for 3–6 months first",
-        detail: `PREVENT-CVD ${cvd10}% (<${CVD_BP_TX_THRESHOLD}%), no CVD / diabetes / CKD. Start drug therapy if still ≥130/80 afterward.` };
+        detail: `10-year total CVD risk ${cvd10}% (<${CVD_BP_TX_THRESHOLD}%), with no CVD, diabetes, or CKD. Start drug therapy if still ≥130/80 afterward.` };
     } else {
       action = { id: "need_risk", tone: "blue",
         title: "Risk decides timing",
-        detail: `Clinical CVD, diabetes, CKD, or PREVENT-CVD ≥${CVD_BP_TX_THRESHOLD}% → start drug therapy now. Otherwise lifestyle for 3–6 months first. Complete the PREVENT inputs on the PRIMARY tab.` };
+        detail: `With clinical CVD, diabetes, CKD, or 10-year total CVD risk ≥${CVD_BP_TX_THRESHOLD}%, start drug therapy now. Otherwise lifestyle for 3–6 months first. Complete the PREVENT inputs on the Primary tab.` };
     }
   } else if (cat.id === "elevated") {
-    action = { id: "lifestyle", tone: "blue", title: "Lifestyle only", detail: "No drug therapy. Reassess in 3–6 mo." };
+    action = { id: "lifestyle", tone: "blue", title: "Lifestyle only", detail: "No drug therapy. Reassess in 3–6 months." };
   } else {
-    action = { id: "none", tone: "emerald", title: "No treatment needed", detail: "Reassess in 1 y." };
+    action = { id: "none", tone: "emerald", title: "No treatment needed", detail: "Reassess in 1 year." };
   }
   return { cat, reasons, highRisk, riskKnown, action };
 }

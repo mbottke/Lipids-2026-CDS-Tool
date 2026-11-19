@@ -19,7 +19,7 @@ eq(DM_ENHANCERS.some(x => /A1c/i.test(x.l)), false, "A1c is not a Table 17 enhan
 
 console.log("\n═══ Secondary prevention text ═══");
 eq(/ezetimibe and\/or a PCSK9 mAb/.test(recSecondary({ major: { acs: true, stroke: true } }).txt), true, "VHR: ezetimibe and/or PCSK9 mAb");
-eq(/<55 is reasonable/.test(recSecondary({}).txt), true, "Not VHR: optional <55 stated");
+eq(/below 55 is reasonable/.test(recSecondary({}).txt), true, "Not VHR: optional <55 stated");
 eq(recSecondary({ major: { acs: true }, feat: { dm: true, htn: true }, ckd: true }).vhr, true, "VHR takes precedence over CKD label");
 eq(recSecondary({ ckd: true }).vhr, false, "CKD alone: goal <55 without VHR label");
 
@@ -57,7 +57,7 @@ eq(tgAdvice(149), null, "TG 149 → none");
 eq(/Lifestyle first/.test(tgAdvice(150).txt), true, "TG 150 → lifestyle first");
 eq(/fenofibrate/i.test(tgAdvice(300).txt), false, "TG 300: fenofibrate not suggested for ASCVD risk");
 eq(/fibrate or prescription omega-3/.test(tgAdvice(600).txt), true, "TG 600 → fibrate or prescription omega-3");
-eq(/olezarsen/.test(tgAdvice(1200).txt), true, "TG 1200 → olezarsen for FCS mentioned");
+eq(/olezarsen/i.test(tgAdvice(1200).txt), true, "TG 1200 → olezarsen for FCS mentioned");
 eq(lpaInterpret(125).lv, "Elevated", "Lp(a) 125 → elevated");
 
 console.log(`\n${pass} pass, ${fail} fail`);

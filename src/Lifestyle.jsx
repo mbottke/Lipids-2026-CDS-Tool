@@ -11,43 +11,43 @@
 //    alcohol (Brien SE, BMJ 2011;342:d636)
 
 const ROWS = [
-  { k: "Swap saturated → unsaturated fat", d: "5% of daily energy (e.g. butter, fatty meat → olive/canola oil, nuts, fish)", v: "5–10%" },
+  { k: "Saturated → unsaturated fat", d: "Swap 5% of daily energy: butter and fatty meat for olive or canola oil, nuts, fish", v: "5–10%" },
   { k: "Viscous fiber 7.5 g/day", d: "Psyllium ≈10 g/day, oats, barley, legumes", v: "6–9%" },
-  { k: "Plant sterols / stanols 2 g/day", d: "Fortified foods; supplement capsules no better than placebo (SPORT)", v: "5–8%" },
-  { k: "Plant protein 30 g/day", d: "Soy, legumes — replacing animal protein", v: "3–5%" },
+  { k: "Plant sterols or stanols 2 g/day", d: "Fortified foods. Supplement capsules were no better than placebo (SPORT)", v: "5–8%" },
+  { k: "Plant protein 30 g/day", d: "Soy, legumes, replacing animal protein", v: "3–5%" },
   { k: "Weight loss 5%", d: "If excess adiposity", v: "3–5%" },
-  { k: "Exercise ≥150 min/week", d: "Aerobic + resistance 2 days/week", v: "≈7 mg/dL" },
+  { k: "Exercise ≥150 min/week", d: "Aerobic plus resistance 2 days/week", v: "≈7 mg/dL" },
 ];
 
+function Row({ k, d, v, strong }) {
+  return (
+    <div>
+      <div className="flex items-baseline gap-2">
+        <span className={`text-[12px] text-ink shrink-0 ${strong ? "font-bold" : "font-medium"}`}>{k}</span>
+        <div className="flex-1 border-b border-dotted mb-[3px] min-w-[12px]" style={{ borderColor: "var(--ruler)" }} />
+        <span className="font-mono text-[12px] font-semibold text-ink tabular-nums shrink-0">{v}</span>
+      </div>
+      <div className="text-[10.5px] text-faint leading-snug">{d}</div>
+    </div>
+  );
+}
+
 export function LifestyleLDL() {
-  const sub = "text-slate-400 dark:text-[#5a8aaa]";
   return (
     <div className="mt-1">
-      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#5a8aaa] mb-1">
-        <span>Intervention</span><span>LDL-C ↓</span>
+      <div className="flex justify-between text-[10px] text-faint mb-1">
+        <span>Intervention</span><span>Expected LDL-C reduction</span>
       </div>
-      <div className="space-y-1 pl-2 border-l-2 border-slate-200 dark:border-[#1a2835]">
-        {ROWS.map(r => (
-          <div key={r.k} className="flex items-baseline justify-between gap-2">
-            <div className="min-w-0">
-              <span className="text-slate-700 dark:text-[#d0e4f0]">{r.k}</span>
-              <span className={sub}> · {r.d}</span>
-            </div>
-            <span className="shrink-0 font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">{r.v}</span>
-          </div>
-        ))}
-        <div className="flex items-baseline justify-between gap-2 pt-1 border-t border-slate-200 dark:border-[#1a2835]">
-          <div className="min-w-0">
-            <span className="font-bold text-slate-700 dark:text-[#d0e4f0]">All four diet changes together</span>
-            <span className={sub}> · Portfolio pattern, free-living</span>
-          </div>
-          <span className="shrink-0 font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">12–15%</span>
+      <div className="space-y-1.5 pl-2 border-l-2 border-line">
+        {ROWS.map(r => <Row key={r.k} {...r} />)}
+        <div className="border-t border-line pt-1.5">
+          <Row strong k="All four diet changes together" d="Portfolio pattern, free-living" v="12–15%" />
         </div>
       </div>
-      <div className={`mt-1.5 leading-snug ${sub}`}>
-        <span className="font-bold text-red-600 dark:text-red-400">Raises LDL-C:</span> ketogenic / high-saturated-fat low-carb diets (can reach ≥190), trans fat, unfiltered coffee.{" "}
-        <span className="font-bold">No LDL-C effect:</span> smoking cessation, alcohol reduction — still do both.{" "}
-        <span className="font-bold">Skip:</span> supplements, including red yeast rice, fish oil, garlic (COR 3: No Benefit).
+      <div className="mt-1.5 text-[10.5px] text-muted leading-snug">
+        <b className="text-red-700 dark:text-red-400">Raises LDL-C:</b> ketogenic or high-saturated-fat low-carb diets (can reach ≥190), trans fat, unfiltered coffee.{" "}
+        <b>No LDL-C effect:</b> smoking cessation, alcohol reduction. Still do both.{" "}
+        <b>Skip:</b> supplements, including red yeast rice, fish oil, garlic (COR 3: No Benefit).
       </div>
     </div>
   );

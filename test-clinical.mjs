@@ -443,7 +443,7 @@ assert(recCAC0.g === null, "CAC=0: no specific LDL goal");
 assert(recCAC0.esc === false, "CAC=0: no escalation");
 assert(recCAC0.clr === "emerald", "CAC=0: emerald (reassuring)");
 
-assert(/3–7 years/.test(recCAC0.txt), "CAC=0: repeat CAC in 3–7 years");
+assert(/3 to 7 years/.test(recCAC0.txt), "CAC=0: repeat CAC in 3 to 7 years");
 // CAC = 0 does not defer with a higher-risk condition or at high risk (§4.2.3.6 rec 2)
 const recCAC0smk = getRec({ tab: "primary", risk: 7.0, enhCount: 0, cac: 0, cacPct: "", smoking: true });
 assert(recCAC0smk.int === "moderate" && /smoking/.test(recCAC0smk.note), "CAC=0 + current smoking: not deferred");
@@ -453,7 +453,7 @@ assert(getRec({ tab: "primary", risk: 12.0, cac: 0 }).int === "high", "CAC=0 at 
 
 // CAC 300–999 → <70, with <55 reasonable (§4.2.7 recs 2 and 5)
 const recCAC500 = getRec({ tab: "primary", risk: 4.0, enhCount: 0, cac: 500, cacPct: 90 });
-assert(recCAC500.g.ldl === 70 && /<55 is reasonable/.test(recCAC500.txt), "CAC 500: LDL <70, <55 reasonable");
+assert(recCAC500.g.ldl === 70 && /below 55 is reasonable/.test(recCAC500.txt), "CAC 500: LDL <70, <55 reasonable");
 
 // CAC 1-99 (<75th %ile) → moderate statin
 const recCAC50 = getRec({ tab: "primary", risk: 7.0, enhCount: 0, cac: 50, cacPct: 60 });
