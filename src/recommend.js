@@ -21,7 +21,9 @@ export const VHR_MAJOR = [
   { id: "mi",     l: "Prior MI", d: "Other than the recent ACS above" },
   { id: "stroke", l: "Ischemic stroke", d: "Any history" },
   { id: "pad",    l: "Symptomatic PAD", d: "Peripheral artery disease with symptoms" },
+  { id: "recurrent", l: "Repeat event of the same type", d: "A second MI or a second ischemic stroke counts as another major event" },
 ];
+const VHR_EVENT_TYPES = ["acs", "mi", "stroke", "pad"];
 export const VHR_FEATURES = [
   { id: "age65",  l: "Age ≥65 years", d: null },
   { id: "revasc", l: "Prior CABG or PCI", d: null },
@@ -32,8 +34,12 @@ export const VHR_FEATURES = [
   { id: "ldl100", l: "LDL-C ≥100 on statin + ezetimibe", d: "Despite maximally tolerated statin plus ezetimibe" },
 ];
 
+// Events are counted, not event types: two MIs are two major events. "recurrent"
+// adds one event to the types checked (and stands for two when checked alone).
 export function vhrStatus(major = {}, feat = {}) {
-  const majors = count(major), features = count(feat);
+  const types = VHR_EVENT_TYPES.filter(k => major[k]).length;
+  const majors = types + (major.recurrent ? (types === 0 ? 2 : 1) : 0);
+  const features = count(feat);
   return { majors, features, vhr: majors >= 2 || (majors >= 1 && features >= 2) };
 }
 

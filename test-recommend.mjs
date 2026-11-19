@@ -2,7 +2,7 @@
 // test-recommend.mjs — text and edge behavior of src/recommend.js that the
 // broader test-clinical.mjs suite does not cover.
 
-import { recPrimary, recSecondary, recDiabetes, cacZeroBlockers, dmTier, tgAdvice, lpaInterpret, VHR_MAJOR, VHR_FEATURES, DM_ENHANCERS } from "./src/recommend.js";
+import { recPrimary, recSecondary, recDiabetes, vhrStatus, cacZeroBlockers, dmTier, tgAdvice, lpaInterpret, VHR_MAJOR, VHR_FEATURES, DM_ENHANCERS } from "./src/recommend.js";
 
 let pass = 0, fail = 0;
 function eq(actual, expected, name) {
@@ -12,10 +12,19 @@ function eq(actual, expected, name) {
 }
 
 console.log("\n═══ Guideline lists ═══");
-eq(VHR_MAJOR.map(x => x.id), ["acs", "mi", "stroke", "pad"], "4 major ASCVD events (§2.1)");
+eq(VHR_MAJOR.map(x => x.id), ["acs", "mi", "stroke", "pad", "recurrent"], "4 major ASCVD event types (§2.1) + repeat-event row");
 eq(VHR_FEATURES.map(x => x.id), ["age65", "revasc", "smoker", "dm", "hf", "htn", "ldl100"], "7 high-risk features (§2.1)");
 eq(DM_ENHANCERS.length, 7, "Table 17: 6 enhancers (duration split by diabetes type)");
 eq(DM_ENHANCERS.some(x => /A1c/i.test(x.l)), false, "A1c is not a Table 17 enhancer");
+
+console.log("\n═══ Very high risk counts events, not event types ═══");
+eq(vhrStatus({ mi: true }).vhr, false, "one MI alone → 1 event, not very high risk");
+eq(vhrStatus({ mi: true, recurrent: true }), { majors: 2, features: 0, vhr: true }, "two prior MIs → 2 events → very high risk");
+eq(vhrStatus({ stroke: true, recurrent: true }).vhr, true, "two ischemic strokes → very high risk");
+eq(vhrStatus({ recurrent: true }).majors, 2, "repeat-event row alone stands for 2 events");
+eq(vhrStatus({ mi: true, stroke: true, recurrent: true }).majors, 3, "MI + stroke + a repeat → 3 events");
+eq(vhrStatus({ mi: true }, { dm: true, htn: true }).vhr, true, "1 event + 2 high-risk features → very high risk");
+eq(recSecondary({ major: { mi: true, recurrent: true } }).g.ldl, 55, "two prior MIs → LDL goal <55");
 
 console.log("\n═══ Secondary prevention text ═══");
 eq(/ezetimibe and\/or a PCSK9 mAb/.test(recSecondary({ major: { acs: true, stroke: true } }).txt), true, "VHR: ezetimibe and/or PCSK9 mAb");

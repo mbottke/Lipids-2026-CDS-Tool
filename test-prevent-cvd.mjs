@@ -39,6 +39,10 @@ eq(calcPREVENT10({ ...F, bmi: "" }), 9.2,  "ASCVD without BMI = 9.2%");
 eq(calcPREVENT30({ ...F, bmi: "" }), 35.4, "30-yr ASCVD without BMI = 35.4%");
 eq(calcPREVENT10CVD({ ...F, bmi: "" }), 14.7, "total CVD without BMI = 14.7%");
 
+console.log("\n═══ Diabetes status changes total CVD (BP section uses the status in force) ═══");
+eq(calcPREVENT10CVD({ ...M, dm: false }), 7.5, "50M reference without diabetes = 7.5%");
+eq(calcPREVENT10CVD({ ...M, dm: true }), 16.3, "50M reference with diabetes = 16.3%");
+
 console.log("\n═══ ASCVD models unchanged ═══");
 eq(calcPREVENT10(F), 9.2,  "50F 10-yr ASCVD = 9.2%");
 eq(calcPREVENT10(M), 10.2, "50M 10-yr ASCVD = 10.2%");

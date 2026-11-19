@@ -32,7 +32,8 @@ const Line = ({ k, children }) => (
   <div className="flex gap-2"><span className="text-ink font-semibold shrink-0 w-[68px]">{k}</span><span>{children}</span></div>
 );
 
-export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, auto, flags, toggleFlag }) {
+// cvdWithDm: cvd10 was calculated with diabetes although the PREVENT diabetes toggle is off
+export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, cvdWithDm, auto, flags, toggleFlag }) {
   const [open, setOpen] = useState(false);
   const [sec, setSec] = useState(null);
   const tog = (id) => setSec(p => (p === id ? null : id));
@@ -83,7 +84,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
               <Toggle value={bpTx} on={setBpTx} label="BP med(s)" />
               <div className="text-right">
                 <div className={`text-[15px] font-semibold font-mono tabular-nums leading-none ${cvdHigh ? "text-amber-700 dark:text-amber-400" : "text-ink"}`}>{cvd10 !== null ? `${cvd10}%` : "–"}</div>
-                <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-faint mt-1">10-year total CVD</div>
+                <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-faint mt-1">10-year total CVD{cvdWithDm ? ", with diabetes" : ""}</div>
               </div>
             </div>
             <div className="text-[10.5px] text-faint leading-snug">
@@ -102,7 +103,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
                 label="CKD" sub={auto.ckd ? `Set by: ${auto.ckd}` : "eGFR <60 or albuminuria ≥30 mg/g"} />
               <AutoRow compact checked={cvdHigh} label={`PREVENT 10-year total CVD ≥${CVD_BP_TX_THRESHOLD}%`}
                 sub={eff.clinicalCvd ? "Not needed: clinical CVD already sets the threshold"
-                  : cvd10 !== null ? `Calculated: ${cvd10}%`
+                  : cvd10 !== null ? `Calculated${cvdWithDm ? " with diabetes" : ""}: ${cvd10}%`
                   : "Not calculated. Complete the PREVENT inputs on the Primary tab (ages 30–79)"} />
             </div>
           </div>

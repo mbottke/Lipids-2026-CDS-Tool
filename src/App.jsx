@@ -518,6 +518,10 @@ export default function App() {
   // Diabetes tab: PREVENT-ASCVD with diabetes set (uses the Primary tab inputs, if complete)
   const dmRisk10 = useMemo(() => calcPREVENT10({ ...inputsObj, dm: true }), [inputsObj]);
   const egfrCkd = egfr !== "" && Number(egfr) < 60;
+  // Blood pressure section: total CVD with the diabetes status in force there
+  // (Diabetes tab, or diabetes checked in the section, even if the PREVENT toggle is off).
+  const bpDm = dm || tab === "diabetes" || !!bpF.dm;
+  const cvd10Bp = useMemo(() => (tab === "secondary" ? null : calcPREVENT10CVD({ ...inputsObj, dm: bpDm })), [tab, inputsObj, bpDm]);
 
   const rc10 = useMemo(() => riskCat10(risk10), [risk10]);
   const rc30 = useMemo(() => riskCat30(risk30), [risk30]);
@@ -1150,7 +1154,7 @@ export default function App() {
 
         {/* BLOOD PRESSURE */}
         <BloodPressure sbp={sbp} setSbp={setSbp} dbp={dbp} setDbp={setDbp} bpTx={bpTx} setBpTx={setBpTx}
-          cvd10={tab === "secondary" ? null : cvd10} auto={bpAuto} flags={bpF} toggleFlag={toggleBpF} />
+          cvd10={cvd10Bp} cvdWithDm={bpDm && !dm} auto={bpAuto} flags={bpF} toggleFlag={toggleBpF} />
 
         {/* MONITORING */}
         <Card title="Monitoring" accent="emerald">
