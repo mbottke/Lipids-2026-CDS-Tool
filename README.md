@@ -66,6 +66,7 @@ node test-recommend.mjs
 
 ```bash
 node test-clinical.mjs
+node test-copy.mjs        # wording style sheet, contrast, type floor
 ```
 
 ## Disclaimer

@@ -10,8 +10,8 @@
   --surface: #ffffff;
   --ink: #15181c;
   --body: #3d4148;
-  --muted: #6e7378;
-  --faint: #9ba0a6;
+  --muted: #555a61;
+  --faint: #676c72;
   --line: #e7e5e1;
   --edge: #e0ddd8;
   --accent: #15181c;
@@ -35,8 +35,8 @@
   --surface: #1c2026;
   --ink: #eef0f2;
   --body: #d0d5db;
-  --muted: #adb4bc;
-  --faint: #868d96;
+  --muted: #b4bbc3;
+  --faint: #9aa1a9;
   --line: #2a2f36;
   --edge: #363d45;
   --accent: #eef0f2;
@@ -186,5 +186,26 @@ input:focus-visible {
   }
   body {
     background: white;
+  }
+}
+
+/* Small glyph buttons: a 44 px hit area around a smaller mark */
+.hit {
+  position: relative;
+}
+.hit::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
+/* Desktop right rail: stays in view and scrolls on its own when taller than the window */
+@media (min-width: 1024px) {
+  .rail {
+    max-height: calc(100dvh - 9rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--edge) transparent;
   }
 }

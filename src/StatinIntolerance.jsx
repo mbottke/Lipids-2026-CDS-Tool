@@ -8,25 +8,21 @@
 // CLEAR Outcomes NEJM 2023;388:1353-64 · GAUSS-3 JAMA 2016;315:1580-90 ·
 // ODYSSEY ALTERNATIVE J Clin Lipidol 2015;9:758-69 · VITAL JAMA Cardiol 2023;8:74-80.
 import { useState } from "react";
-import { Route, Cor, Step } from "./ui.jsx";
+import { Route, Cor, Step, LeaderRow, chol, cholUnit } from "./ui.jsx";
 
 // group: "ascvd" | "high" | "mid" | "severe" | null — marks the matching nonstatin row
-export function StatinIntolerance({ onClose, group }) {
+export function StatinIntolerance({ onClose, group, si }) {
+  // LDL-C threshold in the active unit, e.g. "70" or "1.8 mmol/L"
+  const L = (v) => (si ? `${chol(v, si)} ${cholUnit(si)}` : v);
   const [aace, setAace] = useState(false);
   const row = (id) => `rounded-lg border p-2 ${group === id ? "border-edge bg-accent-soft" : "border-line bg-surface"}`;
-  const Fx = ({ r, k, v }) => (
-    <div className="flex items-baseline gap-2">
-      <span className="shrink-0"><Route r={r} /> <span className="text-ink font-medium">{k}</span></span>
-      <div className="flex-1 border-b border-dotted mb-[3px] min-w-[12px]" style={{ borderColor: "var(--ruler)" }} />
-      <span className="font-mono font-semibold text-ink tabular-nums shrink-0">{v}</span>
-    </div>
-  );
+  const Fx = ({ r, k, v }) => <LeaderRow lead={<><Route r={r} />{" "}</>} label={k} value={v} />;
 
   return (
-    <div className="panel-in p-3 bg-paper border border-edge rounded-lg text-[11px] text-ink space-y-3">
+    <div data-si-panel className="panel-in p-3 bg-paper border border-edge rounded-lg text-[12px] text-ink space-y-3">
       <div className="flex items-center justify-between">
-        <div className="font-bold text-ink text-[12px]">Statin intolerance pathway</div>
-        <button onClick={onClose} aria-label="Close" className="text-[12px] text-faint hover:text-ink cursor-pointer font-bold px-1">✕</button>
+        <div className="font-bold text-ink text-[13px]">Statin intolerance pathway</div>
+        <button onClick={onClose} aria-label="Close" className="hit w-6 h-6 flex items-center justify-center text-[13px] text-muted hover:text-ink cursor-pointer font-bold">✕</button>
       </div>
 
       <div className="border-t border-line pt-2.5">
@@ -39,7 +35,8 @@ export function StatinIntolerance({ onClose, group }) {
           <div>Take the symptoms seriously. Explain the higher ASCVD risk off a statin and that alternatives exist.<Cor>COR 1</Cor></div>
         </Step>
         <Step small n={2} title="Look for a contributor">
-          <div>Hypothyroidism (TSH) · interacting drugs (macrolides, azoles, protease inhibitors, cyclosporine, gemfibrozil, amiodarone, diltiazem, verapamil, colchicine) · alcohol · vigorous exercise · CKD or liver disease · other muscle disease.<Cor>COR 1</Cor></div>
+          <div>Hypothyroidism (TSH), alcohol, vigorous exercise, CKD or liver disease, other muscle disease.<Cor>COR 1</Cor></div>
+          <div><b>Interacting drugs:</b> macrolides, azoles, protease inhibitors, cyclosporine, gemfibrozil, amiodarone, diltiazem, verapamil, colchicine.</div>
         </Step>
         <Step small n={3} title="CK only for severe pain or weakness">
           <div>Routine CK adds nothing<Cor>COR 3</Cor>. With CK ≥10× ULN and severe symptoms, hold the statin. Neurology referral if it persists.</div>
@@ -57,19 +54,19 @@ export function StatinIntolerance({ onClose, group }) {
           <div className="space-y-1 pt-0.5">
             <div className={row("ascvd")}>
               <div className="font-bold text-ink">Clinical ASCVD</div>
-              <div>Lowest tolerated statin dose plus bempedoic acid, ezetimibe, or a PCSK9 mAb, alone or combined<Cor>COR 1</Cor>. If still above goal and a mAb is not an option, inclisiran<Cor>2a</Cor>.</div>
+              <div>Lowest tolerated statin dose plus bempedoic acid, ezetimibe, or a PCSK9 mAb, alone or combined<Cor>COR 1</Cor>. If still above goal and a mAb is not an option, inclisiran<Cor>COR 2a</Cor>.</div>
             </div>
             <div className={row("high")}>
               <div className="font-bold text-ink">No ASCVD, high risk <span className="font-normal text-faint">PREVENT-ASCVD ≥10%, CAC ≥300, or diabetes</span></div>
-              <div>Bempedoic acid and/or ezetimibe to LDL-C &lt;70<Cor>COR 1</Cor>, then a PCSK9 mAb if not at goal<Cor>COR 1</Cor>.</div>
+              <div>Bempedoic acid and/or ezetimibe to LDL-C below {L(70)}<Cor>COR 1</Cor>, then a PCSK9 mAb if not at goal<Cor>COR 1</Cor>.</div>
             </div>
             <div className={row("mid")}>
-              <div className="font-bold text-ink">No ASCVD, PREVENT-ASCVD 3–&lt;10%</div>
-              <div>Ezetimibe and/or bempedoic acid to LDL-C &lt;100 may be reasonable<Cor>2b</Cor>. CAC if the decision is uncertain<Cor>2b</Cor>.</div>
+              <div className="font-bold text-ink">No ASCVD, PREVENT-ASCVD 3 to &lt;10%</div>
+              <div>Ezetimibe and/or bempedoic acid to LDL-C below {L(100)} may be reasonable<Cor>COR 2b</Cor>. CAC if the decision is uncertain<Cor>COR 2b</Cor>.</div>
             </div>
             {group === "severe" && (
               <div className={row("severe")}>
-                <div className="font-bold text-ink">LDL-C ≥190</div>
+                <div className="font-bold text-ink">LDL-C ≥{L(190)}</div>
                 <div>The same agents (ezetimibe, a PCSK9 mAb, and/or bempedoic acid) to the goal set on this tab<Cor>COR 1</Cor>.</div>
               </div>
             )}
@@ -85,24 +82,24 @@ export function StatinIntolerance({ onClose, group }) {
           <Fx r="PO" k="Bempedoic acid + ezetimibe" v="≈38%" />
           <Fx r="SC" k="Evolocumab or alirocumab" v="≈45–55%" />
         </div>
-        <div className="text-[10px] text-muted mt-1.5 leading-snug">
+        <div className="text-[12px] text-muted mt-1.5 leading-snug">
           Bempedoic acid is the only agent with an outcomes trial in statin-intolerant patients (CLEAR Outcomes, n = 13,970): MACE HR 0.87 (95% CI 0.79–0.96), gout 3.1% vs 2.1%, cholelithiasis 2.2% vs 1.2%. Enlicitide has no statin-intolerant or outcomes data yet.
         </div>
       </div>
 
-      <div className="text-[10.5px] text-muted leading-snug border-t border-line pt-2">
+      <div className="text-[12px] text-muted leading-snug border-t border-line pt-2">
         <b className="text-red-700 dark:text-red-400">Skip:</b> coenzyme Q10 (COR 3: No Benefit). Vitamin D did not prevent muscle symptoms in the one RCT. Replace it only if deficient. <b>Refer</b> to a lipid specialist if no regimen is tolerated or the goal is not reached.
       </div>
 
       <div className="border-t border-line pt-2">
         <button type="button" onClick={() => setAace(p => !p)} aria-expanded={aace}
-          className="flex items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-ink cursor-pointer py-0.5">
+          className="flex items-center gap-1.5 min-h-[44px] text-[12px] font-semibold text-muted hover:text-ink cursor-pointer">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
             className={`transition-transform duration-150 ${aace ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
           Where AACE 2025 differs
         </button>
         {aace && (
-          <div className="panel-in mt-1.5 space-y-1 text-[10.5px] text-body leading-snug">
+          <div className="panel-in mt-1.5 space-y-1 text-[12px] text-body leading-snug">
             <div><b>CK cut-off:</b> AACE stops the statin at CK &gt;5× ULN (managed as mild if &lt;3×). ACC/AHA: ≥10× with severe symptoms. ESC/EAS: 4× and 10×.</div>
             <div><b>Bempedoic acid:</b> AACE suggests it for statin-intolerant patients with ASCVD or at increased risk (conditional, moderate certainty). ACC/AHA: COR 1. ESC/EAS: Class I.</div>
             <div><b>PCSK9 mAb without ASCVD:</b> AACE suggests against when other agents are tolerated. ACC/AHA: COR 1 for high-risk primary prevention not at goal.</div>

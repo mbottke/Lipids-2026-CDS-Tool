@@ -506,17 +506,17 @@ assert(lpaInterpret(124).lv === "Normal", "Lp(a) 124 → Normal");
 assert(lpaInterpret(125).lv === "Elevated", "Lp(a) 125 → Elevated (exact boundary)");
 assert(lpaInterpret(200).lv === "Elevated", "Lp(a) 200 → Elevated");
 assert(lpaInterpret(249).lv === "Elevated", "Lp(a) 249 → Elevated");
-assert(lpaInterpret(250).lv === "Very High", "Lp(a) 250 → Very High (exact boundary)");
-assert(lpaInterpret(400).lv === "Very High", "Lp(a) 400 → Very High");
+assert(lpaInterpret(250).lv === "Very high", "Lp(a) 250 → Very high (exact boundary)");
+assert(lpaInterpret(400).lv === "Very high", "Lp(a) 400 → Very high");
 
 // ApoB — goal pairs with the LDL-C goal (Figure 1): <100 ↔ <90, <70 ↔ <70, <55 ↔ <55
 assert(apoBInterpret("") === null, "ApoB empty → null");
-assert(apoBInterpret(89, 100).lv === "At Goal", "ApoB 89, LDL goal <100 → at goal (<90)");
-assert(apoBInterpret(90, 100).lv === "Above Goal", "ApoB 90, LDL goal <100 → above goal (exact boundary)");
-assert(apoBInterpret(69, 70).lv === "At Goal", "ApoB 69, LDL goal <70 → at goal");
-assert(apoBInterpret(84, 70).lv === "Above Goal", "ApoB 84, LDL goal <70 → above goal (<70)");
-assert(apoBInterpret(54, 55).lv === "At Goal", "ApoB 54, LDL goal <55 → at goal");
-assert(apoBInterpret(60, 55).lv === "Above Goal", "ApoB 60, LDL goal <55 → above goal (<55)");
+assert(apoBInterpret(89, 100).lv === "At goal", "ApoB 89, LDL goal <100 → at goal (<90)");
+assert(apoBInterpret(90, 100).lv === "Above goal", "ApoB 90, LDL goal <100 → above goal (exact boundary)");
+assert(apoBInterpret(69, 70).lv === "At goal", "ApoB 69, LDL goal <70 → at goal");
+assert(apoBInterpret(84, 70).lv === "Above goal", "ApoB 84, LDL goal <70 → above goal (<70)");
+assert(apoBInterpret(54, 55).lv === "At goal", "ApoB 54, LDL goal <55 → at goal");
+assert(apoBInterpret(60, 55).lv === "Above goal", "ApoB 60, LDL goal <55 → above goal (<55)");
 assert(apoBInterpret(130, 70).c === "red", "ApoB 130 above goal → red");
 // No treatment goal: risk-enhancer threshold ≥120 (Table 13)
 assert(apoBInterpret(119).lv === "Not Elevated", "ApoB 119, no goal → not elevated");

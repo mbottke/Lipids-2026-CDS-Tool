@@ -13,11 +13,11 @@
 export const DLCN_GROUPS = [
   { id: "family", l: "Family history", items: [
     { id: "fam_xanth", pts: 2, l: "1st-degree relative with tendon xanthoma / arcus cornealis", d: "Or a child <18 y with LDL-C >95th percentile" },
-    { id: "fam_cad",   pts: 1, l: "1st-degree relative with premature CAD / vascular disease", d: "Male <55 y, female <60 y, or a relative with LDL-C >95th percentile" },
+    { id: "fam_cad",   pts: 1, l: "1st-degree relative with premature CAD / vascular disease", d: "Men <55 y, women <60 y, or a relative with LDL-C >95th percentile" },
   ]},
   { id: "clinical", l: "Patient history", items: [
-    { id: "pt_cad", pts: 2, l: "Premature coronary artery disease", d: "Male <55 y, female <60 y" },
-    { id: "pt_vasc", pts: 1, l: "Premature cerebral or peripheral vascular disease", d: "Male <55 y, female <60 y" },
+    { id: "pt_cad", pts: 2, l: "Premature coronary artery disease", d: "Men <55 y, women <60 y" },
+    { id: "pt_vasc", pts: 1, l: "Premature cerebral or peripheral vascular disease", d: "Men <55 y, women <60 y" },
   ]},
   { id: "exam", l: "Physical exam", items: [
     { id: "ex_xanth", pts: 6, l: "Tendon xanthoma", d: "Achilles, extensor tendons of hands" },

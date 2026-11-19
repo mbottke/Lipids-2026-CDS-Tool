@@ -19,32 +19,20 @@ const ROWS = [
   { k: "Exercise ≥150 min/week", d: "Aerobic plus resistance 2 days/week", v: "≈7 mg/dL" },
 ];
 
-function Row({ k, d, v, strong }) {
-  return (
-    <div>
-      <div className="flex items-baseline gap-2">
-        <span className={`text-[12px] text-ink shrink-0 ${strong ? "font-bold" : "font-medium"}`}>{k}</span>
-        <div className="flex-1 border-b border-dotted mb-[3px] min-w-[12px]" style={{ borderColor: "var(--ruler)" }} />
-        <span className="font-mono text-[12px] font-semibold text-ink tabular-nums shrink-0">{v}</span>
-      </div>
-      <div className="text-[10.5px] text-faint leading-snug">{d}</div>
-    </div>
-  );
-}
+import { LeaderRow } from "./ui.jsx";
+
+const Row = ({ k, d, v, strong }) => <LeaderRow label={k} value={v} sub={d} strong={strong} />;
 
 export function LifestyleLDL() {
   return (
-    <div className="mt-1">
-      <div className="flex justify-between text-[10px] text-faint mb-1">
-        <span>Intervention</span><span>Expected LDL-C reduction</span>
-      </div>
-      <div className="space-y-1.5 pl-2 border-l-2 border-line">
+    <div>
+      <div className="space-y-1.5">
         {ROWS.map(r => <Row key={r.k} {...r} />)}
         <div className="border-t border-line pt-1.5">
           <Row strong k="All four diet changes together" d="Portfolio pattern, free-living" v="12–15%" />
         </div>
       </div>
-      <div className="mt-1.5 text-[10.5px] text-muted leading-snug">
+      <div className="mt-1.5 text-[12px] text-muted leading-snug">
         <b className="text-red-700 dark:text-red-400">Raises LDL-C:</b> ketogenic or high-saturated-fat low-carb diets (can reach ≥190), trans fat, unfiltered coffee.{" "}
         <b>No LDL-C effect:</b> smoking cessation, alcohol reduction. Still do both.{" "}
         <b>Skip:</b> supplements, including red yeast rice, fish oil, garlic (COR 3: No Benefit).

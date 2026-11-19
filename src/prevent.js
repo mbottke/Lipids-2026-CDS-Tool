@@ -253,8 +253,8 @@ export function calcPREVENT30HF(inputs) {
 export function riskCat10(r) {
   if (r === null) return null;
   if (r < 3)  return { label: "Low",          color: "#15803d", darkColor: "#55b385", rank: 1, range: "<3%" };
-  if (r < 5)  return { label: "Borderline",   color: "#a16207", darkColor: "#d9a94e", rank: 2, range: "3–<5%" };
-  if (r < 10) return { label: "Intermediate", color: "#c2410c", darkColor: "#e8875e", rank: 3, range: "5–<10%" };
+  if (r < 5)  return { label: "Borderline",   color: "#a16207", darkColor: "#d9a94e", rank: 2, range: "3 to <5%" };
+  if (r < 10) return { label: "Intermediate", color: "#c2410c", darkColor: "#e8875e", rank: 3, range: "5 to <10%" };
   return         { label: "High",          color: "#b91c1c", darkColor: "#e2635e", rank: 4, range: "≥10%" };
 }
 

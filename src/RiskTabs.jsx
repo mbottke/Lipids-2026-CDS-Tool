@@ -16,19 +16,19 @@ export function AscvdTab({ si, ldl, setLdl, major, toggleMajor, feat, toggleFeat
   const why55 = status.vhr ? why : (other.ckd || ckdAuto) ? "ASCVD with CKD stage ≥3" : "ASCVD with LDL-C ≥190 or HeFH";
   return (
     <Card title="Clinical ASCVD risk level">
-      <p className="text-[11px] text-muted mb-3">All ASCVD: high-intensity statin. Classification sets the LDL-C target.</p>
+      <p className="text-[12px] text-muted mb-3">All clinical ASCVD: high-intensity statin. The risk level sets the LDL-C goal.</p>
       <SINum si={si} factor={CHOL_F} phSI="Current" label="Current LDL-C" unit="mg/dL" value={ldl} on={setLdl} min={0} max={400} ph="Current" />
 
       <div className="mt-3 space-y-2">
         <GoalTier active={goal55} ldl={chol(55, si)} nh={chol(85, si)}>
           <div className={`text-[14px] font-bold leading-tight ${goal55 ? "text-red-800 dark:text-red-300" : "text-ink"}`}>Very high risk</div>
-          <div className="text-[11px] text-muted mt-0.5">Two or more major events, or one major event plus two or more high-risk features. Also ASCVD with CKD stage ≥3, LDL-C ≥190, or HeFH.</div>
-          {goal55 && <div className="text-[11px] font-semibold text-ink mt-1">{why55}</div>}
+          <div className="text-[12px] text-muted mt-0.5">Two or more major events, or one major event plus two or more high-risk features. Also ASCVD with CKD stage ≥3, LDL-C ≥190, or HeFH.</div>
+          {goal55 && <div className="text-[12px] font-semibold text-ink mt-1">{why55}</div>}
         </GoalTier>
         <GoalTier active={!goal55} ldl={chol(70, si)} nh={chol(100, si)}>
           <div className="text-[14px] font-bold text-ink leading-tight">Not very high risk</div>
-          <div className="text-[11px] text-muted mt-0.5">Lowering further to &lt;{chol(55, si)} (non-HDL &lt;{chol(85, si)}) is reasonable.</div>
-          {!goal55 && <div className="text-[11px] font-semibold text-ink mt-1">{why}</div>}
+          <div className="text-[12px] text-muted mt-0.5">Lowering further to &lt;{chol(55, si)} (non-HDL-C &lt;{chol(85, si)}) is reasonable.</div>
+          {!goal55 && <div className="text-[12px] font-semibold text-ink mt-1">{why}</div>}
         </GoalTier>
       </div>
 
@@ -61,17 +61,14 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
   const riskHigh = riskKnown ? risk10 >= 10 : !!f.prevent;
   return (
     <Card title="Diabetes pathway">
-      <div className="bg-accent-soft border border-edge rounded-lg p-3 mb-3">
-        <div className="text-[14px] font-bold text-accent">Statin at age 40–75, whatever the risk estimate</div>
-        <div className="text-[11px] text-body mt-1">Moderate intensity for everyone. High intensity when a factor below applies. The same floor applies to CKD stage ≥3 and to HIV on stable antiretroviral therapy.</div>
-      </div>
+      <p className="text-[12px] text-muted mb-3">Statin at age 40–75, whatever the risk estimate. Moderate intensity for everyone, high intensity when a factor below applies. The same floor applies to CKD stage ≥3 and to HIV on stable antiretroviral therapy.</p>
       <div className="grid grid-cols-2 gap-3">
         <Num label="Age" unit="yr" value={age} on={setAge} min={20} max={100} ph="40–75" />
         <SINum si={si} factor={CHOL_F} phSI="Current" label="Current LDL-C" unit="mg/dL" value={ldl} on={setLdl} min={0} max={400} ph="Current" />
       </div>
 
       {(tier === "young" || tier === "older") && (
-        <div className="panel-in mt-3 rounded-lg border border-line bg-surface p-3 text-[11px] text-body leading-snug">
+        <div className="panel-in mt-3 rounded-lg border border-line bg-surface p-3 text-[12px] text-body leading-snug">
           {tier === "young"
             ? <>Age {a}: the 40–75 tiers below do not apply. A moderate-intensity statin may be reasonable with a diabetes-specific risk enhancer. From age 30, use PREVENT-ASCVD on the Primary tab.</>
             : <>Age {a}: the 40–75 tiers below do not apply. Starting a moderate-intensity statin may be reasonable after a benefit-risk discussion when life expectancy is at least 2.5 years. Continue a statin that is already tolerated.</>}
@@ -83,11 +80,11 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
         <div className="space-y-2">
           <GoalTier active={tier === "base"} ldl={chol(100, si)} nh={chol(130, si)}>
             <div className="text-[14px] font-bold text-ink leading-tight">Diabetes alone</div>
-            <div className="text-[11px] text-muted mt-0.5">Moderate-intensity statin, 30–49% LDL-C reduction.</div>
+            <div className="text-[12px] text-muted mt-0.5">Moderate-intensity statin, 30–49% LDL-C reduction.</div>
           </GoalTier>
           <GoalTier active={tier === "high"} ldl={chol(70, si)} nh={chol(100, si)}>
             <div className="text-[14px] font-bold text-ink leading-tight">With added risk</div>
-            <div className="text-[11px] text-muted mt-0.5 mb-1.5">High-intensity statin, ≥50% reduction, with any one of:</div>
+            <div className="text-[12px] text-muted mt-0.5 mb-1.5">High-intensity statin, ≥50% reduction, with any one of:</div>
             <div className="space-y-1">
               <CheckRow compact checked={!!f.rf} on={() => toggleF("rf")}
                 label="Multiple ASCVD risk factors"
@@ -102,7 +99,7 @@ export function DiabetesTab({ si, age, setAge, ldl, setLdl, enhs, toggleEnh, enh
                   label="PREVENT-ASCVD ≥10%" sub="Check here, or complete the Primary tab inputs to calculate it" />
               )}
             </div>
-            <div className="text-[10.5px] text-faint mt-1.5 leading-snug">At PREVENT-ASCVD ≥10%, adding ezetimibe or a PCSK9 mAb to reach the goal may be reasonable.</div>
+            <div className="text-[12px] text-faint mt-1.5 leading-snug">At PREVENT-ASCVD ≥10%, adding ezetimibe or a PCSK9 mAb to reach the goal may be reasonable.</div>
           </GoalTier>
         </div>
       </div>

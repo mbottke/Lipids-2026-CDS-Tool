@@ -51,7 +51,7 @@ export function recSecondary({ major = {}, feat = {}, ckd = false, severe = fals
   if (ckd) return { g: G55, int: "high", esc: true, clr: "red", vhr: false,
     txt: "ASCVD with CKD stage ≥3. High-intensity statin, with ezetimibe and/or a PCSK9 mAb as needed, to LDL below 55 mg/dL." };
   if (severe) return { g: G55, int: "high", esc: true, clr: "red", vhr: false,
-    txt: "ASCVD with LDL ≥190 or HeFH. High-intensity statin plus nonstatin therapy to LDL below 55 mg/dL." };
+    txt: "ASCVD with LDL-C ≥190 or HeFH. High-intensity statin plus nonstatin therapy to LDL below 55 mg/dL." };
   return { g: G70, int: "high", esc: true, clr: "orange", vhr: false,
     txt: "Clinical ASCVD, not very high risk. High-intensity statin to LDL below 70 mg/dL. Lowering further to below 55 is reasonable." };
 }
@@ -98,11 +98,11 @@ export function recSevere(factors = {}) {
   const sg = severeGoal(factors);
   const g = { ldl: sg.ldl, nh: sg.nh, p: 50 };
   if (sg.tier === "ascvd") return { g, int: "high", esc: true, clr: "red", tier: sg.tier,
-    txt: "LDL ≥190 with clinical ASCVD. High-intensity statin plus nonstatin therapy to LDL below 55 mg/dL." };
+    txt: "LDL-C ≥190 with clinical ASCVD. High-intensity statin plus nonstatin therapy to LDL below 55 mg/dL." };
   if (sg.tier === "enhanced") return { g, int: "high", esc: true, clr: "red", tier: sg.tier,
-    txt: "LDL ≥190 with HeFH, additional ASCVD risk factors, or coronary calcification. High-intensity statin plus nonstatin therapy to LDL below 70 mg/dL." };
+    txt: "LDL-C ≥190 with HeFH, additional ASCVD risk factors, or coronary calcification. High-intensity statin plus nonstatin therapy to LDL below 70 mg/dL." };
   return { g, int: "high", esc: true, clr: "red", tier: sg.tier,
-    txt: "LDL ≥190. High-intensity statin, adding nonstatin therapy to LDL below 100 mg/dL. Evaluate for familial hypercholesterolemia." };
+    txt: "LDL-C ≥190. High-intensity statin, adding nonstatin therapy to LDL below 100 mg/dL. Evaluate for familial hypercholesterolemia." };
 }
 
 // ── Primary prevention, LDL-C 70–189 (§4.2.3.6, §4.2.3.7, §4.2.7) ─────────────
@@ -147,11 +147,11 @@ export function recPrimary({ risk10 = null, risk30 = null, age = "", ldl = "", e
     if (risk10 >= 10) return { g: G70, int: "high", esc: true, clr: "red", src: "risk",
       txt: "High 10-year risk (≥10%). High-intensity statin to LDL below 70 mg/dL." };
     if (risk10 >= 5) return { g: G100(30), int: "moderate", esc: false, clr: "amber", src: "risk",
-      txt: "Intermediate risk (5–<10%). At least a moderate-intensity statin to LDL below 100 mg/dL, high-intensity at the upper end of the range." };
+      txt: "Intermediate risk (5 to <10%). At least a moderate-intensity statin to LDL below 100 mg/dL, high-intensity at the upper end of the range." };
     if (risk10 >= 3 && enhCount > 0) return { g: G100(30), int: "moderate", esc: false, clr: "amber", src: "risk",
-      txt: `Borderline risk with ${enhCount} risk enhancer${enhCount > 1 ? "s" : ""}. A moderate-intensity statin is reasonable, with an LDL goal below 100 mg/dL.` };
+      txt: `Borderline risk (3 to <5%) with ${enhCount} risk enhancer${enhCount > 1 ? "s" : ""}. A moderate-intensity statin to LDL below 100 mg/dL is reasonable.` };
     if (risk10 >= 3) return { g: G100(30), int: "lifestyle", esc: false, clr: "blue", src: "risk",
-      txt: "Borderline risk (3–<5%). Lifestyle optimization. A moderate-intensity statin is reasonable if risk enhancers are present or after shared decision-making." };
+      txt: "Borderline risk (3 to <5%). Lifestyle optimization. A moderate-intensity statin is reasonable if risk enhancers are present or after shared decision-making." };
     // Low 10-yr risk: 30-yr risk and LDL-C decide (§4.2.3.7 recs 2–3), ages 30–59
     const young = a !== null && a >= 30 && a <= 59;
     const ldlHigh = !blank(ldl) && Number(ldl) >= 160 && Number(ldl) < 190;
@@ -168,7 +168,7 @@ export function recPrimary({ risk10 = null, risk30 = null, age = "", ldl = "", e
   if (mid && (dm || ckd3) && (r.int === "none" || r.int === "lifestyle")) {
     const why = dm && ckd3 ? "Diabetes and CKD stage ≥3" : dm ? "Diabetes" : "CKD stage ≥3";
     r = { g: G100(30), int: "moderate", esc: false, clr: "amber", src: dm ? "dm" : "ckd",
-      txt: `${why}, age 40 to 75. A moderate-intensity statin${!dm ? " (with or without ezetimibe)" : ""} is indicated whatever the risk estimate, with an LDL goal below 100 mg/dL.` };
+      txt: `${why}, age 40 to 75. Moderate-intensity statin${!dm ? " (with or without ezetimibe)" : ""} to LDL below 100 mg/dL, whatever the risk estimate.` };
   }
   return note ? { ...r, note } : r;
 }
@@ -179,8 +179,8 @@ export function recPrimary({ risk10 = null, risk30 = null, age = "", ldl = "", e
 export function lpaInterpret(val) {
   if (blank(val)) return null;
   const v = Number(val);
-  if (v >= 250) return { lv: "Very High", c: "red", n: "~2× ASCVD risk. Control every modifiable risk factor early. With ASCVD above goal, add a PCSK9 mAb." };
-  if (v >= 125) return { lv: "Elevated", c: "amber", n: "~1.4× ASCVD risk. Counts as a risk enhancer. Control modifiable risk factors early." };
+  if (v >= 250) return { lv: "Very high", c: "red", n: "≈2× ASCVD risk. Control every modifiable risk factor early. With ASCVD above goal, add a PCSK9 mAb." };
+  if (v >= 125) return { lv: "Elevated", c: "amber", n: "≈1.4× ASCVD risk. Counts as a risk enhancer. Control modifiable risk factors early." };
   return { lv: "Normal", c: "emerald", n: "Not a risk enhancer." };
 }
 
@@ -193,8 +193,8 @@ export function apoBInterpret(val, ldlGoal = null) {
   const v = Number(val), goal = apoBGoalFor(ldlGoal);
   if (goal !== null) {
     return v < goal
-      ? { lv: "At Goal", c: "emerald", goal, n: `Below ${goal} mg/dL, the apoB goal paired with LDL-C below ${ldlGoal}.` }
-      : { lv: "Above Goal", c: v >= APOB_ENHANCER ? "red" : "amber", goal, n: `At or above ${goal} mg/dL, the apoB goal paired with LDL-C below ${ldlGoal}. Intensify if LDL-C and non-HDL-C are already at goal.` };
+      ? { lv: "At goal", c: "emerald", goal, n: `Below ${goal} mg/dL, the apoB goal paired with LDL-C below ${ldlGoal}.` }
+      : { lv: "Above goal", c: v >= APOB_ENHANCER ? "red" : "amber", goal, n: `At or above ${goal} mg/dL, the apoB goal paired with LDL-C below ${ldlGoal}. Intensify if LDL-C and non-HDL-C are already at goal.` };
   }
   return v >= APOB_ENHANCER
     ? { lv: "Elevated", c: "amber", goal: null, n: `At or above ${APOB_ENHANCER} mg/dL: counts as a risk enhancer and favors starting therapy.` }
@@ -207,9 +207,34 @@ export function tgAdvice(tg) {
   const v = Number(tg);
   if (v < 150) return null;
   if (v >= 1000) return { sev: "severe",
-    txt: "Severe (≥1000): pancreatitis risk. Fibrate or prescription omega-3 after dietary intervention. Olezarsen if familial chylomicronemia syndrome. Look for secondary causes. Fenofibrate CI: eGFR <30, active liver or gallbladder disease. Never gemfibrozil with a statin." };
+    txt: "Severe (≥1000): pancreatitis risk. Fibrate or prescription omega-3 after dietary intervention. Olezarsen if familial chylomicronemia syndrome. Look for secondary causes. Fenofibrate is contraindicated with eGFR <30 or active liver or gallbladder disease. Never gemfibrozil with a statin." };
   if (v >= 500) return { sev: "severe",
-    txt: "Severe (500–999): a fibrate or prescription omega-3 is reasonable to lower pancreatitis risk after dietary intervention. Look for secondary causes. Fenofibrate CI: eGFR <30, active liver or gallbladder disease. Never gemfibrozil with a statin." };
+    txt: "Severe (500–999): a fibrate or prescription omega-3 is reasonable to lower pancreatitis risk after dietary intervention. Look for secondary causes. Fenofibrate is contraindicated with eGFR <30 or active liver or gallbladder disease. Never gemfibrozil with a statin." };
   return { sev: "moderate",
     txt: "Lifestyle first: less added sugar, alcohol and saturated fat, regular exercise, 5–10% weight loss. The statin decision follows ASCVD risk. Track non-HDL-C or apoB rather than LDL-C. Icosapent ethyl may be reasonable at age ≥50 with ASCVD, or diabetes plus at least one risk factor, once LDL is below 100 on a statin (REDUCE-IT: AF and bleeding signals)." };
+}
+
+// ── Goal status for the plan ─────────────────────────────────────────────────
+// Every goal is written "<N", so "at goal" means strictly below it.
+// ldl and goal are mg/dL. → null when either is missing.
+export function goalStatus(ldl, goal) {
+  if (ldl === "" || ldl === null || ldl === undefined || goal === null || goal === undefined) return null;
+  const v = Number(ldl);
+  if (!Number.isFinite(v) || v <= 0) return null;
+  const above = v - goal;
+  return { atGoal: v < goal, above, needed: above > 0 ? Math.round((above / v) * 100) : 0 };
+}
+
+// ── Plan sentence in the active unit ─────────────────────────────────────────
+// The sentences above are written in mg/dL. In mmol/L mode the LDL-C values in
+// them are converted for display. CAC scores and percentages are left alone.
+const MGDL_PER_MMOL = 38.67;
+export function inUnit(txt, si) {
+  if (!si || !txt) return txt;
+  const c = (n) => (Number(n) / MGDL_PER_MMOL).toFixed(1);
+  return txt
+    .replace(/below (\d+) mg\/dL/g, (_, n) => `below ${c(n)} mmol/L`)
+    .replace(/below (\d+) is reasonable/g, (_, n) => `below ${c(n)} is reasonable`)
+    .replace(/LDL-C ≥(\d+)/g, (_, n) => `LDL-C ≥${c(n)}`)
+    .replace(/LDL-C (\d+)–(\d+)/g, (_, a, b) => `LDL-C ${c(a)}–${c(b)}`);
 }

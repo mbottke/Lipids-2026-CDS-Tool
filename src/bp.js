@@ -53,7 +53,7 @@ export function bpPlan({ sbp, dbp, onTx, cvd10 = null, clinicalCvd = false, dm =
           title: "At goal on therapy",
           detail: cat.id === "elevated" ? "Systolic <120 is encouraged if tolerated. Reassess in 3–6 months." : "Reassess in 3–6 months." }
       : { id: "intensify", tone: "amber",
-          title: "Above goal on therapy: intensify",
+          title: "Above goal on therapy. Intensify",
           detail: "Confirm adherence and home BP, then titrate or add the next class. Reassess monthly until controlled." };
   } else if (cat.id === "stage2") {
     action = { id: "start_two", tone: "red",

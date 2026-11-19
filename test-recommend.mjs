@@ -2,7 +2,7 @@
 // test-recommend.mjs — text and edge behavior of src/recommend.js that the
 // broader test-clinical.mjs suite does not cover.
 
-import { recPrimary, recSecondary, recDiabetes, vhrStatus, cacZeroBlockers, dmTier, tgAdvice, lpaInterpret, VHR_MAJOR, VHR_FEATURES, DM_ENHANCERS } from "./src/recommend.js";
+import { recPrimary, recSecondary, recDiabetes, recSevere, vhrStatus, goalStatus, inUnit, cacZeroBlockers, dmTier, tgAdvice, lpaInterpret, VHR_MAJOR, VHR_FEATURES, DM_ENHANCERS } from "./src/recommend.js";
 
 let pass = 0, fail = 0;
 function eq(actual, expected, name) {
@@ -25,6 +25,37 @@ eq(vhrStatus({ recurrent: true }).majors, 2, "repeat-event row alone stands for 
 eq(vhrStatus({ mi: true, stroke: true, recurrent: true }).majors, 3, "MI + stroke + a repeat → 3 events");
 eq(vhrStatus({ mi: true }, { dm: true, htn: true }).vhr, true, "1 event + 2 high-risk features → very high risk");
 eq(recSecondary({ major: { mi: true, recurrent: true } }).g.ldl, 55, "two prior MIs → LDL goal <55");
+
+console.log("\n═══ Goal status: goals are written <N, so at goal means strictly below ═══");
+eq(goalStatus("", 100), null, "no LDL-C entered → no status");
+eq(goalStatus(null, 100), null, "null LDL-C → no status");
+eq(goalStatus(152, null), null, "no goal → no status");
+eq(goalStatus(99, 100), { atGoal: true, above: -1, needed: 0 }, "99 with goal <100 → at goal");
+eq(goalStatus(100, 100), { atGoal: false, above: 0, needed: 0 }, "100 with goal <100 → not at goal");
+eq(goalStatus(152, 100), { atGoal: false, above: 52, needed: 34 }, "152 with goal <100 → 52 above, 34% reduction needed");
+eq(goalStatus(152, 70), { atGoal: false, above: 82, needed: 54 }, "152 with goal <70 → 82 above, 54% reduction needed");
+
+console.log("\n═══ Plan sentence in mmol/L ═══");
+eq(inUnit("Very high-risk ASCVD. High-intensity statin, then ezetimibe and/or a PCSK9 mAb to LDL below 55 mg/dL.", true),
+   "Very high-risk ASCVD. High-intensity statin, then ezetimibe and/or a PCSK9 mAb to LDL below 1.4 mmol/L.", "goal phrase converts: 55 mg/dL → 1.4 mmol/L");
+eq(inUnit("High-intensity statin to LDL below 70 mg/dL. Lowering further to below 55 is reasonable.", true),
+   "High-intensity statin to LDL below 1.8 mmol/L. Lowering further to below 1.4 is reasonable.", "the second, unit-less goal converts too");
+eq(inUnit("LDL-C ≥190 with clinical ASCVD.", true), "LDL-C ≥4.9 with clinical ASCVD.", "LDL-C threshold converts: 190 → 4.9");
+eq(inUnit("Low 10-year risk (<3%) with LDL-C 160–189.", true), "Low 10-year risk (<3%) with LDL-C 4.1–4.9.", "LDL-C range converts");
+eq(inUnit("CAC 300–999. High-intensity statin to LDL below 70 mg/dL.", true), "CAC 300–999. High-intensity statin to LDL below 1.8 mmol/L.", "CAC scores are left alone");
+eq(inUnit("Diabetes with PREVENT-ASCVD ≥10%.", true), "Diabetes with PREVENT-ASCVD ≥10%.", "percentages are left alone");
+eq(inUnit("to LDL below 55 mg/dL.", false), "to LDL below 55 mg/dL.", "mg/dL mode leaves the sentence as written");
+{ const all = [
+    recSecondary({ major: { mi: true, recurrent: true } }), recSecondary({ major: { mi: true } }), recSecondary({ major: {}, ckd: true }), recSecondary({ major: {}, severe: true }),
+    recDiabetes({ age: 55, enhCount: 0, rf: false, risk10: 5 }), recDiabetes({ age: 55, enhCount: 1, rf: false, risk10: 5 }),
+    recSevere({}), recSevere({ hefh: true }), recSevere({ ascvd: true }),
+    ...[1, 4, 7, 12].map(r => recPrimary({ risk10: r, risk30: 20, age: 50, ldl: 150, enhCount: 0, cac: "", cacPct: "", smoking: false, dm: false, fhx: false, egfr: 90 })),
+    recPrimary({ risk10: 4, risk30: 20, age: 50, ldl: 150, enhCount: 2, cac: "", cacPct: "", smoking: false, dm: false, fhx: false, egfr: 90 }),
+    recPrimary({ risk10: 2, risk30: 8, age: 50, ldl: 170, enhCount: 0, cac: "", cacPct: "", smoking: false, dm: false, fhx: false, egfr: 90 }),
+    ...[150, 500, 1200].map(c => recPrimary({ risk10: 7, risk30: 20, age: 55, ldl: 150, enhCount: 0, cac: c, cacPct: "", smoking: false, dm: false, fhx: false, egfr: 90 })),
+  ].filter(Boolean);
+  const left = all.map(r => inUnit(r.txt, true)).filter(t => /mg\/dL|below \d{2,3}\b|LDL-C (≥|\d)\d{2}/.test(t));
+  eq(left, [], `no mg/dL LDL-C value is left in any of ${all.length} plan sentences`); }
 
 console.log("\n═══ Secondary prevention text ═══");
 eq(/ezetimibe and\/or a PCSK9 mAb/.test(recSecondary({ major: { acs: true, stroke: true } }).txt), true, "VHR: ezetimibe and/or PCSK9 mAb");
