@@ -115,3 +115,27 @@ export function Route({ r }) {
   };
   return <span className={`inline-block align-middle px-1 rounded border text-[9px] font-black tracking-wide leading-[14px] ${s[r] || s.PO}`}>{r}</span>;
 }
+
+// One LDL-C goal tier (used on the LDL ≥190, ASCVD and Diabetes tabs).
+export function GoalTier({ active, ldl, nh, tone="blue", children }) {
+  const tones = {
+    blue:   "border-blue-400 bg-blue-50 dark:border-sky-400/60 dark:bg-sky-500/10",
+    amber:  "border-amber-400 bg-amber-50 dark:border-amber-400/60 dark:bg-amber-500/10",
+    red:    "border-red-400 bg-red-50 dark:border-red-400/60 dark:bg-red-500/10",
+    violet: "border-violet-400 bg-violet-50 dark:border-sky-400/60 dark:bg-sky-500/15",
+  };
+  const num = { blue:"text-blue-700 dark:text-sky-400", amber:"text-amber-700 dark:text-amber-400",
+    red:"text-red-700 dark:text-red-400", violet:"text-violet-700 dark:text-sky-300" };
+  return (
+    <div className={`rounded-lg border-2 p-2.5 transition-colors ${active ? tones[tone] : "border-slate-200 dark:border-[#1a2835] bg-white dark:bg-[#111a24]"}`}>
+      <div className="flex items-start gap-3">
+        <div className="w-[58px] shrink-0 text-center">
+          <div className={`text-[20px] font-black font-mono tabular-nums leading-none ${active ? num[tone] : "text-slate-400 dark:text-[#3d6580]"}`} style={{fontFeatureSettings:'"zero" 0'}}>&lt;{ldl}</div>
+          <div className="text-[9px] font-bold mt-1 text-slate-500 dark:text-[#5a8aaa]">non-HDL &lt;{nh}</div>
+          {active && <div className={`mt-1 text-[8px] font-black uppercase tracking-widest ${num[tone]}`}>Goal</div>}
+        </div>
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    </div>
+  );
+}

@@ -119,9 +119,61 @@ export const PREVENT_30YR_CVD = {
 // this value → drug therapy at stage 1 hypertension.
 export const CVD_BP_TX_THRESHOLD = 7.5;
 
+// ── Heart failure base models ────────────────────────────────────────────────
+// preventr v0.12.2 sysdata.rda, columns `female_heart_failure` / `male_heart_failure`.
+// The only PREVENT base model that uses BMI (and it has no lipid or statin terms).
+// Verified against preventr tests: 50F 8.1% / 39.0%, 50M 10.6% / 42.4%.
+export const PREVENT_10YR_HF = {
+  female: {
+    age: 0.8998235, ageSquared: 0.0, nonHdlC: 0.0, hdlC: 0.0,
+    sbpLt110: -0.4559771, sbpGte110: 0.3576505, dm: 1.0383460,
+    smoking: 0.5839160, bmiLt30: -0.0072294, bmiGte30: 0.2997706,
+    egfrLt60: 0.7451638, egfrGte60: 0.0557087, bpTx: 0.3534442,
+    statin: 0.0, bpTxSbpGte110: -0.0981511, statinNonHdlC: 0.0,
+    ageNonHdlC: 0.0, ageHdlC: 0.0, ageSbpGte110: -0.0946663,
+    ageDm: -0.3581041, ageSmoking: -0.1159453, ageBmiGte30: -0.0038780,
+    ageEgfrLt60: -0.1884289, constant: -4.3104090,
+  },
+  male: {
+    age: 0.8972642, ageSquared: 0.0, nonHdlC: 0.0, hdlC: 0.0,
+    sbpLt110: -0.6811466, sbpGte110: 0.3634461, dm: 0.9237760,
+    smoking: 0.5023736, bmiLt30: -0.0485841, bmiGte30: 0.3726929,
+    egfrLt60: 0.6926917, egfrGte60: 0.0251827, bpTx: 0.2980922,
+    statin: 0.0, bpTxSbpGte110: -0.0497731, statinNonHdlC: 0.0,
+    ageNonHdlC: 0.0, ageHdlC: 0.0, ageSbpGte110: -0.1289201,
+    ageDm: -0.3040924, ageSmoking: -0.1401688, ageBmiGte30: 0.0068126,
+    ageEgfrLt60: -0.1797778, constant: -3.9463910,
+  },
+};
+
+export const PREVENT_30YR_HF = {
+  female: {
+    age: 0.6254374, ageSquared: -0.0983038, nonHdlC: 0.0, hdlC: 0.0,
+    sbpLt110: -0.3919241, sbpGte110: 0.3142295, dm: 0.8330787,
+    smoking: 0.3438651, bmiLt30: 0.0594874, bmiGte30: 0.2525536,
+    egfrLt60: 0.2981642, egfrGte60: 0.0667159, bpTx: 0.3339210,
+    statin: 0.0, bpTxSbpGte110: -0.0893177, statinNonHdlC: 0.0,
+    ageNonHdlC: 0.0, ageHdlC: 0.0, ageSbpGte110: -0.0974299,
+    ageDm: -0.4048550, ageSmoking: -0.1982991, ageBmiGte30: -0.0035619,
+    ageEgfrLt60: -0.1564215, constant: -2.2053790,
+  },
+  male: {
+    age: 0.5681541, ageSquared: -0.1048388, nonHdlC: 0.0, hdlC: 0.0,
+    sbpLt110: -0.4761564, sbpGte110: 0.3032400, dm: 0.6840338,
+    smoking: 0.2656273, bmiLt30: 0.0833107, bmiGte30: 0.2699900,
+    egfrLt60: 0.2541805, egfrGte60: 0.0638923, bpTx: 0.2583631,
+    statin: 0.0, bpTxSbpGte110: -0.0391938, statinNonHdlC: 0.0,
+    ageNonHdlC: 0.0, ageHdlC: 0.0, ageSbpGte110: -0.1269124,
+    ageDm: -0.3273572, ageSmoking: -0.2043019, ageBmiGte30: -0.0182831,
+    ageEgfrLt60: -0.1342618, constant: -1.9575100,
+  },
+};
+
 export const VALID_30YR_AGE_MAX = 59;
-export const DISCORDANCE_RISK10_MAX = 5;
-export const DISCORDANCE_RISK30_MIN = 20;
+// 2026 ACC/AHA Dyslipidemia Guideline §4.2.3.7 rec 3: at low (<3%) 10-yr risk,
+// a 30-yr ASCVD risk ≥10% (ages 30–59) makes a moderate-intensity statin reasonable.
+export const DISCORDANCE_RISK10_MAX = 3;
+export const DISCORDANCE_RISK30_MIN = 10;
 
 function _xbeta(c, { age, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bmi }) {
   const toMmol = (mg) => mg / 38.67;
@@ -131,8 +183,11 @@ function _xbeta(c, { age, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bm
   const sl = (Math.min(sbp, 110) - 110) / 20;
   const sh = (Math.max(sbp, 110) - 130) / 20;
   const d = dm ? 1 : 0, sm = smoking ? 1 : 0, bp = bpTx ? 1 : 0, st = statin ? 1 : 0;
-  const bl = (Math.min(bmi, 30) - 25) / 5;
-  const bh = (Math.max(bmi, 30) - 30) / 5;
+  // BMI enters only the heart-failure model; when blank, a neutral value keeps
+  // the (zero-coefficient) BMI terms of the ASCVD / total CVD models finite.
+  const bmiV = (bmi === "" || bmi === null || bmi === undefined) ? 25 : Number(bmi);
+  const bl = (Math.min(bmiV, 30) - 25) / 5;
+  const bh = (Math.max(bmiV, 30) - 30) / 5;
   const el = (Math.min(egfr, 60) - 60) / -15;
   const eh = (Math.max(egfr, 60) - 90) / -15;
   return c.age*a + c.ageSquared*(a*a) +
@@ -145,8 +200,9 @@ function _xbeta(c, { age, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bm
     c.ageEgfrLt60*(a*el) + c.constant;
 }
 
-function _hasAllInputs({ age, sbp, totalC, hdlC, egfr, bmi }) {
-  return Boolean(age && sbp && totalC && hdlC && egfr && bmi);
+// BMI is not required: it has a zero coefficient in the ASCVD and total CVD models.
+function _hasAllInputs({ age, sbp, totalC, hdlC, egfr }) {
+  return Boolean(age && sbp && totalC && hdlC && egfr);
 }
 
 export function calcPREVENT10(inputs) {
@@ -179,6 +235,21 @@ export function calcPREVENT30CVD(inputs) {
   return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
 }
 
+// Heart failure risk needs BMI in addition to the other inputs.
+export function calcPREVENT10HF(inputs) {
+  if (!_hasAllInputs(inputs) || !inputs.bmi) return null;
+  const x = _xbeta(PREVENT_10YR_HF[inputs.sex], inputs);
+  return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
+}
+
+export function calcPREVENT30HF(inputs) {
+  if (!_hasAllInputs(inputs) || !inputs.bmi) return null;
+  const a = Number(inputs.age);
+  if (a < 30 || a > VALID_30YR_AGE_MAX) return null;
+  const x = _xbeta(PREVENT_30YR_HF[inputs.sex], inputs);
+  return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
+}
+
 export function riskCat10(r) {
   if (r === null) return null;
   if (r < 3)  return { label: "Low",          color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<3%" };
@@ -187,12 +258,13 @@ export function riskCat10(r) {
   return         { label: "High",          color: "#dc2626", bg: "#fef2f2", darkBg: "rgba(220, 38, 38, 0.10)",  range: "≥10%" };
 }
 
+// The guideline defines one 30-yr threshold (≥10%, §4.2.3.7 recs 2–3); it does
+// not define borderline / intermediate / high bands for 30-yr risk.
+export const RISK30_THRESHOLD = 10;
 export function riskCat30(r) {
   if (r === null) return null;
-  if (r < 10) return { label: "Low",          color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<10%" };
-  if (r < 20) return { label: "Borderline",   color: "#ca8a04", bg: "#fefce8", darkBg: "rgba(202, 138, 4, 0.10)",  range: "10–<20%" };
-  if (r < 30) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", darkBg: "rgba(234, 88, 12, 0.10)",  range: "20–<30%" };
-  return         { label: "High",          color: "#dc2626", bg: "#fef2f2", darkBg: "rgba(220, 38, 38, 0.10)",  range: "≥30%" };
+  if (r < RISK30_THRESHOLD) return { label: "Low", color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<10%" };
+  return { label: "Elevated", color: "#ea580c", bg: "#fff7ed", darkBg: "rgba(234, 88, 12, 0.10)", range: "≥10%" };
 }
 
 export function discordance(risk10, risk30, age) {
@@ -202,9 +274,9 @@ export function discordance(risk10, risk30, age) {
   return risk10 < DISCORDANCE_RISK10_MAX && risk30 >= DISCORDANCE_RISK30_MIN;
 }
 
+// BMI is not optimized: it has no effect on the ASCVD models.
 export function optimizedInputs(inputs) {
   const sbp = Math.min(Number(inputs.sbp), 110);
-  const bmi = Math.min(Number(inputs.bmi), 24);
   const hdlC = Math.max(Number(inputs.hdlC), 50);
   const currentNonHdl = Number(inputs.totalC) - Number(inputs.hdlC);
   const targetNonHdl = Math.min(currentNonHdl, 120);
@@ -214,7 +286,6 @@ export function optimizedInputs(inputs) {
     sbp,
     bpTx: false,
     smoking: false,
-    bmi,
     hdlC,
     totalC,
     statin: false,
@@ -238,7 +309,6 @@ export function driverDeltas(inputs) {
     { factor: "bp",      label: "Blood Pressure", override: { sbp: Math.min(Number(inputs.sbp), 110), bpTx: false } },
     { factor: "lipids",  label: "Lipids",         override: _lipidsOverride(inputs) },
     { factor: "smoking", label: "Smoking",        override: { smoking: false } },
-    { factor: "bmi",     label: "BMI",            override: { bmi: Math.min(Number(inputs.bmi), 24) } },
   ];
 
   const out = [];

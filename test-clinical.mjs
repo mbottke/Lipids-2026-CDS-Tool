@@ -9,6 +9,11 @@
 //  - 2026 ACC/AHA Guideline thresholds & recommendations
 // ══════════════════════════════════════════════════════════════════════════════
 
+import {
+  recPrimary, recSecondary, recDiabetes, recSevere, vhrStatus,
+  lpaInterpret as lpaInterpretSrc, apoBInterpret as apoBInterpretSrc, tgAdvice,
+} from "./src/recommend.js";
+
 let pass = 0, fail = 0, total = 0;
 
 function assert(condition, name, detail = "") {
@@ -59,7 +64,9 @@ const PREVENT = {
 };
 
 function calcPREVENT({ age, sex, sbp, bpTx, totalC, hdlC, statin, dm, smoking, egfr, bmi }) {
-  if (!age || !sbp || !totalC || !hdlC || !egfr || !bmi) return null;
+  // BMI is optional: zero coefficient in the ASCVD model (same as src/prevent.js)
+  if (!age || !sbp || !totalC || !hdlC || !egfr) return null;
+  if (bmi === "" || bmi === null || bmi === undefined) bmi = 25;
   const c = PREVENT[sex];
   const toMmol = (mg) => mg / 38.67;
   const a = (age - 55) / 10;
@@ -91,52 +98,17 @@ function riskCat(r) {
   return { label: "High", color: "#dc2626", bg: "#fef2f2", range: "≥10%" };
 }
 
-// Recommendation engine (extracted from App.jsx useMemo)
-function getRec({ tab, risk, enhCount, cac, cacPct, ascvdLevel }) {
-  if (tab === "secondary") {
-    return ascvdLevel === "very_high"
-      ? { g:{ldl:55,nh:85,p:50}, int:"high", esc:true, txt:"Very high-risk ASCVD — high-intensity statin + add-on therapy to LDL <55 mg/dL", clr:"red" }
-      : { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Clinical ASCVD (not very high risk) — high-intensity statin to LDL <70 mg/dL", clr:"amber" };
-  }
-  if (tab === "diabetes") {
-    return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Diabetes (age 40–75) — LLT recommended regardless of LDL; high-intensity statin if additional risk factors", clr:"violet" };
-  }
-  if (tab === "severe") {
-    return { g:{ldl:100,nh:130,p:50}, int:"high", esc:true, txt:"LDL ≥190 — high-intensity statin; evaluate for familial hypercholesterolemia", clr:"red" };
-  }
-  if (risk === null) return null;
-  // CAC override
-  if (cac !== "" && cac !== undefined) {
-    const c = Number(cac), p = cacPct !== "" && cacPct !== undefined ? Number(cacPct) : null;
-    if (c === 0) return { g:null, int:"none", esc:false, txt:"CAC = 0 — Statin may be deferred. Reassess in 5–10 y. Lifestyle optimization.", clr:"emerald" };
-    if (c >= 1000) return { g:{ldl:55,nh:85,p:50}, int:"high", esc:true, txt:"CAC ≥1000 — Treat as very high risk. LDL goal <55.", clr:"red" };
-    if (c >= 100 || (p !== null && p >= 75)) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"CAC ≥100 or ≥75th %ile — High-intensity statin to LDL <70.", clr:"amber" };
-    if (c >= 1) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"CAC 1–99 (<75th %ile) — Moderate-intensity statin to LDL <100.", clr:"blue" };
-  }
-  if (risk >= 10) return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"High 10-year ASCVD risk (≥10%) — High-intensity statin to LDL <70.", clr:"red" };
-  if (risk >= 5) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:"Intermediate risk (5–<10%) — Moderate-intensity statin to LDL <100 after shared decision-making.", clr:"amber" };
-  if (risk >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
-  if (risk >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
-  return { g:null, int:"none", esc:false, txt:"Low risk (<3%) — Lifestyle optimization. Reassess periodically.", clr:"emerald" };
+// Recommendation engine — the app's own module (src/recommend.js)
+function getRec({ tab, risk, risk30 = null, enhCount = 0, cac = "", cacPct = "", ...rest }) {
+  if (tab === "secondary") return recSecondary(rest);
+  if (tab === "diabetes") return recDiabetes({ enhCount, ...rest });
+  if (tab === "severe") return recSevere(rest);
+  return recPrimary({ risk10: risk ?? null, risk30, enhCount, cac, cacPct, ...rest });
 }
 
-// Biomarker interpretation
-function lpaInterpret(val) {
-  if (val === "" || val === undefined) return null;
-  const v = Number(val);
-  if (v >= 250) return { lv:"Very High", c:"red" };
-  if (v >= 125) return { lv:"Elevated", c:"amber" };
-  return { lv:"Normal", c:"emerald" };
-}
-
-function apoBInterpret(val) {
-  if (val === "" || val === undefined) return null;
-  const v = Number(val);
-  if (v >= 130) return { lv:"Very High", c:"red" };
-  if (v >= 100) return { lv:"Elevated", c:"amber" };
-  if (v >= 85) return { lv:"Borderline", c:"blue" };
-  return { lv:"Optimal", c:"emerald" };
-}
+// Biomarker interpretation — the app's own module
+const lpaInterpret = (v) => lpaInterpretSrc(v === undefined ? "" : v);
+const apoBInterpret = (v, goal = null) => apoBInterpretSrc(v === undefined ? "" : v, goal);
 
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -354,7 +326,8 @@ assert(riskCat(15).color === "#dc2626", "High → red (#dc2626)");
 section("5. Recommendation Engine — Pathways");
 
 // Secondary ASCVD: Very High Risk
-const recSec1 = getRec({ tab: "secondary", ascvdLevel: "very_high" });
+// Very high risk = ≥2 major events, or 1 major event + ≥2 high-risk features (guideline §2.1)
+const recSec1 = getRec({ tab: "secondary", major: { acs: true, mi: true } });
 assert(recSec1.g.ldl === 55, "Secondary Very High: LDL goal <55");
 assert(recSec1.g.nh === 85, "Secondary Very High: non-HDL goal <85");
 assert(recSec1.g.p === 50, "Secondary Very High: ≥50% reduction");
@@ -363,19 +336,37 @@ assert(recSec1.esc === true, "Secondary Very High: escalation = true");
 assert(recSec1.clr === "red", "Secondary Very High: red color");
 
 // Secondary ASCVD: Not Very High Risk
-const recSec2 = getRec({ tab: "secondary", ascvdLevel: "not_very_high" });
+const recSec2 = getRec({ tab: "secondary", major: { mi: true }, feat: { dm: true } });
 assert(recSec2.g.ldl === 70, "Secondary Not Very High: LDL goal <70");
 assert(recSec2.g.nh === 100, "Secondary Not Very High: non-HDL goal <100");
 assert(recSec2.int === "high", "Secondary Not Very High: high-intensity statin");
 assert(recSec2.esc === true, "Secondary Not Very High: escalation = true");
 
-// Diabetes
-const recDM = getRec({ tab: "diabetes" });
-assert(recDM.g.ldl === 70, "Diabetes: LDL goal <70");
-assert(recDM.g.nh === 100, "Diabetes: non-HDL goal <100");
-assert(recDM.int === "high", "Diabetes: high-intensity statin");
-assert(recDM.esc === true, "Diabetes: escalation = true");
+assert(vhrStatus({ mi: true }, { dm: true, htn: true }).vhr === true, "VHR: 1 major event + 2 high-risk features");
+assert(vhrStatus({ mi: true }, { dm: true }).vhr === false, "Not VHR: 1 major event + 1 high-risk feature");
+assert(vhrStatus({}, { dm: true, htn: true, smoker: true, age65: true }).vhr === false, "Not VHR: high-risk features without a major event");
+assert(vhrStatus({ stroke: true, pad: true }, {}).vhr === true, "VHR: 2 major events");
+assert(getRec({ tab: "secondary", ckd: true }).g.ldl === 55, "ASCVD + CKD stage ≥3: LDL goal <55 (§4.2.8.8)");
+assert(getRec({ tab: "secondary", severe: true }).g.ldl === 55, "ASCVD + LDL ≥190/HeFH: LDL goal <55 (§4.2.4.3)");
+
+// Diabetes, age 40–75 (§4.2.5): moderate-intensity to <100 for all; high-intensity to <70 with added risk
+const recDM = getRec({ tab: "diabetes", age: 55 });
+assert(recDM.g.ldl === 100, "Diabetes alone: LDL goal <100 (COR 1)");
+assert(recDM.g.nh === 130, "Diabetes alone: non-HDL goal <130");
+assert(recDM.g.p === 30, "Diabetes alone: ≥30% reduction");
+assert(recDM.int === "moderate", "Diabetes alone: moderate-intensity statin");
+assert(recDM.esc === false, "Diabetes alone: no escalation");
 assert(recDM.clr === "violet", "Diabetes: violet color");
+const recDMhi = getRec({ tab: "diabetes", age: 55, rf: true });
+assert(recDMhi.g.ldl === 70 && recDMhi.g.nh === 100, "Diabetes + multiple ASCVD risk factors: LDL <70 / non-HDL <100 (COR 2a)");
+assert(recDMhi.int === "high" && recDMhi.esc === true, "Diabetes + multiple risk factors: high-intensity, escalation");
+assert(getRec({ tab: "diabetes", age: 55, enhCount: 1 }).g.ldl === 70, "Diabetes + diabetes-specific risk enhancer: LDL <70");
+assert(getRec({ tab: "diabetes", age: 55, risk10: 10 }).g.ldl === 70, "Diabetes + PREVENT-ASCVD ≥10%: LDL <70");
+assert(getRec({ tab: "diabetes", age: 55, risk10: 9.9 }).g.ldl === 100, "Diabetes + PREVENT-ASCVD 9.9%: LDL <100");
+assert(getRec({ tab: "diabetes" }).g.ldl === 100, "Diabetes, age not entered: 40–75 default, LDL <100");
+assert(getRec({ tab: "diabetes", age: 32 }).int === "lifestyle", "Diabetes age 20–39 without enhancer: no routine statin");
+assert(getRec({ tab: "diabetes", age: 32, enhCount: 1 }).int === "moderate", "Diabetes age 20–39 with enhancer: moderate may be reasonable");
+assert(getRec({ tab: "diabetes", age: 80 }).int === "moderate", "Diabetes age >75: moderate may be reasonable");
 
 // Severe (LDL ≥190)
 const recSev = getRec({ tab: "severe" });
@@ -425,6 +416,20 @@ assert(recHigh.g.nh === 100, "High: non-HDL goal <100");
 assert(recHigh.g.p === 50, "High: ≥50% reduction");
 assert(recHigh.esc === true, "High: escalation = true");
 
+// Low 10-yr risk, ages 30–59: 30-yr risk ≥10% or LDL-C 160–189 → moderate statin reasonable (§4.2.3.7 rec 3)
+const recLife = getRec({ tab: "primary", risk: 2.0, risk30: 12, age: 42 });
+assert(recLife.int === "moderate" && recLife.g.ldl === 100, "Low 10-yr + 30-yr ≥10% (age 42): moderate statin, LDL <100");
+assert(getRec({ tab: "primary", risk: 2.0, risk30: 9.9, age: 42 }).int === "none", "Low 10-yr + 30-yr 9.9%: lifestyle");
+assert(getRec({ tab: "primary", risk: 2.0, risk30: 5, age: 42, ldl: 165 }).int === "moderate", "Low 10-yr + LDL 165 (age 42): moderate statin");
+assert(getRec({ tab: "primary", risk: 2.0, risk30: null, age: 65, ldl: 165 }).int === "none", "Low 10-yr, age 65: 30-yr rule does not apply");
+
+// Statin indicated whatever the risk estimate, age 40–75: diabetes (§4.2.5), CKD stage ≥3 (§4.2.8.8)
+const recDmLow = getRec({ tab: "primary", risk: 2.0, age: 45, dm: true });
+assert(recDmLow.int === "moderate" && recDmLow.g.ldl === 100, "Primary tab, diabetes age 45, low risk: moderate statin, LDL <100");
+assert(getRec({ tab: "primary", risk: 4.0, age: 50, egfr: 52 }).int === "moderate", "Primary tab, eGFR 52 age 50, borderline: moderate statin");
+assert(getRec({ tab: "primary", risk: 2.0, age: 38, dm: true }).int === "none", "Primary tab, diabetes age 38: floor does not apply");
+assert(getRec({ tab: "primary", risk: 12.0, age: 60, dm: true }).int === "high", "Primary tab, diabetes + high risk: stays high-intensity");
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  TEST 7: CAC OVERRIDE LOGIC
@@ -437,6 +442,18 @@ assert(recCAC0.int === "none", "CAC=0: defer statin");
 assert(recCAC0.g === null, "CAC=0: no specific LDL goal");
 assert(recCAC0.esc === false, "CAC=0: no escalation");
 assert(recCAC0.clr === "emerald", "CAC=0: emerald (reassuring)");
+
+assert(/3–7 years/.test(recCAC0.txt), "CAC=0: repeat CAC in 3–7 years");
+// CAC = 0 does not defer with a higher-risk condition or at high risk (§4.2.3.6 rec 2)
+const recCAC0smk = getRec({ tab: "primary", risk: 7.0, enhCount: 0, cac: 0, cacPct: "", smoking: true });
+assert(recCAC0smk.int === "moderate" && /smoking/.test(recCAC0smk.note), "CAC=0 + current smoking: not deferred");
+assert(getRec({ tab: "primary", risk: 7.0, cac: 0, dm: true, age: 55 }).int === "moderate", "CAC=0 + diabetes age 55: not deferred");
+assert(getRec({ tab: "primary", risk: 7.0, cac: 0, fhx: true }).int === "moderate", "CAC=0 + family history of premature ASCVD: not deferred");
+assert(getRec({ tab: "primary", risk: 12.0, cac: 0 }).int === "high", "CAC=0 at high (≥10%) risk: not deferred");
+
+// CAC 300–999 → <70, with <55 reasonable (§4.2.7 recs 2 and 5)
+const recCAC500 = getRec({ tab: "primary", risk: 4.0, enhCount: 0, cac: 500, cacPct: 90 });
+assert(recCAC500.g.ldl === 70 && /<55 is reasonable/.test(recCAC500.txt), "CAC 500: LDL <70, <55 reasonable");
 
 // CAC 1-99 (<75th %ile) → moderate statin
 const recCAC50 = getRec({ tab: "primary", risk: 7.0, enhCount: 0, cac: 50, cacPct: 60 });
@@ -492,16 +509,18 @@ assert(lpaInterpret(249).lv === "Elevated", "Lp(a) 249 → Elevated");
 assert(lpaInterpret(250).lv === "Very High", "Lp(a) 250 → Very High (exact boundary)");
 assert(lpaInterpret(400).lv === "Very High", "Lp(a) 400 → Very High");
 
-// ApoB
+// ApoB — goal pairs with the LDL-C goal (Figure 1): <100 ↔ <90, <70 ↔ <70, <55 ↔ <55
 assert(apoBInterpret("") === null, "ApoB empty → null");
-assert(apoBInterpret(60).lv === "Optimal", "ApoB 60 → Optimal");
-assert(apoBInterpret(84).lv === "Optimal", "ApoB 84 → Optimal");
-assert(apoBInterpret(85).lv === "Borderline", "ApoB 85 → Borderline (exact boundary)");
-assert(apoBInterpret(99).lv === "Borderline", "ApoB 99 → Borderline");
-assert(apoBInterpret(100).lv === "Elevated", "ApoB 100 → Elevated (exact boundary)");
-assert(apoBInterpret(129).lv === "Elevated", "ApoB 129 → Elevated");
-assert(apoBInterpret(130).lv === "Very High", "ApoB 130 → Very High (exact boundary)");
-assert(apoBInterpret(200).lv === "Very High", "ApoB 200 → Very High");
+assert(apoBInterpret(89, 100).lv === "At Goal", "ApoB 89, LDL goal <100 → at goal (<90)");
+assert(apoBInterpret(90, 100).lv === "Above Goal", "ApoB 90, LDL goal <100 → above goal (exact boundary)");
+assert(apoBInterpret(69, 70).lv === "At Goal", "ApoB 69, LDL goal <70 → at goal");
+assert(apoBInterpret(84, 70).lv === "Above Goal", "ApoB 84, LDL goal <70 → above goal (<70)");
+assert(apoBInterpret(54, 55).lv === "At Goal", "ApoB 54, LDL goal <55 → at goal");
+assert(apoBInterpret(60, 55).lv === "Above Goal", "ApoB 60, LDL goal <55 → above goal (<55)");
+assert(apoBInterpret(130, 70).c === "red", "ApoB 130 above goal → red");
+// No treatment goal: risk-enhancer threshold ≥120 (Table 13)
+assert(apoBInterpret(119).lv === "Not Elevated", "ApoB 119, no goal → not elevated");
+assert(apoBInterpret(120).lv === "Elevated", "ApoB 120, no goal → risk enhancer (exact boundary)");
 
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -515,7 +534,7 @@ assert(calcPREVENT({ age: 55, sex: "male", sbp: "", bpTx: false, totalC: 200, hd
 assert(calcPREVENT({ age: 55, sex: "male", sbp: 120, bpTx: false, totalC: "", hdlC: 50, statin: false, dm: false, smoking: false, egfr: 90, bmi: 25 }) === null, "Missing totalC → null");
 assert(calcPREVENT({ age: 55, sex: "male", sbp: 120, bpTx: false, totalC: 200, hdlC: "", statin: false, dm: false, smoking: false, egfr: 90, bmi: 25 }) === null, "Missing HDL-C → null");
 assert(calcPREVENT({ age: 55, sex: "male", sbp: 120, bpTx: false, totalC: 200, hdlC: 50, statin: false, dm: false, smoking: false, egfr: "", bmi: 25 }) === null, "Missing eGFR → null");
-assert(calcPREVENT({ age: 55, sex: "male", sbp: 120, bpTx: false, totalC: 200, hdlC: 50, statin: false, dm: false, smoking: false, egfr: 90, bmi: "" }) === null, "Missing BMI → null");
+assert(calcPREVENT({ age: 55, sex: "male", sbp: 120, bpTx: false, totalC: 200, hdlC: 50, statin: false, dm: false, smoking: false, egfr: 90, bmi: "" }) !== null, "Missing BMI → still calculates (BMI is not in the ASCVD model)");
 
 // Extreme but valid boundary values
 const extreme1 = calcPREVENT({
@@ -562,7 +581,7 @@ function getLadderSteps(rec) {
     { s:2, show: rec.int !== "none" && rec.int !== "lifestyle" },  // Statin
     { s:3, show: rec.esc },                                       // Ezetimibe
     { s:4, show: rec.esc },                                       // Bempedoic/PCSK9i
-    { s:5, show: rec.esc && rec.g?.ldl <= 55 },                   // Inclisiran
+    { s:5, show: rec.esc },                                       // Enlicitide (± inclisiran)
   ].filter(s => s.show);
 }
 
@@ -578,17 +597,17 @@ assert(ladderBord.length === 1, `Borderline no enhancers: 1 step, got ${ladderBo
 const ladderInter = getLadderSteps(recInter);
 assert(ladderInter.length === 2, `Intermediate: 2 steps, got ${ladderInter.length}`);
 
-// High → lifestyle + statin + ezetimibe + PCSK9i (4 steps, no inclisiran since LDL goal is 70 not 55)
+// High → lifestyle + statin + ezetimibe + bempedoic acid/PCSK9 mAb + enlicitide (5 steps)
 const ladderHigh = getLadderSteps(recHigh);
-assert(ladderHigh.length === 4, `High: 4 steps (no inclisiran since goal=70), got ${ladderHigh.length}`);
+assert(ladderHigh.length === 5, `High: 5 steps, got ${ladderHigh.length}`);
 
 // Very high ASCVD → all 5 steps (inclisiran since LDL goal ≤55)
 const ladderVH = getLadderSteps(recSec1);
 assert(ladderVH.length === 5, `Very high ASCVD: 5 steps (incl. inclisiran, goal=55), got ${ladderVH.length}`);
 
-// Secondary not very high → 4 steps (no inclisiran since goal=70)
+// Secondary not very high → 5 steps
 const ladderNVH = getLadderSteps(recSec2);
-assert(ladderNVH.length === 4, `Secondary not very high: 4 steps (goal=70), got ${ladderNVH.length}`);
+assert(ladderNVH.length === 5, `Secondary not very high: 5 steps, got ${ladderNVH.length}`);
 
 // CAC≥1000 → 5 steps (LDL goal=55, so inclisiran shown)
 const ladderCAC1k = getLadderSteps(recCAC1500);
@@ -620,10 +639,7 @@ assert(calcPctNeeded("", 70) === null, "Empty LDL: null");
 // ══════════════════════════════════════════════════════════════════════════════
 section("12. Hypertriglyceridemia Thresholds");
 
-function tgMessage(tg) {
-  if (tg === "" || Number(tg) < 150) return null;
-  return Number(tg) >= 500 ? "severe" : "moderate";
-}
+const tgMessage = (tg) => tgAdvice(tg)?.sev ?? null;
 
 assert(tgMessage("") === null, "Empty TG → no message");
 assert(tgMessage(100) === null, "TG 100 → no message");
@@ -756,7 +772,8 @@ assert(recInter.g.nh === recInter.g.ldl + 30, "non-HDL = LDL + 30 (intermediate 
 
 // Verify statin intensities match guidelines
 assert(recSec1.int === "high", "Guideline: ASCVD → high-intensity (Class I)");
-assert(recDM.int === "high", "Guideline: DM → high-intensity (Class I)");
+assert(recDM.int === "moderate", "Guideline: DM 40–75 → moderate-intensity (COR 1)");
+assert(recDMhi.int === "high", "Guideline: DM + multiple risk factors → high-intensity (COR 2a)");
 assert(recSev.int === "high", "Guideline: LDL≥190 → high-intensity (Class I)");
 assert(recHigh.int === "high", "Guideline: ≥10% → high-intensity (Class I)");
 assert(recInter.int === "moderate", "Guideline: 5-<10% → moderate-intensity (Class IIa)");

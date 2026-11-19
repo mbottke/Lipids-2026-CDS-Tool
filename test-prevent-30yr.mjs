@@ -86,26 +86,23 @@ eq(calcPREVENT30({ ...validInputs, sbp: "" }), null, "missing sbp returns null")
 eq(calcPREVENT30({ ...validInputs, totalC: "" }), null, "missing totalC returns null");
 eq(calcPREVENT30({ ...validInputs, hdlC: "" }), null, "missing hdlC returns null");
 eq(calcPREVENT30({ ...validInputs, egfr: "" }), null, "missing egfr returns null");
-eq(calcPREVENT30({ ...validInputs, bmi: "" }), null, "missing bmi returns null");
+eq(calcPREVENT30({ ...validInputs, bmi: "" }), calcPREVENT30(validInputs), "missing bmi: same result (BMI is not in the ASCVD model)");
 
-console.log("\n═══ riskCat30 ═══");
+console.log("\n═══ riskCat30 (guideline threshold: ≥10%) ═══");
 eq(riskCat30(null), null, "null input returns null");
-eq(riskCat30(5).label,  "Low",          "5%  → Low");
-eq(riskCat30(9.9).label, "Low",         "9.9% → Low");
-eq(riskCat30(10).label, "Borderline",   "10% → Borderline");
-eq(riskCat30(19.9).label, "Borderline", "19.9% → Borderline");
-eq(riskCat30(20).label, "Intermediate", "20% → Intermediate");
-eq(riskCat30(29.9).label, "Intermediate", "29.9% → Intermediate");
-eq(riskCat30(30).label, "High",         "30% → High");
-eq(riskCat30(50).label, "High",         "50% → High");
+eq(riskCat30(5).label,   "Low",      "5%  → Low");
+eq(riskCat30(9.9).label, "Low",      "9.9% → Low");
+eq(riskCat30(10).label,  "Elevated", "10% → Elevated (exact boundary)");
+eq(riskCat30(25).label,  "Elevated", "25% → Elevated");
+eq(riskCat30(50).range,  "≥10%",     "50% → range ≥10%");
 
-console.log("\n═══ discordance ═══");
-eq(DISCORDANCE_RISK10_MAX, 5,  "DISCORDANCE_RISK10_MAX = 5");
-eq(DISCORDANCE_RISK30_MIN, 20, "DISCORDANCE_RISK30_MIN = 20");
-eq(discordance(2,  25, 35), true,  "low 10y, high 30y, age 35 → true");
-eq(discordance(4.9, 20, 40), true,  "boundary: just below 5/at 20 → true");
-eq(discordance(5,  25, 35), false, "10y at threshold not below → false");
-eq(discordance(2,  19, 35), false, "30y below threshold → false");
+console.log("\n═══ discordance (low 10-yr <3%, 30-yr ≥10%) ═══");
+eq(DISCORDANCE_RISK10_MAX, 3,  "DISCORDANCE_RISK10_MAX = 3");
+eq(DISCORDANCE_RISK30_MIN, 10, "DISCORDANCE_RISK30_MIN = 10");
+eq(discordance(2,  25, 35), true,  "low 10y, 30y 25%, age 35 → true");
+eq(discordance(2.9, 10, 40), true,  "boundary: just below 3 / at 10 → true");
+eq(discordance(3,  25, 35), false, "10y at threshold not below → false");
+eq(discordance(2,  9.9, 35), false, "30y below threshold → false");
 eq(discordance(2,  25, 60), false, "age 60 → false (out of range)");
 eq(discordance(2,  25, 29), false, "age 29 → false (out of range)");
 eq(discordance(null, 25, 35), false, "null 10y → false");
@@ -124,7 +121,7 @@ eq(opt.egfr, 88, "egfr preserved");
 eq(opt.sbp, 110, "high sbp pulled down to 110");
 eq(opt.bpTx, false, "bpTx forced false");
 eq(opt.smoking, false, "smoking forced false");
-eq(opt.bmi, 24, "high bmi pulled down to 24");
+eq(opt.bmi, 30, "bmi left unchanged (no effect on ASCVD models)");
 eq(opt.statin, false, "statin forced false");
 eq(opt.hdlC, 50, "low HDL raised to 50");
 // non-HDL = totalC - hdlC = 240 - 38 = 202 (high) → cap at 120
@@ -138,7 +135,7 @@ const goodPatient = {
 };
 const optGood = optimizedInputs(goodPatient);
 eq(optGood.sbp, 105, "low sbp preserved (not pulled up to 110)");
-eq(optGood.bmi, 22, "low bmi preserved (not pulled up to 24)");
+eq(optGood.bmi, 22, "bmi left unchanged");
 eq(optGood.hdlC, 70, "good HDL preserved (not pulled down to 50)");
 // non-HDL = 165 - 70 = 95 (already < 120) → preserved at 95
 // totalC = 95 + 70 = 165
@@ -167,6 +164,7 @@ const factorIds = drivers.map(d => d.factor);
 eq(factorIds.includes("bp"),      true, "includes bp");
 eq(factorIds.includes("lipids"),  true, "includes lipids");
 eq(factorIds.includes("smoking"), true, "includes smoking");
+eq(factorIds.includes("bmi"),     false, "BMI is not a driver (zero coefficient in the ASCVD model)");
 
 // sorted descending
 for (let i = 1; i < drivers.length; i++) {

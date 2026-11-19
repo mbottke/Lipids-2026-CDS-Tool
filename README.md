@@ -9,7 +9,8 @@ Built for physician use at the point of care. Mobile-first PWA — add to home s
 - **PREVENT-ASCVD Calculator** — exact coefficients from Khan et al. (Circulation 2024;149:430-449), extracted from the validated `preventr` R package
 - **4 Patient Pathways** — Primary prevention, Secondary (ASCVD), Diabetes, Severe hypercholesterolemia (LDL ≥190)
 - **Full CDS** — LDL/non-HDL goals, treatment escalation ladder, risk enhancers checklist, CAC/Lp(a)/ApoB interpretation
-- **PREVENT total CVD** (ASCVD + heart failure), 10- and 30-year — shown beside ASCVD risk; used only for the blood pressure drug-therapy threshold (≥7.5%)
+- **PREVENT total CVD and heart failure**, 10- and 30-year — shown beside ASCVD risk. Total CVD sets the blood pressure drug-therapy threshold (≥7.5%); BMI is optional and only feeds the heart-failure estimate
+- **Guideline-anchored logic** (`src/recommend.js`) — very-high-risk ASCVD definition, diabetes tiers, CAC rules, 30-year threshold, apoB goals; each rule cites its section
 - **LDL ≥190 workup** — goal tiers (<100 / <70 / <55) with the factors that lower the goal, Dutch Lipid Clinic Network score, genetic testing and cascade screening steps
 - **Treatment ladder extras** — lifestyle LDL-C effects, statin-intolerance pathway, enlicitide (oral PCSK9 inhibitor), PO/SC/IV route labels
 - **Blood pressure card** — 2025 AHA/ACC category, treatment threshold, goal, initial and subsequent agents
@@ -57,6 +58,10 @@ node test-fh.mjs
 
 ```bash
 node test-bp.mjs
+```
+
+```bash
+node test-recommend.mjs
 ```
 
 ```bash
