@@ -61,6 +61,64 @@ export const PREVENT_30YR = {
   },
 };
 
+// ── Total CVD (ASCVD + heart failure) base models ────────────────────────────
+// Same predictors/transforms as the ASCVD models; only the coefficients differ.
+// Extracted from preventr v0.12.2 sysdata.rda (`base_10yr`/`base_30yr`,
+// columns `female_total_cvd` / `male_total_cvd`).
+// Verified against preventr tests ("Base model works"): 50F 14.7% / 53.0%,
+// 50M 16.3% / 51.4% (10-yr / 30-yr).
+// Used by the 2025 AHA/ACC hypertension guideline (BP drug-therapy threshold);
+// lipid decisions in this app remain on the ASCVD models above.
+export const PREVENT_10YR_CVD = {
+  female: {
+    age: 0.7939329, ageSquared: 0.0, nonHdlC: 0.0305239, hdlC: -0.1606857,
+    sbpLt110: -0.2394003, sbpGte110: 0.3600781, dm: 0.8667604,
+    smoking: 0.5360739, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.6045917, egfrGte60: 0.0433769, bpTx: 0.3151672,
+    statin: -0.1477655, bpTxSbpGte110: -0.0663612, statinNonHdlC: 0.1197879,
+    ageNonHdlC: -0.0819715, ageHdlC: 0.0306769, ageSbpGte110: -0.0946348,
+    ageDm: -0.2705700, ageSmoking: -0.0787150, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.1637806, constant: -3.3077280,
+  },
+  male: {
+    age: 0.7688528, ageSquared: 0.0, nonHdlC: 0.0736174, hdlC: -0.0954431,
+    sbpLt110: -0.4347345, sbpGte110: 0.3362658, dm: 0.7692857,
+    smoking: 0.4386871, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.5378979, egfrGte60: 0.0164827, bpTx: 0.2888790,
+    statin: -0.1337349, bpTxSbpGte110: -0.0475924, statinNonHdlC: 0.1502730,
+    ageNonHdlC: -0.0517874, ageHdlC: 0.0191169, ageSbpGte110: -0.1049477,
+    ageDm: -0.2251948, ageSmoking: -0.0895067, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.1543702, constant: -3.0311680,
+  },
+};
+
+export const PREVENT_30YR_CVD = {
+  female: {
+    age: 0.5503079, ageSquared: -0.0928369, nonHdlC: 0.0409794, hdlC: -0.1663306,
+    sbpLt110: -0.1628654, sbpGte110: 0.3299505, dm: 0.6793894,
+    smoking: 0.3196112, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.1857101, egfrGte60: 0.0553528, bpTx: 0.2894000,
+    statin: -0.0756880, bpTxSbpGte110: -0.0563670, statinNonHdlC: 0.1071019,
+    ageNonHdlC: -0.0751438, ageHdlC: 0.0301786, ageSbpGte110: -0.0998776,
+    ageDm: -0.3206166, ageSmoking: -0.1607862, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.1450788, constant: -1.3188270,
+  },
+  male: {
+    age: 0.4627309, ageSquared: -0.0984281, nonHdlC: 0.0836088, hdlC: -0.1029824,
+    sbpLt110: -0.2140352, sbpGte110: 0.2904325, dm: 0.5331276,
+    smoking: 0.2141914, bmiLt30: 0.0, bmiGte30: 0.0,
+    egfrLt60: 0.1155556, egfrGte60: 0.0603775, bpTx: 0.2327140,
+    statin: -0.0272112, bpTxSbpGte110: -0.0384488, statinNonHdlC: 0.1341920,
+    ageNonHdlC: -0.0511759, ageHdlC: 0.0165865, ageSbpGte110: -0.1101437,
+    ageDm: -0.2585943, ageSmoking: -0.1566406, ageBmiGte30: 0.0,
+    ageEgfrLt60: -0.1166776, constant: -1.1482040,
+  },
+};
+
+// 2025 AHA/ACC hypertension guideline: PREVENT 10-yr total CVD risk at/above
+// this value → drug therapy at stage 1 hypertension.
+export const CVD_BP_TX_THRESHOLD = 7.5;
+
 export const VALID_30YR_AGE_MAX = 59;
 export const DISCORDANCE_RISK10_MAX = 5;
 export const DISCORDANCE_RISK30_MIN = 20;
@@ -104,6 +162,20 @@ export function calcPREVENT30(inputs) {
   if (a < 30 || a > VALID_30YR_AGE_MAX) return null;
   const c = PREVENT_30YR[inputs.sex];
   const x = _xbeta(c, inputs);
+  return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
+}
+
+export function calcPREVENT10CVD(inputs) {
+  if (!_hasAllInputs(inputs)) return null;
+  const x = _xbeta(PREVENT_10YR_CVD[inputs.sex], inputs);
+  return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
+}
+
+export function calcPREVENT30CVD(inputs) {
+  if (!_hasAllInputs(inputs)) return null;
+  const a = Number(inputs.age);
+  if (a < 30 || a > VALID_30YR_AGE_MAX) return null;
+  const x = _xbeta(PREVENT_30YR_CVD[inputs.sex], inputs);
   return Math.round((Math.exp(x) / (1 + Math.exp(x))) * 1000) / 10;
 }
 

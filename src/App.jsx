@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   calcPREVENT10, calcPREVENT30,
+  calcPREVENT10CVD, calcPREVENT30CVD,
   riskCat10, riskCat30,
   discordance, optimizedInputs, driverDeltas,
-  VALID_30YR_AGE_MAX,
+  VALID_30YR_AGE_MAX, CVD_BP_TX_THRESHOLD,
 } from "./prevent.js";
+import { Toggle, Num, Card, Badge } from "./ui.jsx";
 
 const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
@@ -142,70 +144,6 @@ function StatinInfo({ onClose }) {
       </div>
     </div>
   );
-}
-
-// ── UI Components (touch-optimized) ─────────────────────────────────────────
-
-function Toggle({ value, on, label, sub }) {
-  return (
-    <button onClick={() => on(!value)} type="button"
-      className="flex items-center gap-2.5 py-2 active:opacity-70 cursor-pointer min-h-[44px]">
-      <div className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${value ? "bg-blue-600 dark:bg-sky-500" : "bg-slate-300 dark:bg-[#1a2835]"}`}>
-        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white toggle-knob transition-transform duration-200 ${value ? "translate-x-[22px]" : "translate-x-0.5"}`}/>
-      </div>
-      <div className="leading-tight">
-        <span className="text-[14px] text-slate-700 dark:text-[#d0e4f0]">{label}</span>
-        {sub && <div className="text-[10px] text-slate-400 dark:text-[#3d6580]">{sub}</div>}
-      </div>
-    </button>
-  );
-}
-
-function Num({ label, unit, value, on, min, max, step=1, ph, preserveCase }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className={`text-[11px] font-bold text-slate-400 dark:text-white/90 tracking-wider ${preserveCase ? "" : "uppercase"}`}>{label}</label>
-      <div className="flex items-center border border-slate-200 dark:border-[#1e3040] rounded-lg overflow-hidden input-glow transition-shadow duration-200 bg-white dark:bg-[#0a1018]">
-        <input type="number" inputMode="decimal" value={value}
-          onChange={e => on(e.target.value==="" ? "" : Number(e.target.value))}
-          min={min} max={max} step={step} placeholder={ph}
-          className="flex-1 px-3 py-3 text-[16px] text-slate-800 dark:text-[#d0e4f0] outline-none bg-transparent min-w-0 placeholder:text-slate-400 dark:placeholder:text-[#3d6580]" />
-        {unit && <span className="pr-3 text-[13px] text-slate-400 dark:text-[#3d6580] whitespace-nowrap">{unit}</span>}
-      </div>
-    </div>
-  );
-}
-
-function Card({ title, accent="blue", children }) {
-  const bdr = { blue:"border-l-blue-600 dark:border-l-sky-400", amber:"border-l-amber-500 dark:border-l-amber-400", red:"border-l-red-500 dark:border-l-red-400",
-    emerald:"border-l-emerald-600 dark:border-l-emerald-400", violet:"border-l-violet-600 dark:border-l-sky-400", orange:"border-l-orange-500 dark:border-l-orange-400" };
-  const glowColors = {
-    blue:   { light:"59, 130, 246",  dark:"56, 189, 248" },
-    amber:  { light:"245, 158, 11", dark:"245, 158, 11" },
-    red:    { light:"239, 68, 68",  dark:"248, 113, 113" },
-    emerald:{ light:"16, 185, 129", dark:"52, 211, 153" },
-    violet: { light:"139, 92, 246", dark:"56, 189, 248" },
-    orange: { light:"249, 115, 22", dark:"251, 146, 60" },
-  };
-  const accentSub = {
-    blue:"#7dd3fc", amber:"#fcd34d", red:"#fca5a5", emerald:"#6ee7b7",
-    violet:"#7dd3fc", orange:"#fdba74",
-  };
-  const gc = glowColors[accent] || glowColors.blue;
-  return (
-    <div className={`bg-white dark:bg-[#111a24] rounded-xl border border-slate-200/80 dark:border-[#1a2835] border-l-4 ${bdr[accent]} card-shadow`}
-      style={{"--glow-rgb": gc.light, "--glow-rgb-dark": gc.dark}}>
-      {title && <div className="px-4 pt-4 pb-1"><h3 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wide">{title}</h3></div>}
-      <div className="px-4 pb-4" style={{"--accent-sub": accentSub[accent]}}>{children}</div>
-    </div>
-  );
-}
-
-function Badge({ children, color="blue" }) {
-  const s = { blue:"bg-blue-50 text-blue-700 border-blue-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/30", red:"bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30",
-    amber:"bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30", emerald:"bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30",
-    violet:"bg-violet-50 text-violet-700 border-violet-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30", slate:"bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1a2835] dark:text-[#5a8aaa] dark:border-[#1e3040]" };
-  return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${s[color]}`}>{children}</span>;
 }
 
 function Goals({ ldl, nonHdl, pct, currentLdl }) {
@@ -374,6 +312,11 @@ export default function App() {
     return calcPREVENT30(inputsObj);
   }, [tab, inputsObj]);
 
+  // Total CVD (ASCVD + HF): computed whenever inputs are complete (any tab) —
+  // feeds the BP card; lipid recommendations stay on ASCVD risk.
+  const cvd10 = useMemo(() => calcPREVENT10CVD(inputsObj), [inputsObj]);
+  const cvd30 = useMemo(() => calcPREVENT30CVD(inputsObj), [inputsObj]);
+
   const rc10 = useMemo(() => riskCat10(risk10), [risk10]);
   const rc30 = useMemo(() => riskCat30(risk30), [risk30]);
 
@@ -524,9 +467,11 @@ export default function App() {
                   <span>Probability of having a heart attack, stroke, or fatal coronary event in the <span className="font-bold">next 10 years</span>.</span>
                   <span className="font-bold text-blue-700 dark:text-sky-400 whitespace-nowrap">30-Yr ASCVD</span>
                   <span>Probability of the same event over <span className="font-bold">30 years</span> (often called "lifetime risk"). Validated for ages 30–59 only.</span>
+                  <span className="font-bold text-blue-700 dark:text-sky-400 whitespace-nowrap">Total CVD</span>
+                  <span>ASCVD <span className="font-bold">or heart failure</span>. Always ≥ the ASCVD number. The 2025 AHA/ACC hypertension guideline uses 10-yr total CVD ≥{CVD_BP_TX_THRESHOLD}% as the drug-therapy threshold in stage 1 hypertension.</span>
                 </div>
                 <div className="text-slate-500 dark:text-[#5a8aaa] border-t border-blue-200 dark:border-sky-500/30 pt-2">
-                  <span className="font-bold">ASCVD</span> = atherosclerotic cardiovascular disease — the underlying process behind heart attacks, ischemic strokes, and peripheral arterial disease. The PREVENT model excludes heart failure (separate model).
+                  <span className="font-bold">ASCVD</span> = atherosclerotic cardiovascular disease — the underlying process behind heart attacks, ischemic strokes, and peripheral arterial disease. Lipid-lowering thresholds in the 2026 guideline are defined on PREVENT-ASCVD, so statin recommendations here never use the total CVD number.
                 </div>
               </div>
             )}
@@ -666,6 +611,28 @@ export default function App() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Total CVD (ASCVD + HF) — secondary row; not used for lipid decisions */}
+            {risk10 !== null && cvd10 !== null && (
+              <div className="mt-2 rounded-xl border border-slate-200 dark:border-[#1a2835] bg-slate-50 dark:bg-[#0a1018] px-3 py-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-[#7a9ab5]">Total CVD <span className="normal-case tracking-normal font-semibold">· ASCVD + heart failure</span></div>
+                  <div className="text-[10px] text-slate-400 dark:text-[#5a8aaa] leading-snug mt-0.5">
+                    Sets the BP drug-therapy threshold (≥{CVD_BP_TX_THRESHOLD}% 10-yr). Statin decisions use ASCVD above.
+                  </div>
+                </div>
+                <div className="flex gap-3 shrink-0">
+                  <div className="text-right">
+                    <div className={`text-[16px] font-black font-mono tabular-nums leading-none ${cvd10 >= CVD_BP_TX_THRESHOLD ? "text-orange-600 dark:text-orange-400" : "text-slate-700 dark:text-[#d0e4f0]"}`}>{cvd10}%</div>
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#5a8aaa] mt-1">10-yr</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[16px] font-black font-mono tabular-nums leading-none text-slate-700 dark:text-[#d0e4f0]">{cvd30 !== null ? `${cvd30}%` : "—"}</div>
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#5a8aaa] mt-1">30-yr</div>
+                  </div>
+                </div>
               </div>
             )}
 
