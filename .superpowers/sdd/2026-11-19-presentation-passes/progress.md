@@ -19,3 +19,4 @@ Request (verbatim): "Do additional passes using the pass skill and utilizing the
 
 ## Phase 1 — Measure
 - Audit: scratchpad/pass/audit.md (A1 to A19), 40 variants, 104 contact sheets.
+- Codex review 5969518206 on 9474118: 4 findings (comments 4624486473 contrast, 4624486482 lifestyle rows at 320 px, 4624486480 automatic blood-pressure conditions shown as pressable, 4624486476 statin-intolerance thresholds ignore mmol/L). All four confirmed against code or measurement (audit A20 to A23). Going into the spec.
