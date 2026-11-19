@@ -1,18 +1,15 @@
 // src/SevereTab.jsx — LDL ≥190 tab: goal tiers + FH workup flow
-// Sources: 2026 ACC/AHA Dyslipidemia Guideline §3.1, §3.4, §4.2.2, §4.2.4.1–4.2.4.4,
-// §4.2.8.1; DLCN criteria (Nordestgaard BG et al. Eur Heart J 2013;34:3478-90).
+// Sources:
+//  · 2026 ACC/AHA Dyslipidemia Guideline §3.1, §3.4, §4.2.2 (Table 9), §4.2.4.1–4.2.4.4
+//    (Table 15), §4.2.8.1 — goals, secondary causes, genetic testing, cascade, referral
+//  · DLCN: WHO 1998; Nordestgaard BG et al. Eur Heart J 2013;34:3478-90
+//  · Untreated LDL-C estimate: Haralambos K et al. Atherosclerosis 2015;240:190-6
+//  · Genetic testing / cascade: Sturm AC et al. JACC 2018;72:662-80;
+//    Khera AV et al. JACC 2016;67:2578-89
+//  · Homozygous FH: Cuchel M et al. Eur Heart J 2023;44:2277-91
 import { useState } from "react";
-import { Card, CheckRow, Badge } from "./ui.jsx";
-import { DLCN_GROUPS, DLCN_LDL_BANDS, DLCN_CLINICAL_FH_MIN } from "./fh.js";
-
-// Expected LDL-C lowering of the current regimen, used to back-calculate
-// untreated LDL-C for the DLCN score.
-export const REGIMENS = [
-  { id: "none",     l: "None",        pct: 0 },
-  { id: "mod",      l: "Mod statin",  pct: 40 },
-  { id: "high",     l: "High statin", pct: 50 },
-  { id: "high_eze", l: "High + EZE",  pct: 65 },
-];
+import { Card, Num, CheckRow, Badge } from "./ui.jsx";
+import { DLCN_GROUPS, DLCN_LDL_BANDS, DLCN_CLINICAL_FH_MIN, LDL_CORRECTION, HOFH_UNTREATED_LDL } from "./fh.js";
 
 const sub = "text-slate-500 dark:text-[#5a8aaa]";
 const body = "text-slate-600 dark:text-[#d0e4f0]";
@@ -106,10 +103,16 @@ const Expect = ({ children }) => (
   </div>
 );
 
-export function FHWorkup({ ldl, regimen, setRegimen, untreated, checked, toggle, dlcn }) {
+export function FHWorkup({ ldl, rx, setRx, factor, knownLdl, setKnownLdl, untreated, checked, toggle, dlcn }) {
   const [showBands, setShowBands] = useState(false);
   const cat = dlcn.cat;
   const hasLdl = ldl !== "" && ldl !== null;
+  const known = knownLdl !== "" && knownLdl !== null;
+  const onRx = rx.statin !== "none" || rx.eze;
+  const doses = Object.keys(LDL_CORRECTION[rx.statin].doses).map(Number);
+  const pick = "bg-blue-600 dark:bg-sky-500/30 text-white dark:text-sky-300 dark:border dark:border-sky-400/40";
+  const unpick = "bg-white dark:bg-[#111a24] text-slate-500 dark:text-[#5a8aaa] border border-slate-200 dark:border-[#1e3040]";
+  const hofh = untreated !== "" && Number(untreated) > HOFH_UNTREATED_LDL;
   const variant = !!checked.dna_pos;
   const clinicalFH = dlcn.score >= DLCN_CLINICAL_FH_MIN;
   const catClr = { red:"red", orange:"amber", amber:"amber", slate:"slate" }[cat.clr];
@@ -131,30 +134,45 @@ export function FHWorkup({ ldl, regimen, setRegimen, untreated, checked, toggle,
         <Expect>Treat any cause found and repeat the lipid panel. LDL still ≥190 → continue below.</Expect>
       </Step>
 
-      <Step n={2} title="Score the phenotype" tag={<Badge color="slate">Dutch Lipid Clinic Network</Badge>}>
+      <Step n={2} title="Score the phenotype" tag={<Badge color="slate">Dutch Lipid Clinic Network · adults</Badge>}>
         <div className="rounded-lg border border-slate-200 dark:border-[#1a2835] bg-slate-50 dark:bg-[#0a1018] p-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="text-[11px] font-bold text-slate-700 dark:text-[#d0e4f0]">Untreated LDL-C</div>
             <button type="button" onClick={() => setShowBands(p => !p)}
               className="text-[10px] font-bold text-blue-600 dark:text-sky-400 cursor-pointer underline decoration-dotted">{showBands ? "hide bands" : "point bands"}</button>
           </div>
-          <div className={`text-[10px] mt-0.5 ${sub}`}>DLCN scores the untreated value. Current lipid-lowering therapy:</div>
-          <div className="flex gap-1 mt-1.5">
-            {REGIMENS.map(r => (
-              <button key={r.id} type="button" onClick={() => setRegimen(r.id)}
-                className={`flex-1 py-1.5 px-0.5 rounded text-[10px] font-bold text-center cursor-pointer transition-colors min-h-[32px] ${
-                  regimen === r.id ? "bg-blue-600 dark:bg-sky-500/30 text-white dark:text-sky-300 dark:border dark:border-sky-400/40" : "bg-white dark:bg-[#111a24] text-slate-500 dark:text-[#5a8aaa] border border-slate-200 dark:border-[#1e3040]"
-                }`}>{r.l}{r.pct ? <span className="block font-normal opacity-80">−{r.pct}%</span> : null}</button>
-            ))}
-          </div>
+          <div className={`text-[10px] mt-0.5 ${sub}`}>The score uses the untreated value. On therapy with no baseline on record: pick the regimen to estimate it. A documented baseline (below) overrides the estimate.</div>
+
+          {!known && (<>
+            <div className="flex gap-1 mt-1.5">
+              {Object.entries(LDL_CORRECTION).map(([id, r]) => (
+                <button key={id} type="button" aria-pressed={rx.statin === id}
+                  onClick={() => setRx({ statin: id, dose: id === "none" ? 0 : Number(Object.keys(r.doses)[0]), eze: rx.eze })}
+                  className={`flex-1 py-1.5 px-0.5 rounded text-[10px] font-bold text-center cursor-pointer transition-colors min-h-[32px] ${rx.statin === id ? pick : unpick}`}>{r.l}</button>
+              ))}
+            </div>
+            <div className="flex gap-1 mt-1 items-stretch">
+              {rx.statin !== "none" && doses.map(d => (
+                <button key={d} type="button" aria-pressed={rx.dose === d} onClick={() => setRx({ ...rx, dose: d })}
+                  className={`flex-1 py-1.5 rounded text-[10px] font-bold font-mono text-center cursor-pointer transition-colors min-h-[32px] ${rx.dose === d ? pick : unpick}`}>{d} mg</button>
+              ))}
+              <button type="button" aria-pressed={rx.eze} onClick={() => setRx({ ...rx, eze: !rx.eze })}
+                title="Ezetimibe 10 mg" className={`flex-1 py-1.5 px-1 rounded text-[10px] font-bold text-center whitespace-nowrap cursor-pointer transition-colors min-h-[32px] ${rx.eze ? pick : unpick}`}>+ EZE 10</button>
+            </div>
+          </>)}
+
           <div className="mt-2 flex items-baseline justify-between gap-2">
-            {hasLdl ? (
-              <span className="text-[11px] text-slate-600 dark:text-[#d0e4f0]">
-                {regimen === "none" ? "Using current LDL-C: " : `Estimated from ${ldl} on therapy: `}
-                <span className="text-[14px] font-black font-mono tabular-nums text-slate-800 dark:text-white">{untreated}</span> mg/dL
-              </span>
-            ) : (
+            {known ? (
+              <span className="text-[11px] text-slate-600 dark:text-[#d0e4f0]">Documented baseline: <span className="text-[14px] font-black font-mono tabular-nums text-slate-800 dark:text-white">{untreated}</span> mg/dL</span>
+            ) : !hasLdl ? (
               <span className={`text-[11px] ${sub}`}>Enter LDL-C above to score this item.</span>
+            ) : factor === null ? (
+              <span className="text-[11px] text-amber-700 dark:text-amber-400">No published factor for this combination — enter the baseline below.</span>
+            ) : (
+              <span className="text-[11px] text-slate-600 dark:text-[#d0e4f0]">
+                {onRx ? `${ldl} × ${factor.toFixed(1)} = ` : "Current LDL-C: "}
+                <span className="text-[14px] font-black font-mono tabular-nums text-slate-800 dark:text-white">{untreated}</span> mg/dL{onRx ? " (estimate)" : ""}
+              </span>
             )}
             <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-black font-mono tabular-nums bg-slate-200 text-slate-600 dark:bg-[#1a2835] dark:text-[#7a9ab5]">+{dlcn.byGroup.ldl}</span>
           </div>
@@ -165,6 +183,14 @@ export function FHWorkup({ ldl, regimen, setRegimen, untreated, checked, toggle,
                   <div className="font-mono tabular-nums">{b.range}</div><div>+{b.pts}</div>
                 </div>
               ))}
+            </div>
+          )}
+          <div className="mt-2">
+            <Num label="Documented untreated LDL-C" unit="mg/dL" value={knownLdl} on={setKnownLdl} min={0} max={1000} ph="Optional" />
+          </div>
+          {hofh && (
+            <div className="mt-2 rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-2 text-[11px] text-red-800 dark:text-red-300">
+              <b>Untreated LDL-C &gt;{HOFH_UNTREATED_LDL} mg/dL suggests homozygous FH.</b> Also look for xanthomas before age 10 and HeFH-range LDL-C in both parents. Refer to a lipid specialist now.
             </div>
           )}
         </div>
@@ -209,22 +235,22 @@ export function FHWorkup({ ldl, regimen, setRegimen, untreated, checked, toggle,
         <Do>Order a <b>panel</b> for pathogenic / likely pathogenic variants: <b>LDLR, APOB, PCSK9</b> (<b>LDLRAP1</b> if recessive pattern or HoFH phenotype).</Do>
         <div className={sub}>COR 1 for possible / probable / definite FH · COR 2a for any LDL ≥190 without a secondary cause · COR 2b for LDL 160–189.</div>
         <Expect>
-          ≈2.5% of adults with LDL ≥190 carry a variant; yield rises with DLCN score. <b>Positive</b> → HeFH confirmed (goal &lt;70), higher CAD risk at the same LDL-C, relatives can be tested for the exact variant. <b>Negative</b> → does not exclude FH; treat the phenotype the same.
+          A variant is found in ≈2.5% of all adults with LDL ≥190, 21–44% with possible FH, 60–80% with definite FH. <b>Positive</b> → HeFH confirmed (goal &lt;70); CAD odds ≈22× vs ≈6× for the same LDL-C without a variant; relatives can be tested for the exact variant. <b>Negative</b> → does not exclude FH; treat the phenotype the same.
         </Expect>
         {variant && <div className="font-bold text-red-700 dark:text-red-400">Variant recorded → genetically confirmed FH.</div>}
       </Step>
 
       <Step n={4} title="Cascade screening" tag={<Badge color={clinicalFH || variant ? "red" : "slate"}>{clinicalFH || variant ? "Start now" : "If FH confirmed or LDL ≥190 persists"}</Badge>}>
-        <Do><b>Who</b>: every 1st-degree relative (parents, siblings, children — 50% risk each when a variant is present). Each new case → their 1st-degree relatives.</Do>
-        <Do><b>How</b>: family variant known → test for that variant + lipid profile. No variant / no access → lipid profile alone (misses relatives with milder LDL-C).</Do>
+        <Do><b>Who</b>: every 1st-degree relative (parents, siblings, children — 50% chance each). Then 2nd-degree relatives, and outward from each new case.</Do>
+        <Do><b>How</b>: family variant known → test for that variant + lipid profile. No variant or no access → lipid profile alone (misses relatives with milder LDL-C).</Do>
         <Do><b>When</b>: children from age <b>≥2 y</b>. Add <b>Lp(a)</b> for 1st-degree relatives (COR 1).</Do>
-        <Expect>Give the patient a family letter; relatives are usually screened by their own clinicians. Affected children: statin from age ≥8 y if LDL-C stays ≥160 after 3–6 mo of lifestyle (goal ≥50% ↓ and ≤130 mg/dL).</Expect>
+        <Expect>Variant-based cascades find more affected relatives than LDL-C alone (1.77 vs 1.18 per family). Affected children: statin from age ≥8 y if LDL-C stays ≥160 after 3–6 mo of lifestyle; goal ≥50% ↓ and ≤130 mg/dL.</Expect>
       </Step>
 
       <Step n={5} title="Treat to goal · refer" last>
         <Do>Maximally tolerated statin → add <b>ezetimibe, PCSK9 mAb, and/or bempedoic acid</b> to the goal above. Inclisiran if LDL ≥100 despite statin ± ezetimibe (COR 2a).</Do>
-        <Do>Recheck lipids 4–12 wk after each change. Most HeFH patients need ≥2 agents.</Do>
-        <Do><b>Refer to a lipid specialist</b>: suspected or diagnosed FH needing genetic testing, HeFH not at goal on maximal statin + nonstatin, side effects on ≥2 statins, any suspicion of homozygous FH, pregnancy planning.</Do>
+        <Do>Recheck lipids 4–12 wk after each change.</Do>
+        <Do><b>Refer to a lipid specialist</b>: suspected or diagnosed FH, genetic testing needed, HeFH not at goal on maximal statin + nonstatin, side effects on ≥2 statins, any suspicion of homozygous FH (evinacumab, lomitapide, apheresis).</Do>
       </Step>
     </Card>
   );

@@ -10,8 +10,8 @@ import { Toggle, Num, Card, Badge, Route } from "./ui.jsx";
 import { StatinIntolerance } from "./StatinIntolerance.jsx";
 import { LifestyleLDL } from "./Lifestyle.jsx";
 import { BloodPressure } from "./BloodPressure.jsx";
-import { dlcnScore, estimateUntreatedLdl, severeGoal, DLCN_CLINICAL_FH_MIN } from "./fh.js";
-import { SevereGoalTiers, FHWorkup, REGIMENS } from "./SevereTab.jsx";
+import { dlcnScore, estimateUntreatedLdl, ldlCorrectionFactor, severeGoal, DLCN_CLINICAL_FH_MIN } from "./fh.js";
+import { SevereGoalTiers, FHWorkup } from "./SevereTab.jsx";
 
 const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
@@ -257,7 +257,8 @@ export default function App() {
   // LDL ≥190 tab
   const [sevF, setSevF] = useState({});            // goal-lowering factors
   const [dlcnChecked, setDlcnChecked] = useState({});
-  const [sevRegimen, setSevRegimen] = useState("none");
+  const [sevRx, setSevRx] = useState({ statin: "none", dose: 0, eze: false });  // current therapy (for untreated-LDL estimate)
+  const [knownLdl, setKnownLdl] = useState("");    // documented untreated LDL-C
   const [siOpen, setSiOpen] = useState(false);     // statin intolerance pathway
   // Blood pressure card
   const [dbp, setDbp] = useState("");
@@ -273,7 +274,7 @@ export default function App() {
     setStatinInfo(false); setStatinInfoMon(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhr({}); setDmEnhs({}); setMetSyn({});
-    setSevF({}); setDlcnChecked({}); setSevRegimen("none");
+    setSevF({}); setDlcnChecked({}); setSevRx({ statin: "none", dose: 0, eze: false }); setKnownLdl("");
     setSiOpen(false); setDbp(""); setBpF({});
     setLifetimeOptimizedOpen(false); setLifetimeDriversOpen(false);
   }, []);
@@ -361,11 +362,11 @@ export default function App() {
   }, [totalC, hdlC]);
 
   // ── LDL ≥190: DLCN score + goal tier ──
+  const sevFactor = useMemo(() => ldlCorrectionFactor(sevRx), [sevRx]);
   const untreatedLdl = useMemo(() => {
-    if (ldlC === "" || ldlC === null) return "";
-    const pct = REGIMENS.find(r => r.id === sevRegimen)?.pct || 0;
-    return pct ? (estimateUntreatedLdl(ldlC, pct) ?? "") : Number(ldlC);
-  }, [ldlC, sevRegimen]);
+    if (knownLdl !== "" && knownLdl !== null) return Number(knownLdl);
+    return estimateUntreatedLdl(ldlC, sevFactor) ?? "";
+  }, [ldlC, knownLdl, sevFactor]);
   const dlcn = useMemo(() => dlcnScore(dlcnChecked, untreatedLdl), [dlcnChecked, untreatedLdl]);
   const hefhAuto = dlcn.score >= DLCN_CLINICAL_FH_MIN || !!dlcnChecked.dna_pos;
   const sevGoal = useMemo(() => severeGoal({ ...sevF, hefh: sevF.hefh || hefhAuto }), [sevF, hefhAuto]);
@@ -948,7 +949,8 @@ export default function App() {
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
             <SevereGoalTiers f={sevF} toggle={toggleSevF} hefhAuto={hefhAuto} goal={sevGoal} />
           </Card>
-          <FHWorkup ldl={ldlC} regimen={sevRegimen} setRegimen={setSevRegimen} untreated={untreatedLdl}
+          <FHWorkup ldl={ldlC} rx={sevRx} setRx={setSevRx} factor={sevFactor}
+            knownLdl={knownLdl} setKnownLdl={setKnownLdl} untreated={untreatedLdl}
             checked={dlcnChecked} toggle={toggleDlcn} dlcn={dlcn} />
         </>)}
 
@@ -1154,7 +1156,7 @@ export default function App() {
 
         {/* BLOOD PRESSURE */}
         <BloodPressure sbp={sbp} setSbp={setSbp} dbp={dbp} setDbp={setDbp} bpTx={bpTx} setBpTx={setBpTx}
-          cvd10={cvd10} auto={bpAuto} flags={bpF} toggleFlag={toggleBpF} />
+          cvd10={tab === "secondary" ? null : cvd10} auto={bpAuto} flags={bpF} toggleFlag={toggleBpF} />
 
         {/* MONITORING */}
         <Card title="Monitoring" accent="emerald">

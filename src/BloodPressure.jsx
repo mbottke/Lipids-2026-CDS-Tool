@@ -137,7 +137,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
           <Disclosure open={sec === "rx"} on={() => tog("rx")} label="Drug therapy: initial → subsequent" hint="5 steps">
             <Rung n={1} title="Initial therapy">
               <Row k="Stage 1">One first-line agent; titrate, then add (COR 2a).</Row>
-              <Row k="Stage 2">Two first-line agents from different classes, ideally one single-pill combination (COR 1). ACEi or ARB + CCB or thiazide-type.</Row>
+              <Row k="Stage 2">Two first-line agents from different classes, ideally one single-pill combination (COR 1): ACEi or ARB + CCB or thiazide-type. Best suited to nonfrail adults ≥20/10 mm Hg above goal.</Row>
               <div className="mt-1 rounded-lg border border-slate-200 dark:border-[#1a2835] p-2 space-y-1 bg-slate-50 dark:bg-[#0a1018]">
                 <div className={`text-[10px] font-bold uppercase tracking-wider ${sub}`}>First-line classes · usual mg/day</div>
                 <Row k="Thiazide-type">chlorthalidone 12.5–25 · HCTZ 25–50 · indapamide 1.25–2.5</Row>
@@ -158,7 +158,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
               <div>• Exclude pseudoresistance: adherence, technique, home/ambulatory BP, interfering drugs.</div>
               <div>• Screen for primary aldosteronism (aldosterone, renin, ratio) — hypokalemia not required (COR 1).</div>
               <div>• Switch the diuretic to chlorthalidone 12.5–25 or indapamide 1.25–2.5 mg.</div>
-              <div>• Add <b>spironolactone 25–50 mg/day</b> if eGFR ≥45 (COR 1). Check K⁺ and creatinine in 1–2 wk.</div>
+              <div>• Add <b>spironolactone 25–50 mg/day</b> if eGFR ≥45 (COR 1). Recheck K⁺ and creatinine in 2–4 wk.</div>
             </Rung>
             <Rung n={5} title="Beyond four drugs" last>
               <div>MRA not tolerated (COR 2a): amiloride, β-blocker, α-blocker, central sympatholytic, aprocitentan 12.5 mg, or hydralazine / minoxidil (with a β-blocker + loop diuretic).</div>

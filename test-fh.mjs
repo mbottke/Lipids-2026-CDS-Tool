@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // test-fh.mjs — Dutch Lipid Clinic Network score + untreated-LDL estimate
 
-import { dlcnScore, dlcnLdlPoints, dlcnCategory, estimateUntreatedLdl, DLCN_GROUPS } from "./src/fh.js";
+import { dlcnScore, dlcnLdlPoints, dlcnCategory, estimateUntreatedLdl, ldlCorrectionFactor, DLCN_GROUPS } from "./src/fh.js";
 
 let pass = 0, fail = 0;
 function eq(actual, expected, name) {
@@ -44,12 +44,30 @@ eq(dlcnScore({ dna_pos: true }, "").cat.id, "probable", "variant alone (8) → p
 const all = Object.fromEntries(DLCN_GROUPS.flatMap(g => g.items.map(i => [i.id, true])));
 eq(dlcnScore(all, 400).score, 2 + 2 + 6 + 8 + 8, "maximum score = 26");
 
+console.log("\n═══ Correction factors (Haralambos 2015, Table 2) ═══");
+eq(ldlCorrectionFactor({}), 1.0, "no therapy → 1.0");
+eq(ldlCorrectionFactor({ eze: true }), 1.2, "ezetimibe alone → 1.2");
+eq(ldlCorrectionFactor({ statin: "prava", dose: 40 }), 1.5, "pravastatin 40 → 1.5");
+eq(ldlCorrectionFactor({ statin: "simva", dose: 20 }), 1.6, "simvastatin 20 → 1.6");
+eq(ldlCorrectionFactor({ statin: "simva", dose: 80, eze: true }), 2.4, "simvastatin 80 + EZE → 2.4");
+eq(ldlCorrectionFactor({ statin: "atorva", dose: 10 }), 1.6, "atorvastatin 10 → 1.6");
+eq(ldlCorrectionFactor({ statin: "atorva", dose: 40 }), 2.0, "atorvastatin 40 → 2.0");
+eq(ldlCorrectionFactor({ statin: "atorva", dose: 80 }), 2.2, "atorvastatin 80 → 2.2");
+eq(ldlCorrectionFactor({ statin: "atorva", dose: 80, eze: true }), 2.5, "atorvastatin 80 + EZE → 2.5");
+eq(ldlCorrectionFactor({ statin: "rosuva", dose: 5 }), 1.8, "rosuvastatin 5 → 1.8");
+eq(ldlCorrectionFactor({ statin: "rosuva", dose: 20 }), 2.1, "rosuvastatin 20 → 2.1");
+eq(ldlCorrectionFactor({ statin: "rosuva", dose: 40, eze: true }), 3.3, "rosuvastatin 40 + EZE → 3.3");
+eq(ldlCorrectionFactor({ statin: "rosuva", dose: 5, eze: true }), null, "rosuvastatin 5 + EZE → not published");
+eq(ldlCorrectionFactor({ statin: "atorva", dose: 30 }), null, "unlisted dose → null");
+
 console.log("\n═══ Untreated LDL-C estimate ═══");
-eq(estimateUntreatedLdl(120, 50), 240, "120 on 50% regimen → 240");
-eq(estimateUntreatedLdl(130, 35), 200, "130 on 35% regimen → 200");
-eq(estimateUntreatedLdl("", 50), null, "blank LDL → null");
-eq(estimateUntreatedLdl(120, 0), null, "0% → null");
-eq(estimateUntreatedLdl(120, ""), null, "blank % → null");
+eq(estimateUntreatedLdl(120, 2.0), 240, "120 × 2.0 → 240");
+eq(estimateUntreatedLdl(118, 2.1), 248, "118 × 2.1 → 248");
+eq(estimateUntreatedLdl(212, 1.0), 212, "untreated: × 1.0 → unchanged");
+eq(estimateUntreatedLdl("", 2.0), null, "blank LDL → null");
+eq(estimateUntreatedLdl(120, null), null, "no factor → null");
+eq(dlcnLdlPoints(estimateUntreatedLdl(118, 2.1)), 3, "118 on rosuvastatin 20 → est. 248 → 3 pts");
+eq(dlcnLdlPoints(estimateUntreatedLdl(120, 2.2)), 5, "120 on atorvastatin 80 → est. 264 → 5 pts");
 
 console.log(`\n${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);
