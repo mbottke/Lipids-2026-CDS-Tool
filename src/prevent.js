@@ -109,18 +109,18 @@ export function calcPREVENT30(inputs) {
 
 export function riskCat10(r) {
   if (r === null) return null;
-  if (r < 3)  return { label: "Low",          color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<3%" };
-  if (r < 5)  return { label: "Borderline",   color: "#ca8a04", bg: "#fefce8", darkBg: "rgba(202, 138, 4, 0.10)",  range: "3–<5%" };
-  if (r < 10) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", darkBg: "rgba(234, 88, 12, 0.10)",  range: "5–<10%" };
-  return         { label: "High",          color: "#dc2626", bg: "#fef2f2", darkBg: "rgba(220, 38, 38, 0.10)",  range: "≥10%" };
+  if (r < 3)  return { label: "Low",          color: "#15803d", darkColor: "#55b385", rank: 1, range: "<3%" };
+  if (r < 5)  return { label: "Borderline",   color: "#a16207", darkColor: "#d9a94e", rank: 2, range: "3–<5%" };
+  if (r < 10) return { label: "Intermediate", color: "#c2410c", darkColor: "#e8875e", rank: 3, range: "5–<10%" };
+  return         { label: "High",          color: "#b91c1c", darkColor: "#e2635e", rank: 4, range: "≥10%" };
 }
 
 export function riskCat30(r) {
   if (r === null) return null;
-  if (r < 10) return { label: "Low",          color: "#16a34a", bg: "#f0fdf4", darkBg: "rgba(16, 185, 129, 0.08)", range: "<10%" };
-  if (r < 20) return { label: "Borderline",   color: "#ca8a04", bg: "#fefce8", darkBg: "rgba(202, 138, 4, 0.10)",  range: "10–<20%" };
-  if (r < 30) return { label: "Intermediate", color: "#ea580c", bg: "#fff7ed", darkBg: "rgba(234, 88, 12, 0.10)",  range: "20–<30%" };
-  return         { label: "High",          color: "#dc2626", bg: "#fef2f2", darkBg: "rgba(220, 38, 38, 0.10)",  range: "≥30%" };
+  if (r < 10) return { label: "Low",          color: "#15803d", darkColor: "#55b385", rank: 1, range: "<10%" };
+  if (r < 20) return { label: "Borderline",   color: "#a16207", darkColor: "#d9a94e", rank: 2, range: "10–<20%" };
+  if (r < 30) return { label: "Intermediate", color: "#c2410c", darkColor: "#e8875e", rank: 3, range: "20–<30%" };
+  return         { label: "High",          color: "#b91c1c", darkColor: "#e2635e", rank: 4, range: "≥30%" };
 }
 
 export function discordance(risk10, risk30, age) {
