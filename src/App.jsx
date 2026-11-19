@@ -167,7 +167,7 @@ function Scale({ cuts, max, value, color }) {
       )}
       <div className="absolute top-[17px] left-0 font-mono text-[11px] text-faint">0</div>
       {cuts.map(c => <div key={c} className="absolute top-[17px] -translate-x-1/2 font-mono text-[11px] text-muted" style={{ left: pos(c) }}>{c}</div>)}
-      <div className="absolute top-[17px] right-0 font-mono text-[11px] text-faint">{max}+</div>
+      <div className="absolute top-[17px] right-0 font-mono text-[11px] text-faint max-[359px]:hidden">{max}+</div>
     </div>
   );
 }
@@ -216,7 +216,7 @@ function CopyButton({ note }) {
 const pct = (v) => (v === null || v === undefined ? "–" : `${Number(v).toFixed(1)}%`);
 
 // One horizon of the ASCVD row: number, category, range and ruler.
-function AscvdCell({ value, rc, dark, cuts, max, empty }) {
+function AscvdCell({ value, rc, dark, cuts, max, empty, note }) {
   if (value === null || value === undefined || !rc) {
     return (
       <div className="min-w-0">
@@ -232,7 +232,7 @@ function AscvdCell({ value, rc, dark, cuts, max, empty }) {
         {Number(value).toFixed(1)}<span className="text-[0.44em]">%</span>
       </div>
       <div className="mt-1.5 text-[14px] font-bold leading-tight" style={{ color }}>{rc.label}</div>
-      <div className="text-[12px] text-muted">{rc.range}</div>
+      <div className="text-[12px] text-muted">{rc.range}{note ? `, ${note}` : ""}</div>
       <Scale cuts={cuts} max={max} value={value} color={color} />
     </div>
   );
@@ -251,6 +251,10 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
     : null;
   const cvdHigh = cvd10 !== null && cvd10 >= CVD_BP_TX_THRESHOLD;
   const num = "font-mono text-[15px] font-semibold tabular-nums";
+  // On a phone this sits with the numbers it explains. In the rail it follows the plan, so the whole plan stays in view on a short window.
+  const cvdNote = (cls) => (
+    <p className={`text-[12px] text-muted leading-snug ${cls}`}>Total CVD is ASCVD plus heart failure. It sets the blood pressure drug-therapy threshold (≥{CVD_BP_TX_THRESHOLD}% at 10 years). Statin decisions use ASCVD risk.</p>
+  );
   const rowName = "text-[13px] font-semibold text-ink leading-tight";
   return (
     <div className={variant === "rail" ? "lg:border-l lg:border-line lg:pl-10 flex flex-col gap-5" : "border-t border-line pt-5 flex flex-col gap-5"}>
@@ -266,7 +270,7 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
             <div className="text-[12px] text-muted">For statins</div>
           </div>
           <AscvdCell value={risk10} rc={rc10} dark={dark} cuts={[3, 5, 10]} max={15} />
-          <AscvdCell value={risk30} rc={rc30} dark={dark} cuts={[10]} max={40} empty="Not validated for ages 60 and above." />
+          <AscvdCell value={risk30} rc={rc30} dark={dark} cuts={[10]} max={40} note="ages 30–59" empty="Not validated for ages 60 and above." />
 
           <div className="col-span-3 h-px bg-line" />
 
@@ -284,9 +288,10 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
             ? <div className="col-span-2 text-[12px] text-muted">Enter BMI</div>
             : <><div className={`${num} text-ink`}>{pct(hf10)}</div><div className={`${num} text-ink`}>{pct(hf30)}</div></>}
         </div>
+        {variant !== "rail" && cvdNote("mt-3")}
       </div>
       {children}
-      <p className="text-[12px] text-muted leading-snug -mt-1">Total CVD is ASCVD plus heart failure. It sets the blood pressure drug-therapy threshold (≥{CVD_BP_TX_THRESHOLD}% at 10 years).</p>
+      {variant === "rail" && cvdNote("-mt-1")}
       {(horizonNote || delta !== null || drivers.length > 0) && (
         <>
           <div className="h-px bg-line" />
@@ -331,7 +336,7 @@ function RiskRail({ risk10, rc10, risk30, rc30, discord, optRisk30, drivers, dar
 // ── Reference content shown in the info sheet ────────────────────────────────
 const SHEET_TITLE = {
   prevent: "About the PREVENT calculator", cac: "About CAC scoring", bio: "About Lp(a) and apoB",
-  statin: "Statin reference", intolerance: "Statin intolerance pathway",
+  statin: "Statin reference", intolerance: "Statin not tolerated?",
 };
 function PreventInfo() {
   return (
@@ -413,12 +418,16 @@ const TAB_ROUTE = {
 function TabIntro({ tab, si, ready }) {
   const go = (e, id) => {
     e.preventDefault();
-    document.getElementById(id)?.scrollIntoView({
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Focus goes with the scroll, so the next Tab continues inside the section.
+    el.focus({ preventScroll: true });
+    el.scrollIntoView({
       block: "start",
       behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
     });
   };
-  // Before the plan exists (Primary tab, inputs incomplete) its stops are named but not yet links.
+  // Before the plan exists its stops are named but are not yet links.
   const pending = (id) => !ready && (id === "sec-plan" || id === "sec-treat");
   const stops = TAB_ROUTE[tab];
   return (
@@ -938,7 +947,7 @@ export default function App() {
               <RiskRail risk10={risk10} rc10={rc10} risk30={risk30} rc30={rc30} discord={discord}
                 optRisk30={optRisk30} drivers={drivers} dark={darkMode} variant="inline" note={summaryNote}
                 cvd10={cvd10} cvd30={cvd30} hf10={hf10} hf30={hf30}>
-                {showPlan && <div ref={setPlanEl} id="sec-plan"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
+                {showPlan && <div ref={setPlanEl} id="sec-plan" tabIndex={-1} className="outline-none"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
               </RiskRail>
             </div>
           )}
@@ -1001,7 +1010,7 @@ export default function App() {
             f={dmF} toggleF={toggleDmF} risk10={dmRisk10} rec={rec} />
         )}
         {(tab === "secondary" || tab === "diabetes") && showPlan && (
-          <div ref={setPlanEl} id="sec-plan" className="lg:hidden"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>
+          <div ref={setPlanEl} id="sec-plan" tabIndex={-1} className="lg:hidden outline-none"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>
         )}
 
         {/* SEVERE */}
@@ -1011,7 +1020,7 @@ export default function App() {
             <SINum si={si} factor={CHOL_F} phSI="Current" label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
             <SevereGoalTiers si={si} f={sevF} toggle={toggleSevF} hefhAuto={hefhAuto} goal={sevGoal} />
           </Card>
-          {showPlan && <div ref={setPlanEl} id="sec-plan" className="lg:hidden"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
+          {showPlan && <div ref={setPlanEl} id="sec-plan" tabIndex={-1} className="lg:hidden outline-none"><Plan rec={rec} ldl={ldlC} si={si} where="inline" /></div>}
           <FHWorkup si={si} ldl={ldlC} rx={sevRx} setRx={setSevRx} factor={sevFactor}
             knownLdl={knownLdl} setKnownLdl={setKnownLdl} untreated={untreatedLdl}
             checked={dlcnChecked} toggle={toggleDlcn} dlcn={dlcn} />

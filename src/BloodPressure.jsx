@@ -4,7 +4,7 @@
 // Table 13, §3.1.2, §3.1.4, §3.2.3, §5.2.2–5.2.9, §5.3, §5.5, §5.6, Figures 6–8.
 // Baxdrostat: FDA label (2026); positioning from the 2026 ACC resistant-hypertension pathway.
 import { useState, useRef } from "react";
-import { Card, Num, Toggle, Badge, CheckRow, AutoRow, Disclosure, Step, Cor, Eyebrow, LeaderRow, ROWS } from "./ui.jsx";
+import { Card, Num, Toggle, Badge, CheckRow, AutoRow, Disclosure, Step, Cor, Eyebrow, LeaderRow, ROWS, backIntoView } from "./ui.jsx";
 import { bpPlan } from "./bp.js";
 import { CVD_BP_TX_THRESHOLD } from "./prevent.js";
 
@@ -33,7 +33,7 @@ export function BloodPressure({ sbp, setSbp, dbp, setDbp, bpTx, setBpTx, cvd10, 
   const closeFromEnd = () => {
     setOpen(false);
     sumRef.current?.focus({ preventScroll: true });
-    requestAnimationFrame(() => sumRef.current?.scrollIntoView({ block: "start" }));
+    requestAnimationFrame(() => backIntoView(sumRef.current));
   };
 
   const eff = {

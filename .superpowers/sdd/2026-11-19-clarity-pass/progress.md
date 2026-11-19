@@ -48,3 +48,23 @@ Request (verbatim): "I can't find where cvd risk % is calculated and shown. Also
 - Unit: test-copy 26, prevent-cvd 29, recommend 66, clinical 263, bp 39, fh 48, prevent-30yr 60, crossvalidate exit 0. vite build ok.
 - Browser: clarity 74/74, layout 97/97, flows 30/30, scrollbars 18/18, clip 320 and 390 = 0, axe 0 on 16 variants.
 - Screenshots read at 100%: primary-390 day and night, ascvd-390, primary 1243 x 700, sheet at 390 and at 1243. WebKit: not run.
+
+## Phase 7 — Review of e82acf3
+- Fresh reviewer (opus, xhigh, read-only, own server on :4192): 1 Important, 7 Minor, 3 rulings judged wrong or weak, 5 declined to judge. Codex review 5971309317: 1 finding (comment 4625883276), the same as the reviewer's Important finding.
+- Each was reproduced by a check that failed before the fix: clarity.cjs "review: …" sections, 12 of 15 failing.
+
+## Phase 8 — Fix pass (one pass, RED → GREEN, then the whole suite)
+- Re-grade: the Important finding stands. All seven Minors are raised to "fix": each is seen by a person and a check pins it.
+- Final: fixed, route links scrolled but left keyboard focus on the link, so the next Tab jumped back to the top (also Codex 4625883276) — the target section takes focus before the scroll — RED 4 → GREEN.
+- Final: fixed, dragging a text selection out of the sheet closed it — it closes only when the press starts and ends on the backdrop — RED → GREEN.
+- Final: fixed, two clinical clauses had left the page for the PREVENT sheet: "Statin decisions use ASCVD risk." and the "ages 30–59" note on the 30-year number. Both are back — RED 2 → GREEN. This broke "no content removed" as written.
+- Final: fixed, reviewer judged the ruling on the total CVD sentence too wide — the rail reason does not apply on a phone — the sentence now sits inside the grid on the phone layout and after the plan in the rail — RED → GREEN.
+- Final: fixed, hairlines between check rows curved at both ends — rows have square corners except under a focus ring — RED (8 px) → GREEN. Hover styles apply only where hover exists.
+- Final: fixed, the end "Close" row scrolled even when the head was already on screen — one shared rule (backIntoView) for Disclosure, Card and blood pressure — RED → GREEN.
+- Final: fixed, ruler labels "10" and "15+" ran together at 320 px (0.6 px apart) — the end label is dropped below 360 px — RED → GREEN.
+- Final: fixed, the intolerance sheet did not keep its trigger's name — titled "Statin not tolerated?" — RED → GREEN.
+- Final: Review Focus 5 is now pinned: a press where Reset sits only closes the sheet and resets nothing.
+- Final: Ruling corrected: "cost if wrong: none" on the phone limit for total CVD was not true. At 987 px it is still below the first screen after the inputs on an 844 px phone.
+- Final: minor (deferred): the first bold line inside the PREVENT sheet nearly repeats its title. A single-child justify-between row in SevereTab. The three sheet components keep the indentation of their old location.
+- Final: Ruling: the ASCVD intro lists ACS, prior MI, ischemic stroke, symptomatic PAD, CABG or PCI (reviewer declined to judge whether it reads as exhaustive, since stable angina, TIA and aneurysm are also ASCVD) — the list is the tab's own checklist terms — cost if wrong: a clinician reads the tab as not applying to a patient it applies to. Held for the owner.
+- Suite after the pass: unit all exit 0 (test-copy 26, recommend 66, clinical 263, prevent-cvd 29, bp 39, fh 48, prevent-30yr 60, crossvalidate). vite build ok. Browser: clarity 89/89, layout 97/97, flows 30/30, scrollbars 18/18, clip 320 and 390 = 0, axe 0 on 16 variants.

@@ -72,4 +72,4 @@ Nearly all are 8 px radius. Check rows are individual bordered boxes stacked wit
 
 The plan sits 84 to 220 px lower on a phone than before this pass. That is the cost of the purpose sentence and route line on every tab, and of the full risk grid above the plan on the Primary tab.
 
-Checks: `clarity.cjs` 74, `../2026-11-19/scripts/layout.cjs` 97, `flows.cjs` 30, `scrollbars.cjs` 18, `clip.cjs` 0 spills at 320 and 390.
+Checks: `clarity.cjs` 89 (15 added for the review findings), `../2026-11-19/scripts/layout.cjs` 97, `flows.cjs` 30, `scrollbars.cjs` 18, `clip.cjs` 0 spills at 320 and 390.

@@ -80,6 +80,14 @@ export const LABEL = "text-[12px] font-medium text-muted";
 // A list of check rows: hairlines between rows, no box per row.
 export const ROWS = "divide-y divide-line border-y border-line";
 
+// Brings an element back to the top of its scroll area, but only when it has scrolled above the view.
+// What the user can already see never moves.
+export function backIntoView(el) {
+  if (!el) return;
+  const sc = el.closest("[data-scroll], dialog");
+  if (el.getBoundingClientRect().top < (sc ? sc.getBoundingClientRect().top : 0)) el.scrollIntoView({ block: "start" });
+}
+
 const Chevron = ({ open }) => (
   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
     className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
@@ -91,7 +99,7 @@ export function Card({ title, children, open, onToggle, hint, id, stage, endClos
   const headRef = useRef(null);
   if (typeof onToggle !== "function") {
     return (
-      <section id={id} className="border-t border-line pt-5">
+      <section id={id} tabIndex={id ? -1 : undefined} className="border-t border-line pt-5 outline-none">
         {title && <SectionHead className="mb-3" stage={stage}>{title}</SectionHead>}
         <div>{children}</div>
       </section>
@@ -101,10 +109,10 @@ export function Card({ title, children, open, onToggle, hint, id, stage, endClos
   const closeFromEnd = () => {
     onToggle();
     headRef.current?.focus({ preventScroll: true });
-    requestAnimationFrame(() => headRef.current?.scrollIntoView({ block: "start" }));
+    requestAnimationFrame(() => backIntoView(headRef.current));
   };
   return (
-    <section id={id} className="border-t border-line pt-5">
+    <section id={id} tabIndex={id ? -1 : undefined} className="border-t border-line pt-5 outline-none">
       <h2 className="-mt-3.5">
         <button ref={headRef} type="button" onClick={onToggle} aria-expanded={!!open}
           className="w-full min-h-[44px] flex items-center justify-between gap-3 text-left cursor-pointer active:opacity-70 rounded-lg">
@@ -161,7 +169,7 @@ export function Eyebrow({ children, right }) {
 export function CheckRow({ checked, on, label, sub, pts, compact }) {
   return (
     <button type="button" onClick={on} aria-pressed={!!checked}
-      className={`group w-full flex items-start gap-3 text-left cursor-pointer active:opacity-70 rounded-lg ${compact ? "py-2.5 min-h-[44px]" : "py-3 min-h-[48px]"}`}>
+      className={`group w-full flex items-start gap-3 text-left cursor-pointer active:opacity-70 focus-visible:rounded-lg ${compact ? "py-2.5 min-h-[44px]" : "py-3 min-h-[48px]"}`}>
       <div className={`mt-0.5 w-5 h-5 rounded-[4px] border-[1.5px] shrink-0 flex items-center justify-center ${
         checked ? "bg-accent border-accent" : "border-faint group-hover:border-ink"
       }`}>{checked && <span className="text-paper font-bold text-[13px] leading-none">✓</span>}</div>
@@ -196,11 +204,7 @@ export function Disclosure({ open, on, label, hint, children }) {
     const wasOpen = open;
     on();
     // Closing a panel whose row has scrolled above the view brings the row back at once.
-    if (wasOpen) requestAnimationFrame(() => {
-      const el = ref.current; if (!el) return;
-      const sc = el.closest("[data-scroll], dialog");
-      if (el.getBoundingClientRect().top < (sc ? sc.getBoundingClientRect().top : 0)) el.scrollIntoView({ block: "start" });
-    });
+    if (wasOpen) requestAnimationFrame(() => backIntoView(ref.current));
   };
   return (
     <div className="border-t border-line">
@@ -218,6 +222,7 @@ export function Disclosure({ open, on, label, hint, children }) {
 // A native modal dialog: the page behind does not move, Escape closes it, focus returns to the trigger.
 export function InfoSheet({ open, title, onClose, children }) {
   const ref = useRef(null);
+  const downOnBackdrop = useRef(false);
   useEffect(() => {
     const d = ref.current; if (!d) return;
     if (open && !d.open) { d.showModal(); d.querySelector("[data-sheet-body]")?.scrollTo(0, 0); }
@@ -225,7 +230,8 @@ export function InfoSheet({ open, title, onClose, children }) {
   }, [open]);
   return (
     <dialog ref={ref} data-sheet className="sheet" aria-labelledby="sheet-title" onClose={onClose} onCancel={onClose}
-      onClick={e => { if (e.target === ref.current) onClose(); }}>
+      onPointerDown={e => { downOnBackdrop.current = e.target === ref.current; }}
+      onClick={e => { if (e.target === ref.current && downOnBackdrop.current) onClose(); }}>
       <div className="flex flex-col min-h-0 w-full">
         <div className="shrink-0 min-h-[52px] flex items-center justify-between gap-3 pl-4 sm:pl-5 pr-1 border-b border-line">
           <h2 id="sheet-title" className="text-[14px] font-bold text-ink">{title}</h2>

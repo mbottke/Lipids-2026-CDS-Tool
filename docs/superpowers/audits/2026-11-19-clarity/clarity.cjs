@@ -77,7 +77,7 @@ const ok = (c, name, dbg) => {
   // ── Task 2 ─────────────────────────────────────────────────────────────────
   await section('sheet: reference content opens without moving the page', async () => {
     const cases = [['Primary', 'About the PREVENT calculator', /PREVENT/], ['Primary', 'About CAC scoring', /CAC/], ['ASCVD', 'About Lp(a) and apoB', /Lp\(a\)/],
-      ['ASCVD', 'Statin reference', /Statin reference/], ['ASCVD', /^Statin not tolerated/, /Statin intolerance/]];
+      ['ASCVD', 'Statin reference', /Statin reference/], ['ASCVD', /^Statin not tolerated/, /Statin not tolerated/]];
     for (const [tab, name, title] of cases) {
       const p = await open(390, 844, tab);
       const trig = p.locator('main').getByRole('button', { name }).first();
@@ -219,6 +219,75 @@ const ok = (c, name, dbg) => {
     const n = await en.locator('.col-main').getByRole('button', { name: /^(✓\s*)?Elevated Lp\(a\)/ }).first().getAttribute('aria-pressed');
     ok(n === 'false', 'risk-enhancer rows are the shared check row and state whether they are pressed', n);
     await en.done(); await p.done();
+  });
+
+  // ── Review findings on e82acf3 (independent reviewer and Codex) ──────────────
+  await section('review: a route link takes keyboard focus to its section', async () => {
+    for (const [w, h] of [[390, 844], [1243, 700]]) {
+      const p = await open(w, h, 'Primary');
+      const link = p.locator('nav[aria-label="On this tab"]').getByRole('link', { name: 'Treat', exact: true });
+      await link.focus(); await p.keyboard.press('Enter'); await p.waitForTimeout(900);
+      const a = await p.evaluate(() => { const t = document.getElementById('sec-treat'); return { inTarget: t === document.activeElement || t.contains(document.activeElement), top: Math.round(document.querySelector('[data-scroll]').scrollTop) }; });
+      ok(a.inTarget && a.top > 300, `${w}: after Enter on "Treat", focus is in the treatment ladder`, a);
+      await p.keyboard.press('Tab'); await p.waitForTimeout(300);
+      const b2 = await p.evaluate(() => ({ inTarget: document.getElementById('sec-treat').contains(document.activeElement), top: Math.round(document.querySelector('[data-scroll]').scrollTop) }));
+      ok(b2.inTarget && Math.abs(b2.top - a.top) < 400, `${w}: the next Tab stays in that section instead of jumping back to the top`, { a, b2 });
+      await p.done();
+    }
+  });
+
+  await section('review: the sheet survives a text selection and names its trigger', async () => {
+    let p = await open(1243, 700, 'ASCVD');
+    await p.locator('main').getByRole('button', { name: 'Statin reference' }).first().click(); await p.waitForTimeout(350);
+    const box = await p.locator('dialog[open] [data-sheet-body]').boundingBox();
+    await p.mouse.move(box.x + 60, box.y + 80); await p.mouse.down(); await p.mouse.move(box.x - 200, box.y + 90, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(300);
+    ok(await p.locator('dialog[open]').count() === 1, 'dragging a selection out past the edge does not close the sheet');
+    await p.mouse.click(200, 300); await p.waitForTimeout(300);
+    ok(await p.locator('dialog[open]').count() === 0, 'a press that starts and ends on the backdrop still closes it');
+    await p.locator('main').getByRole('button', { name: /^Statin not tolerated/ }).click(); await p.waitForTimeout(350);
+    ok(/^Statin not tolerated\?$/.test((await p.locator('dialog[open] h2').first().innerText()).trim()), 'the sheet keeps the name of the button that opened it');
+    await p.done();
+    p = await open(390, 844, 'Primary');
+    await p.locator('main').getByRole('button', { name: 'About CAC scoring' }).scrollIntoViewIfNeeded();
+    await p.locator('main').getByRole('button', { name: 'About CAC scoring' }).click(); await p.waitForTimeout(350);
+    const reset = await p.locator('header').getByRole('button', { name: 'Reset patient' }).boundingBox();
+    await p.mouse.click(reset.x + reset.width / 2, reset.y + reset.height / 2); await p.waitForTimeout(300);
+    const st = await p.evaluate(() => ({ open: !!document.querySelector('dialog[open]'), age: document.querySelector('.col-main input').value }));
+    ok(!st.open && st.age === '52', 'a press where Reset sits only closes the sheet. Nothing is reset', st);
+    await p.done();
+  });
+
+  await section('review: nothing clinical left the risk readout', async () => {
+    let p = await open(390, 844, 'Primary');
+    let m = await p.evaluate(() => { const g = document.querySelector('.col-main [data-risk-grid]'), plan = document.querySelector('[data-plan="inline"]'); const note = [...document.querySelectorAll('.col-main p')].find(x => /Total CVD is ASCVD plus heart failure/.test(x.textContent)); return { grid: g.innerText.replace(/\s+/g, ' '), note: note?.textContent, noteBeforePlan: note ? note.getBoundingClientRect().top < plan.getBoundingClientRect().top : null }; });
+    ok(/Statin decisions use ASCVD risk\./.test(m.note || ''), '"Statin decisions use ASCVD risk." is back in the total CVD sentence', m.note);
+    ok(/ages 30–59/.test(m.grid), 'the 30-year column says it applies to ages 30–59', m.grid);
+    ok(m.noteBeforePlan === true, '390: the sentence sits with the numbers it explains, above the plan', m.noteBeforePlan);
+    await p.done();
+    p = await open(1280, 720, 'Primary');
+    m = await p.evaluate(() => { const a = document.querySelector('aside'), plan = a.querySelector('[data-plan="rail"]'); const note = [...a.querySelectorAll('p')].find(x => /Total CVD is ASCVD plus heart failure/.test(x.textContent)); return { after: note.getBoundingClientRect().top > plan.getBoundingClientRect().bottom - 1, planBottom: Math.round(plan.getBoundingClientRect().bottom), vh: innerHeight }; });
+    ok(m.after && m.planBottom <= m.vh, '1280 x 720: in the rail it follows the plan, and the whole plan is still in view', m);
+    await p.done();
+  });
+
+  await section('review: rows, rulers and the closing row', async () => {
+    let p = await open(390, 844, 'ASCVD');
+    const r = await p.locator('main button[aria-pressed]').first().evaluate(el => getComputedStyle(el).borderTopLeftRadius);
+    ok(r === '0px', `a check row has square corners, so the hairlines between rows are straight (radius ${r})`);
+    await p.done();
+    p = await open(320, 700, 'Primary');
+    const gap = await p.evaluate(() => { const sc = document.querySelector('.col-main [data-risk-grid] [data-scale]'); const labels = [...sc.querySelectorAll('div')].filter(d => d.childElementCount === 0 && d.textContent.trim() && d.getBoundingClientRect().width > 0).map(d => ({ t: d.textContent.trim(), l: d.getBoundingClientRect().left, r: d.getBoundingClientRect().right })).sort((x, y) => x.l - y.l); let min = 99, pair = ''; for (let i = 1; i < labels.length; i++) { const g = labels[i].l - labels[i - 1].r; if (g < min) { min = g; pair = labels[i - 1].t + ' | ' + labels[i].t; } } return { min: Math.round(min * 10) / 10, pair }; });
+    ok(gap.min >= 4, `320: ruler labels are at least 4 px apart (closest ${gap.min} px: ${gap.pair})`);
+    await p.done();
+    // A window tall enough that the head and the closing row are both on screen and nothing has to scroll.
+    p = await open(390, 3400, 'Primary');
+    const head = p.getByRole('button', { name: /Risk enhancers/ }).first();
+    await p.getByRole('button', { name: 'Close risk enhancers' }).scrollIntoViewIfNeeded(); await p.waitForTimeout(150);
+    const y0 = (await head.boundingBox()).y;
+    await p.getByRole('button', { name: 'Close risk enhancers' }).click(); await p.waitForTimeout(350);
+    const y1 = (await head.boundingBox()).y;
+    ok(Math.abs(y1 - y0) <= 1, `closing from the end does not scroll when the head is already in view (moved ${Math.round(y1 - y0)} px)`);
+    await p.done();
   });
 
   console.log(`\n${pass} pass, ${fail} fail`);
