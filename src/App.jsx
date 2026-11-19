@@ -6,7 +6,12 @@ import {
   discordance, optimizedInputs, driverDeltas,
   VALID_30YR_AGE_MAX, CVD_BP_TX_THRESHOLD,
 } from "./prevent.js";
-import { Toggle, Num, Card, Badge } from "./ui.jsx";
+import { Toggle, Num, Card, Badge, Route } from "./ui.jsx";
+import { StatinIntolerance } from "./StatinIntolerance.jsx";
+import { LifestyleLDL } from "./Lifestyle.jsx";
+import { BloodPressure } from "./BloodPressure.jsx";
+import { dlcnScore, estimateUntreatedLdl, severeGoal, DLCN_CLINICAL_FH_MIN } from "./fh.js";
+import { SevereGoalTiers, FHWorkup, REGIMENS } from "./SevereTab.jsx";
 
 const VHR_CRITERIA = [
   { id:"acs", l:"Recent ACS", d:"MI or unstable angina within past 12 months" },
@@ -249,6 +254,14 @@ export default function App() {
   const [metSyn, setMetSyn] = useState({});
   const [vhr, setVhr] = useState({});
   const [dmEnhs, setDmEnhs] = useState({});
+  // LDL ≥190 tab
+  const [sevF, setSevF] = useState({});            // goal-lowering factors
+  const [dlcnChecked, setDlcnChecked] = useState({});
+  const [sevRegimen, setSevRegimen] = useState("none");
+  const [siOpen, setSiOpen] = useState(false);     // statin intolerance pathway
+  // Blood pressure card
+  const [dbp, setDbp] = useState("");
+  const [bpF, setBpF] = useState({});              // manual: clinical CVD / diabetes / CKD
 
   const resetPatient = useCallback(() => {
     setAge(""); setSex("male"); setSbp(""); setBpTx(false);
@@ -260,6 +273,8 @@ export default function App() {
     setStatinInfo(false); setStatinInfoMon(false);
     setBmiWt(""); setBmiHt(""); setBmiHtIn("");
     setVhr({}); setDmEnhs({}); setMetSyn({});
+    setSevF({}); setDlcnChecked({}); setSevRegimen("none");
+    setSiOpen(false); setDbp(""); setBpF({});
     setLifetimeOptimizedOpen(false); setLifetimeDriversOpen(false);
   }, []);
 
@@ -290,6 +305,9 @@ export default function App() {
   const vhrCount = useMemo(() => Object.values(vhr).filter(Boolean).length, [vhr]);
   const toggleDmEnh = useCallback(id => setDmEnhs(p => ({...p,[id]:!p[id]})), []);
   const dmEnhCount = useMemo(() => Object.values(dmEnhs).filter(Boolean).length, [dmEnhs]);
+  const toggleSevF = useCallback(id => setSevF(p => ({...p,[id]:!p[id]})), []);
+  const toggleBpF = useCallback(id => setBpF(p => ({...p,[id]:!p[id]})), []);
+  const toggleDlcn = useCallback(id => setDlcnChecked(p => ({...p,[id]:!p[id]})), []);
   const toggleMetSyn = useCallback(id => setMetSyn(p => ({...p,[id]:!p[id]})), []);
   const metSynCount = useMemo(() => Object.values(metSyn).filter(Boolean).length, [metSyn]);
   const enhCount = useMemo(() => {
@@ -342,6 +360,16 @@ export default function App() {
     return Number(totalC) - Number(hdlC);
   }, [totalC, hdlC]);
 
+  // ── LDL ≥190: DLCN score + goal tier ──
+  const untreatedLdl = useMemo(() => {
+    if (ldlC === "" || ldlC === null) return "";
+    const pct = REGIMENS.find(r => r.id === sevRegimen)?.pct || 0;
+    return pct ? (estimateUntreatedLdl(ldlC, pct) ?? "") : Number(ldlC);
+  }, [ldlC, sevRegimen]);
+  const dlcn = useMemo(() => dlcnScore(dlcnChecked, untreatedLdl), [dlcnChecked, untreatedLdl]);
+  const hefhAuto = dlcn.score >= DLCN_CLINICAL_FH_MIN || !!dlcnChecked.dna_pos;
+  const sevGoal = useMemo(() => severeGoal({ ...sevF, hefh: sevF.hefh || hefhAuto }), [sevF, hefhAuto]);
+
   // ── Recommendation engine ──
   const rec = useMemo(() => {
     if (tab === "secondary") {
@@ -353,7 +381,10 @@ export default function App() {
       return { g:{ldl:70,nh:100,p:50}, int:"high", esc:true, txt:"Diabetes (age 40–75) — LLT recommended regardless of LDL; high-intensity statin if additional risk factors", clr:"violet" };
     }
     if (tab === "severe") {
-      return { g:{ldl:100,nh:130,p:50}, int:"high", esc:true, txt:"LDL ≥190 — high-intensity statin; evaluate for familial hypercholesterolemia", clr:"red" };
+      const g = { ldl: sevGoal.ldl, nh: sevGoal.nh, p: 50 };
+      if (sevGoal.tier === "ascvd") return { g, int:"high", esc:true, txt:"LDL ≥190 with clinical ASCVD — high-intensity statin + nonstatin therapy to LDL <55 mg/dL", clr:"red" };
+      if (sevGoal.tier === "enhanced") return { g, int:"high", esc:true, txt:"LDL ≥190 with HeFH, additional ASCVD risk factor(s), or coronary calcification — high-intensity statin + nonstatin therapy to LDL <70 mg/dL", clr:"red" };
+      return { g, int:"high", esc:true, txt:"LDL ≥190 — high-intensity statin; add nonstatin therapy to LDL <100 mg/dL. Evaluate for familial hypercholesterolemia", clr:"red" };
     }
     if (risk10 === null) return null;
     // CAC override
@@ -369,7 +400,25 @@ export default function App() {
     if (risk10 >= 3 && enhCount > 0) return { g:{ldl:100,nh:130,p:30}, int:"moderate", esc:false, txt:`Borderline risk with ${enhCount} risk enhancer${enhCount>1?"s":""} — Consider moderate-intensity statin.`, clr:"amber" };
     if (risk10 >= 3) return { g:{ldl:100,nh:130,p:30}, int:"lifestyle", esc:false, txt:"Borderline risk (3–<5%) — Lifestyle optimization; consider statin if risk enhancers present.", clr:"blue" };
     return { g:null, int:"none", esc:false, txt:"Low risk (<3%) — Lifestyle optimization. Reassess periodically.", clr:"emerald" };
-  }, [tab, risk10, enhCount, cac, cacPct, vhrCount]);
+  }, [tab, risk10, enhCount, cac, cacPct, vhrCount, sevGoal]);
+
+  // Which nonstatin row of the statin-intolerance pathway applies here
+  const siGroup = useMemo(() => {
+    if (tab === "secondary") return "ascvd";
+    if (tab === "severe") return sevGoal.tier === "ascvd" ? "ascvd" : "severe";
+    if (tab === "diabetes") return "high";
+    if (risk10 === null) return null;
+    if (risk10 >= 10 || (cac !== "" && Number(cac) >= 300)) return "high";
+    return risk10 >= 3 ? "mid" : null;
+  }, [tab, sevGoal, risk10, cac]);
+
+  // Conditions already entered elsewhere that set the BP drug-therapy threshold
+  const bpAuto = useMemo(() => ({
+    clinicalCvd: tab === "secondary" ? "ASCVD tab" : (tab === "severe" && sevF.ascvd) ? "clinical ASCVD checked above" : null,
+    dm: tab === "diabetes" ? "Diabetes tab" : dm ? "diabetes entered in PREVENT" : null,
+    ckd: (egfr !== "" && Number(egfr) < 60) ? `eGFR ${egfr}`
+      : (enhs.ckd || dmEnhs.egfr_dm || dmEnhs.alb || vhr.ckd_ascvd) ? "CKD / albuminuria checked above" : null,
+  }), [tab, sevF, dm, egfr, enhs, dmEnhs, vhr]);
 
   // Biomarker interpretation
   const lpaNote = useMemo(() => {
@@ -890,15 +939,18 @@ export default function App() {
         )}
 
         {/* SEVERE */}
-        {tab === "severe" && (
+        {tab === "severe" && (<>
           <Card title="Severe Hypercholesterolemia" accent="red">
             <div className="bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 rounded-lg p-3 mb-3">
               <div className="text-[14px] font-bold text-red-800 dark:text-red-300">LDL ≥190 mg/dL → High-Intensity Statin</div>
-              <div className="text-[11px] text-red-600 dark:text-red-400 mt-1">No risk calculation needed. Evaluate for FH (Dutch Lipid Clinic criteria). Cascade screening. Lipid specialist referral.</div>
+              <div className="text-[11px] text-red-600 dark:text-red-400 mt-1">No risk calculation needed. Set the goal here, then work through the FH steps below.</div>
             </div>
             <Num label="Current LDL-C" unit="mg/dL" value={ldlC} on={setLdlC} min={0} max={600} ph="Current" />
+            <SevereGoalTiers f={sevF} toggle={toggleSevF} hefhAuto={hefhAuto} goal={sevGoal} />
           </Card>
-        )}
+          <FHWorkup ldl={ldlC} regimen={sevRegimen} setRegimen={setSevRegimen} untreated={untreatedLdl}
+            checked={dlcnChecked} toggle={toggleDlcn} dlcn={dlcn} />
+        </>)}
 
         {/* BIOMARKERS */}
         <Card title="Advanced Biomarkers" accent="violet">
@@ -1014,8 +1066,8 @@ export default function App() {
           <Card title="Treatment Ladder" accent="blue">
             <div className="space-y-0">
               {[
-                { s:5, l:"Consider Inclisiran", show:rec.esc&&rec.g?.ldl<=55 },
-                { s:4, l:"Bempedoic Acid / PCSK9i", show:rec.esc },
+                { s:5, l:(rec.g?.ldl<=55 || tab==="severe") ? "Enlicitide / Inclisiran" : "Enlicitide", show:rec.esc },
+                { s:4, l:"Bempedoic Acid / PCSK9 mAb", show:rec.esc },
                 { s:3, l:"Add Ezetimibe", show:rec.esc },
                 { s:2, l:"Maximally Tolerated Statin", show:rec.int!=="none"&&rec.int!=="lifestyle", isStatin:true },
                 { s:1, l:"Lifestyle Optimization", show:true },
@@ -1036,9 +1088,7 @@ export default function App() {
                       )}
                     </div>
                     <div className="text-[11px] text-slate-500 dark:text-[#5a8aaa] mt-0.5">
-                      {s.s === 1 && (
-                        <div>Diet, exercise, weight management, smoking cessation, sleep optimization</div>
-                      )}
+                      {s.s === 1 && <LifestyleLDL />}
                       {s.isStatin && (<>
                         <div className="font-bold text-slate-600 dark:text-[#d0e4f0]">{rec.int==="high" ? "High-Intensity" : "Moderate-Intensity"} <span className="font-normal text-slate-400 dark:text-[#3d6580]">({rec.int==="high" ? "≥50%" : "30–49%"} LDL-C reduction)</span></div>
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-[#1a2835]">
@@ -1052,23 +1102,33 @@ export default function App() {
                           </>)}
                         </div>
                         {statinInfo && <div className="mt-2"><StatinInfo onClose={() => setStatinInfo(false)} /></div>}
+                        <button type="button" onClick={() => setSiOpen(p => !p)} aria-expanded={siOpen}
+                          className="mt-2 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-blue-600 dark:text-sky-400 bg-blue-50 dark:bg-sky-500/10 border border-blue-200 dark:border-sky-500/30 hover:bg-blue-100 dark:hover:bg-sky-500/15 active:scale-95 transition-all cursor-pointer min-h-[32px]">
+                          {siOpen ? "▾" : "▸"} Statin not tolerated?
+                        </button>
+                        {siOpen && <div className="mt-2"><StatinIntolerance onClose={() => setSiOpen(false)} group={siGroup} /></div>}
                       </>)}
                       {s.s === 3 && (
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-[#1a2835]">
-                          <div>Ezetimibe 10 mg daily <span className="text-slate-400 dark:text-[#3d6580]">(additional 15–20% LDL-C reduction)</span></div>
+                          <div><Route r="PO" /> Ezetimibe 10 mg daily <span className="text-slate-400 dark:text-[#3d6580]">(additional 15–20% LDL-C reduction)</span></div>
                         </div>
                       )}
                       {s.s === 4 && (
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-[#1a2835]">
-                          <div>Bempedoic acid 180 mg daily <span className="text-slate-400 dark:text-[#3d6580]">(~18% LDL-C reduction)</span></div>
-                          <div>Evolocumab 140 mg q2wk or 420 mg monthly <span className="text-slate-400 dark:text-[#3d6580]">(~60% LDL-C reduction)</span></div>
-                          <div>Alirocumab 75–150 mg q2wk <span className="text-slate-400 dark:text-[#3d6580]">(~50–60% LDL-C reduction)</span></div>
+                          <div><Route r="PO" /> Bempedoic acid 180 mg daily <span className="text-slate-400 dark:text-[#3d6580]">(~18% LDL-C reduction)</span></div>
+                          <div><Route r="SC" /> Evolocumab 140 mg q2wk or 420 mg monthly <span className="text-slate-400 dark:text-[#3d6580]">(~60% LDL-C reduction)</span></div>
+                          <div><Route r="SC" /> Alirocumab 75–150 mg q2wk <span className="text-slate-400 dark:text-[#3d6580]">(~50–60% LDL-C reduction)</span></div>
                         </div>
                       )}
                       {s.s === 5 && (
                         <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-slate-200 dark:border-[#1a2835]">
-                          <div>Inclisiran 284 mg SC <span className="text-slate-400 dark:text-[#3d6580]">(~50% LDL-C reduction)</span></div>
-                          <div className="text-slate-400 dark:text-[#3d6580]">Day 0, Day 90, then q6 months · siRNA for residual LDL elevation</div>
+                          <div className="text-slate-400 dark:text-[#3d6580]">Alternatives to a PCSK9 mAb. LDL-C lowering only — outcomes trials pending.</div>
+                          <div><Route r="PO" /> Enlicitide (Lipfendra) 20 mg daily <span className="text-slate-400 dark:text-[#3d6580]">(~56% LDL-C reduction)</span></div>
+                          <div className="text-slate-400 dark:text-[#3d6580]">Morning, empty stomach; no food for 30 min. Only oral PCSK9 inhibitor. FDA-approved Jul 2026 — not in the 2026 guideline.</div>
+                          {(rec.g?.ldl<=55 || tab==="severe") && (<>
+                            <div><Route r="SC" /> Inclisiran 284 mg <span className="text-slate-400 dark:text-[#3d6580]">(~50% LDL-C reduction)</span></div>
+                            <div className="text-slate-400 dark:text-[#3d6580]">Day 0, month 3, then q6 months · clinician-administered · guideline: second-line PCSK9 inhibitor (COR 2a)</div>
+                          </>)}
                         </div>
                       )}
                     </div>
@@ -1076,6 +1136,11 @@ export default function App() {
                 </div>
               ))}
             </div>
+            {rec.esc && (
+              <div className="mt-1 text-[10px] text-slate-500 dark:text-[#5a8aaa] leading-snug">
+                <Route r="PO" /> oral · <Route r="SC" /> subcutaneous · <Route r="IV" /> infusion. <b>No oral form:</b> evolocumab, alirocumab, lerodalcibep (self-injected), inclisiran (clinic injection), evinacumab (IV, HoFH only).
+              </div>
+            )}
             {tg!==""&&Number(tg)>=150 && (
               <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg">
                 <div className="text-[14px] font-bold text-amber-800 dark:text-amber-300">Hypertriglyceridemia</div>
@@ -1086,6 +1151,10 @@ export default function App() {
             )}
           </Card>
         </>)}
+
+        {/* BLOOD PRESSURE */}
+        <BloodPressure sbp={sbp} setSbp={setSbp} dbp={dbp} setDbp={setDbp} bpTx={bpTx} setBpTx={setBpTx}
+          cvd10={cvd10} auto={bpAuto} flags={bpF} toggleFlag={toggleBpF} />
 
         {/* MONITORING */}
         <Card title="Monitoring" accent="emerald">
@@ -1141,7 +1210,7 @@ export default function App() {
         {/* Footer */}
         <div className="footer-sep mx-8 mt-4" />
         <div className="text-center pt-3 space-y-1">
-          <div className="text-[11px] text-slate-400 dark:text-[#3d6580]">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Guideline: Blumenthal RS et al. JACC/Circ 2026</div>
+          <div className="text-[11px] text-slate-400 dark:text-[#3d6580]">PREVENT: Khan SS et al. Circ 2024;149:430-449 · Lipids: Blumenthal RS et al. JACC/Circ 2026 · BP: Jones DW et al. JACC/Circ 2025</div>
           <div className="text-[11px] text-slate-400 dark:text-[#3d6580]">Clinical decision support only. Does not replace clinical judgment.</div>
           <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
             target="_blank" rel="noopener"

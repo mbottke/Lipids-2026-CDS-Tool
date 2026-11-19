@@ -66,3 +66,18 @@ export function estimateUntreatedLdl(onTxLdl, pctReduction) {
   if (!Number.isFinite(v) || !Number.isFinite(p) || v <= 0 || p <= 0 || p >= 95) return null;
   return Math.round(v / (1 - p / 100));
 }
+
+// ── LDL-C goal in severe hypercholesterolemia (LDL-C ≥190 mg/dL) ─────────────
+// 2026 ACC/AHA Dyslipidemia Guideline §4.2.4.3, recs 3–5:
+//   no HeFH / additional ASCVD risk factors / subclinical atherosclerosis → <100 (non-HDL <130)
+//   clinical or genetic HeFH, additional ASCVD risk factors, or documented
+//   coronary calcification                                               → <70  (non-HDL <100)
+//   clinical ASCVD                                                       → <55  (non-HDL <85)
+export function severeGoal({ ascvd, hefh, rf, cac } = {}) {
+  if (ascvd) return { ldl: 55, nh: 85, tier: "ascvd" };
+  if (hefh || rf || cac) return { ldl: 70, nh: 100, tier: "enhanced" };
+  return { ldl: 100, nh: 130, tier: "base" };
+}
+
+// DLCN ≥6 (probable/definite) is treated as clinical confirmation of HeFH.
+export const DLCN_CLINICAL_FH_MIN = 6;
